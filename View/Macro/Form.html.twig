@@ -1,0 +1,28 @@
+{%- macro inputfile(id, name, label, filetype) %}
+    <label>{{ label }}</label>
+    <div class="custom-file">
+        <input type="file" id="{{ id }}" name="{{ name }}" class="custom-file-input" accept="{{ filetype }}">
+        <label class="custom-file-label" for="{{ id }}">Archivo *{{ filetype }}</label>
+    </div>
+{% endmacro -%}
+
+{%- macro inputpassword(id, name, label) %}
+    <label for="{{ id }}">{{ label }}</label>
+    <input type="password" class="form-control" id="{{ id }}" name="{{ name }}" autocomplete="off">
+{% endmacro -%}
+
+{%- macro inputselect(id, name, label, items, default) %}
+    <label for="{{ id }}">{{ label }}</label>
+    <select id="{{ id }}" name="{{ name }}" class="form-control" required>
+        {% for item in items %}
+            <option value="{{ item.id }}" {% if default == item.id %} selected {% endif %}>
+                {{ item.descripcion }}</option>
+        {% endfor %}
+    </select>
+{% endmacro %}
+
+{%- macro inputtext(id, label, value, disabled = '') %}
+    <label for="{{ id }}">{{ label }}</label>
+    <input type="text" id="{{ id}}" name="{{ id }}" class="form-control"
+           value="{{ value }}" {{disabled}}>
+{% endmacro -%}

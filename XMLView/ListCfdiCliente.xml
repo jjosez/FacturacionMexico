@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * This file is part of FacturaScripts
+ * Copyright (C) 2017-2018 Carlos Garcia Gomez <carlos@facturascripts.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * Initial description for the controller ListFamilia
+ *
+ * @author Artex Trading sa <jcuello@artextrading.com>  
+-->
+
+<view>
+    <columns> 
+        <column name="invoice" order="100">
+            <widget type="select" fieldname="idfactura" onclick="EditFacturaCliente">
+                <values source="facturascli" fieldcode="idfactura" fieldtitle="codigo"/>
+            </widget>
+        </column>
+        <column name="customer" order="110">
+            <widget type="select" fieldname="codcliente" onclick="EditCliente">
+                <values source="clientes" fieldcode="codcliente" fieldtitle="nombre"/>
+            </widget>
+        </column>
+        <column name="cifnif" order="120">
+            <widget type="text" fieldname="rfcreceptor"/>
+        </column>
+        <column name="uuid" order="130" title="UUID">
+            <widget type="text" fieldname="uuid"/>
+        </column>
+        <column name="type" display="center" order="140">
+            <widget type="text" fieldname="tipocfdi"/>
+        </column>
+        <column name="amount" display="right" order="150">
+            <widget type="money" fieldname="total" />
+        </column> 
+        <column name="date" display="right" order="160">
+            <widget type="date" fieldname="fecha" />
+        </column>        
+    </columns>
+</view>

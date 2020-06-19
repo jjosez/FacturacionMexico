@@ -1,0 +1,157 @@
+{#
+/**
+ *  This file is part of EasyPOS plugin for FacturaScripts
+ *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% extends 'Master/MenuTemplate.html.twig' %}
+{% import 'Macro/Form.html.twig' as form %}
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-2">
+        <div class="row">
+            <div class="col-1">
+                <div class="btn-group bg-white">
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.url() }}" title="Recargar">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-11 text-right">
+                <h1 class="h3">
+                    Ajustes para la emisión de CFDI
+                    <i class="fas fa-cogs fa-fw" aria-hidden="true"></i>
+                </h1>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-3">
+                <div class="nav flex-column nav-pills">
+                    <a class="nav-link active show" data-toggle="pill" href="#general">
+                        <i class="fas fa-building fa-fw"></i> Empresa</a>
+                    <a class="nav-link" data-toggle="pill" href="#libfiles">
+                        <i class="fas fa-cloud-download-alt fa-fw"></i> Archivos</a>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <div class="tab-pane container active" id="general">
+                                <form action="{{ fsc.url() }}" autocomplete="off" enctype="multipart/form-data"
+                                      method="post">
+                                    <input type="hidden" name="action" value='save-settings'>
+                                    {% set defaultRegimen = appSettings.get('cfdi','regimen') %}
+                                    <div class="form-group row">
+                                        {{ form.inputselect('regimenFiscal', 'regimenfiscal', 'Régimen Fiscal',
+                                            fsc.getRegimenFiscal().all(), defaultRegimen) }}
+                                    </div>
+                                    {% set defaultUso = appSettings.get('cfdi','uso') %}
+                                    <div class="form-group row mb-4">
+                                        {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI',
+                                            fsc.getUsoCfdi().all(), defaultUso) }}
+                                    </div>
+                                    <div class="form-group row">
+                                        {{ form.inputfile('certFile', 'certfile', 'Certificado', '.cer') }}
+                                    </div>
+                                    <div class="form-group row">
+                                        {{ form.inputfile('keyFile', 'keyfile', 'Llave privada', '.key') }}
+                                    </div>
+                                    <div class="form-group row">
+                                        {{ form.inputpassword('certPassword', 'certpassword', 'Contraseña') }}
+                                        <small class="form-text text-muted">Contraseña de la llave privada</small>
+                                    </div>
+                                    <div class="row">
+                                        <button type="submit" class="btn btn-primary ml-auto">Guardar</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="tab-pane container fade" id="libfiles">
+                                <div class="row">
+                                    <p>Almacen de recursos locales para agilizar el proceso de generacion de la cadena
+                                        original.</p>
+                                    {% set cacheExists = fsc.toolBox().appSettings().get('cfdi', 'cachefiles', '0') %}
+                                    {% if cacheExists == '1' %}
+                                        <div class="col-12 alert alert-info" role="alert">
+                                            Almacen local de archivos XSLT <i class="fas fa-check-circle"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="col-12 alert alert-success" role="alert">
+                                            Aun no se tiene la copia local de los archivos
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="row d-flex justify-content-center">
+                                    <div id="spinnerbox" class="d-none">
+                                        <div class="spinner-grow text-primary" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                        <div class="spinner-grow text-primary" role="status">
+                                        </div>
+                                        <div class="spinner-grow text-primary" role="status">
+                                        </div>
+                                    </div>
+                                    <div id="downloadResponse" class="col alert" role="alert">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <button type="submit" id="sourceDownloadBtn" class="btn btn-primary ml-auto">
+                                        <i class="fas fa-arrow-alt-circle-down"></i>&nbsp;Descargar archivos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $('.custom-file-input').on('change', function () {
+            let fileName = $(this).val().split('\\').pop();
+            let label = $(this).siblings('.custom-file-label');
+
+            if (label.data('default-title') === undefined) {
+                label.data('default-title', label.html());
+            }
+            if (fileName === '') {
+                label.removeClass("selected").html(label.data('default-title'));
+            } else {
+                label.addClass("selected").html(fileName);
+            }
+        });
+        $('#sourceDownloadBtn').on('click', function () {
+            var msg = $('#downloadResponse');
+            var sipnner = $('#spinnerbox');
+
+            msg.hide();
+            sipnner.removeClass('d-none');
+            $.ajax({
+                type: 'post',
+                url: '{{ asset('CfdiSettings') }}',
+                dataType: 'text',
+                data: {action: 'download-resources'},
+                success: function (data, textStatus, jQxhr) {
+                    console.log(data)
+                    msg.html(data);
+                    msg.addClass('alert-success');
+                },
+                error: function (jqXhr, textStatus, errorThrown) {
+                    console.log(errorThrown);
+                    msg.html(errorThrown);
+                    msg.addClass('alert-danger');
+                },
+                complete: function () {
+                    sipnner.addClass('d-none');
+                    msg.show();
+                }
+            });
+        })
+    </script>
+{% endblock %}
+
+

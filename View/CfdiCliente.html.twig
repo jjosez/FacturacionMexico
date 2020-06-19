@@ -1,0 +1,219 @@
+{#
+/**
+ *  This file is part of EasyPOS plugin for FacturaScripts
+ *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% extends 'Master/MenuTemplate.html.twig' %}
+{% import 'Macro/Form.html.twig' as form %}
+{% set rfcGenerico =  (fsc.factura.cifnif == 'XAXX010101000') ? true : false %}
+{% set receptor = fsc.reader.getReceptor() %}
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-2">
+        <div class="row">
+            <div class="col">
+                <div class="btn-group bg-white">
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.url() }}" title="Recargar">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                    </a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ asset('ListCfdiCLiente') }}" title="Todos">
+                        <i class="fas fa-list" aria-hidden="true"></i>&nbsp;Todos
+                    </a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.factura.url() }}" title="Factura">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Factura
+                    </a>
+                    <form method="post">
+                        <input type="hidden" name="action" value="download-xml">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download" aria-hidden="true"></i>&nbsp;XML
+                        </button>
+                    </form>
+                    <form method="post">
+                        <input type="hidden" name="action" value="download-pdf">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-file-pdf" aria-hidden="true"></i>&nbsp;PDF
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="col text-right">
+                <h1 class="h3">
+                    <strong>UUID:</strong>&nbsp;{{ fsc.cfdi.uuid }}
+                    <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
+                </h1>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="card-deck mb-3">
+            <div class="card">
+                <div class="card-header">Cliente</div>
+                <div class="card-body">
+                    {% set uso = receptor.UsoCFDI %}
+                    <div class="form-group">
+                        {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.getUsoCfdi(uso).descripcion, 'disabled') }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.inputtext('razonsocial', 'Razón social', fsc.factura.nombrecliente, 'disabled') }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.inputtext('rfc', 'RFC', fsc.factura.cifnif, 'disabled') }}
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Factura</div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            {% set lugarexpedicion = fsc.empresa.ciudad %}
+                            {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', lugarexpedicion, 'disabled') }}
+                        </div>
+                        <div class="form-group col-6">
+                            {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            {% set disabled = (rfcGenerico | default is same as(true)) ? '' : 'disabled' %}
+                            {% set checked = (rfcGenerico | default is same as(true)) ? 'checked' : '' %}
+                            <input class="form-check-input" type="checkbox" id="globalInvoice"
+                                   name="globalinvoice" {{ disabled }} {{ checked }}>
+                            <label class="form-check-label" for="globalInvoice">
+                                Factura global
+                            </label>
+                        </div>
+                    </div>
+                    {% set pagado = (fsc.factura.pagada) ? 'true' : 'false' %}
+                </div>
+                {% if not fsc.factura.pagada %}
+                    <div class="card-footer text-white bg-danger">
+                        Factura no pagada
+                    </div>
+                {% else %}
+                    <div class="card-footer text-white text-right">
+                        <button type="submit" class="btn btn-primary">Generar CFDI</button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Conceptos</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {{ _self.drawTablaConceptos(fsc.reader.getConceptos(), fsc) }}
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">SAT</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-3"></div>
+                    <div class="col">
+                        <div class="d-flex pb-2">
+                            <div class="flex-fill">
+                                <span><strong>NoCertificadoSAT:</strong></span>
+                                {{ fsc.reader.getTimbreFiscal().NoCertificadoSAT }}
+                            </div>
+                            <div class="flex-fill">
+                                <span><strong>RfcProvCertif:</strong></span>
+                                {{ fsc.reader.getTimbreFiscal().RfcProvCertif }}
+                            </div>
+                            <div class="flex-fill">
+                                <span><strong>FechaTimbrado:</strong></span>
+                                {{ fsc.reader.getTimbreFiscal().FechaTimbrado }}
+                            </div>
+                        </div>
+                        <span><strong>Sello CFD</strong></span>
+                        <p>{{ fsc.reader.getTimbreFiscal().SelloCFD }}</p>
+                        <span><strong>Sello SAT</strong></span>
+                        <p>{{ fsc.reader.getTimbreFiscal().SelloSAT }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="xmlModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Pre CFDI</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre>
+                        {{- fsc.cfdi.getXml() -}}
+                    </pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $('form').submit(function (e) {
+            var currentForm = this;
+            var message = 'Esta acción necesita confirmación. ¿Está seguro de que desea continuar?';
+
+            e.preventDefault();
+            bootbox.confirm({
+                title: 'Confirmar',
+                message: message,
+                closeButton: false,
+                buttons: {
+                    cancel: {
+                        label: '<i class="fas fa-times"></i> Cancelar'
+                    },
+                    confirm: {
+                        label: '<i class="fas fa-check"></i> Continuar',
+                        className: "btn-warning"
+                    }
+                },
+                callback: function (result) {
+                    if (result) {
+                        currentForm.submit();
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{%- macro drawTablaConceptos(conceptos, fsc) %}
+    <table class="table table-striped">
+        <thead class="thead-light">
+        <tr>
+            <th scope="col">Cantidad</th>
+            <th scope="col">No. identificacion</th>
+            <th scope="col">Descripcion</th>
+            <th scope="col">Clave SAT</th>
+            <th scope="col">Clave UM</th>
+            <th scope="col">Precio</th>
+            <th scope="col">Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for concepto in conceptos %}
+            <tr>
+                <td>{{ concepto.cantidad }}</td>
+                <td>{{ concepto.noidentificacion }}</td>
+                <td>{{ concepto.descripcion }}</td>
+                <td>{{ concepto.ClaveProdServ }}</td>
+                <td>{{ concepto.claveunidad }}</td>
+                <td>{{ concepto.valorunitario }}</td>
+                <td>{{ concepto.importe }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endmacro -%}
+
+
+

@@ -1,0 +1,187 @@
+{#
+/**
+ *  This file is part of EasyPOS plugin for FacturaScripts
+ *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% extends 'Master/MenuTemplate.html.twig' %}
+{% import 'Macro/Form.html.twig' as form %}
+{% set rfcGenerico =  (fsc.factura.cifnif == 'XAXX010101000') ? true : false %}
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-2">
+        <div class="row">
+            <div class="col">
+                <div class="btn-group bg-white">
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.url() }}" title="Recargar">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                    </a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ fsc.factura.url() }}" title="Recargar">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Factura
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#xmlModal">
+                        <i class="fas fa-file-code" aria-hidden="true"></i>&nbsp;XML
+                    </button>
+                </div>
+            </div>
+            <div class="col text-right">
+                <h1 class="h3">
+                    Pre CFDI
+                    <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
+                </h1>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <form id="formNuevoCfdi" autocomplete="off" method="post">
+        <input type="hidden" name="action" value='timbrar'>
+        <input type="hidden" name="invoice" value='{{ fsc.factura.idfactura }}'>
+        <div class="container-fluid">
+            <div class="card-deck mb-3">
+                <div class="card">
+                    <div class="card-header">Cliente</div>
+                    <div class="card-body">
+                        <div class="form-group mb-4">
+                            {% set defaultUso = appSettings.get('cfdi','uso') %}
+                            {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI',
+                                fsc.getUsoCfdi(), defaultUso) }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.inputtext('razonsocial', 'Razón social', fsc.factura.nombrecliente, 'disabled') }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.inputtext('rfc', 'RFC', fsc.factura.cifnif, 'disabled') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Factura</div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                {% set lugarexpedicion = fsc.empresa.ciudad %}
+                                {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', lugarexpedicion, 'disabled') }}
+                            </div>
+                            <div class="form-group col-6">
+                                {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-check">
+                                {% set disabled = (rfcGenerico | default is same as(true)) ? '' : 'disabled' %}
+                                {% set checked = (rfcGenerico | default is same as(true)) ? 'checked' : '' %}
+                                <input class="form-check-input" type="checkbox" id="globalInvoice" name="globalinvoice" {{ disabled }} {{ checked }}>
+                                <label class="form-check-label" for="globalInvoice">
+                                    Factura global
+                                </label>
+                            </div>
+                        </div>
+                        {% set pagado = (fsc.factura.pagada) ? 'true' : 'false' %}
+                    </div>
+                    {% if not fsc.factura.pagada %}
+                        <div class="card-footer text-white bg-danger">
+                            Factura no pagada
+                        </div>
+                    {% else %}
+                        <div class="card-footer text-white text-right">
+                            <button type="submit" class="btn btn-primary">Generar CFDI</button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-header">Conceptos</div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                {{ _self.drawTablaConceptos(fsc.factura.getLines(), fsc) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="modal fade" id="xmlModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Pre CFDI</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre>
+                        {{- fsc.cfdi.getXml() -}}
+                    </pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $('form').submit(function(e) {
+            var currentForm = this;
+            var message = 'Esta acción necesita confirmación. ¿Está seguro de que desea continuar?';
+
+            e.preventDefault();
+            bootbox.confirm({
+                title: 'Confirmar',
+                message: message,
+                closeButton: false,
+                buttons: {
+                    cancel: {
+                        label: '<i class="fas fa-times"></i> Cancelar'
+                    },
+                    confirm: {
+                        label: '<i class="fas fa-check"></i> Continuar',
+                        className: "btn-warning"
+                    }
+                },
+                callback: function (result) {
+                    if (result) {
+                        currentForm.submit();
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{%- macro drawTablaConceptos(conceptos, fsc) %}
+<table class="table table-striped">
+    <thead class="thead-light">
+    <tr>
+        <th scope="col">Cantidad</th>
+        <th scope="col">Descripcion</th>
+        <th scope="col">Clave SAT</th>
+        <th scope="col">Unidad</th>
+        <th scope="col">Precio</th>
+        <th scope="col">IVA</th>
+        <th scope="col">Total</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for linea in conceptos %}
+        {% set familia = linea.getProducto().getFamilia() %}
+        <tr>
+            <td>{{ linea.referencia }}</td>
+            <td>{{ linea.descripcion }}</td>
+            <td>{{ familia.clavesat }}</td>
+            <td>{{ familia.claveunidad }}</td>
+            <td>{{ linea.pvpunitario }}</td>
+            <td>{{ linea.iva }}</td>
+            <td>{{ linea.pvptotal }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endmacro -%}
+
+
+

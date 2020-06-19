@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : cfdisdata.xml
+    Author     : Juan José Prieto Dzul 
+    Description:
+        Structure for the cfdisdata table.
+-->
+<table>
+    <column>
+        <name>idcfdi</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>uuid</name>
+        <type>character varying(36)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>xml</name>
+        <type>blob</type>
+        <nulo>YES</nulo>
+    </column>
+    <constraint>
+        <name>cfdisdata_pkey</name>
+        <type>PRIMARY KEY (uuid)</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdisdata_cfdisclientes</name>
+        <type>FOREIGN KEY (idcfdi) REFERENCES cfdisclientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+</table>
