@@ -38,6 +38,16 @@ class GlobalCfdiBuilder extends CfdiBuilder
         ];
     }
 
+    protected function setDatosCliente()
+    {
+        $receptor = [
+            'Rfc' => $this->factura->cifnif,
+            'UsoCFDI' => $this->uso,
+        ];
+
+        $this->comprobante->addReceptor($receptor);
+    }
+
     protected function setConceptos()
     {
         foreach ($this->factura->parentDocuments() as $parent) {

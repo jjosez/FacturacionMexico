@@ -6,4 +6,5 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'NumerosEnLetras' => array($vendorDir . '/villca/numeros-en-letras/src'),
 );

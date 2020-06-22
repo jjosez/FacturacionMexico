@@ -3,6 +3,12 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI;
 
+use CfdiUtils\Nodes\XmlNodeUtils;
+use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
+use CfdiUtils\XmlResolver\XmlResolver;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\RegimenFiscal;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\UsoCfdi;
+use NumerosEnLetras;
 
 class CfdiQuickReader
 {
@@ -19,50 +25,162 @@ class CfdiQuickReader
         $this->comprobante = $this->cfdi->getQuickReader();
     }
 
-    public function getConceptos()
+    public function cadenaOrigen()
+    {
+        $tfd = $this->cfdi->getNode()->searchNode('cfdi:Complemento', 'tfd:TimbreFiscalDigital');
+        $tfdXmlString = XmlNodeUtils::nodeToXmlString($tfd);
+
+        $builder = new TfdCadenaDeOrigen();
+        $resolver = new XmlResolver(CFDI_XSLT_DIR);
+
+        $builder->setXmlResolver($resolver);
+        return $builder->build($tfdXmlString);
+    }
+
+    public function certificadoSAT()
+    {
+        return $this->comprobante->complemento->timbreFiscalDigital['NoCertificadoSAT'];
+    }
+
+    public function conceptos()
     {
         $conceptos = $this->comprobante->conceptos;
 
         return $conceptos();
     }
 
-    public function getComprobante()
+    public function conceptosData()
     {
-        return $this->comprobante;
+        $result = [];
+
+        foreach ($this->conceptos() as $concepto)
+        {
+            $result[] = [
+                'cantidad' => $concepto['cantidad'],
+                'id' => $concepto['noidentificacion'],
+                'descripcion' => $concepto['descripcion'],
+                'clavesat' => $concepto['claveprodserv'],
+                'claveum' => $concepto['claveunidad'],
+                'precio' => $concepto['valorunitario'],
+                'importe' => $concepto['importe']
+            ];
+        }
+
+        return $result;
     }
 
-    public function getEmisor()
+    public function emisorNombre()
     {
-        return $this->comprobante->emisor;
+        return $this->comprobante->emisor['Nombre'];
     }
 
-    public function getMetodoPago()
+    public function emisorRfc()
     {
-        return $this->comprobante->metodopago;
+        return $this->comprobante->emisor['Rfc'];
     }
 
-    public function getSource()
+    public function emisorRegimenFiscal()
     {
-        return $this->cfdi->getSource();
+        return (new RegimenFiscal())->getDescripcion(
+            $this->comprobante->emisor['RegimenFiscal']
+        );
     }
 
-    public function getReceptor()
+    public function folio()
     {
-        return $this->comprobante->receptor;
+        return $this->comprobante['Folio'];
     }
 
-    public function getRelacionados()
+    public function fechaExpedicion()
     {
-        [];
+        return $this->comprobante['Fecha'];
     }
 
-    public function getTimbreFiscal()
+    public function fechaTimbrado()
     {
-        return $this->comprobante->complemento->timbreFiscalDigital;
+        return $this->comprobante->complemento->timbreFiscalDigital['FechaTimbrado'];
     }
 
-    public function getVersion()
+    public function formaPago()
     {
-        return $this->cfdi->getVersion();
+        return $this->comprobante['FormaPago'];
+    }
+
+    public function lugarExpedicion()
+    {
+        return $this->comprobante['LugarExpedicion'];
+    }
+
+    public function metodoPago()
+    {
+        return $this->comprobante['MetodoPago'];
+    }
+
+    public function proveedorCertif()
+    {
+        return $this->comprobante->complemento->timbreFiscalDigital['RfcProvCertif'];
+    }
+
+    public function qrCodeUrl()
+    {
+        $parameters = \CfdiUtils\ConsultaCfdiSat\RequestParameters::createFromCfdi($this->cfdi);
+        return $parameters->expression();
+    }
+
+    public function receptorRfc()
+    {
+        return $this->comprobante->receptor['Rfc'];
+    }
+
+    public function receptorUsoCfdi()
+    {
+        return (new UsoCfdi())->getDescripcion(
+            $this->comprobante->receptor['UsoCFDI']
+        );
+    }
+
+    public function selloCfd()
+    {
+        return $this->comprobante->complemento->timbreFiscalDigital['SelloCFD'];
+    }
+
+    public function selloSat()
+    {
+        return $this->comprobante->complemento->timbreFiscalDigital['SelloSat'];
+    }
+
+    public function tipoComprobamte()
+    {
+        return $this->comprobante['TipoDeComprobante'];
+    }
+
+    public function subTotal()
+    {
+        return $this->comprobante['SubTotal'];
+    }
+
+    public function totalDescuentos()
+    {
+        return $this->comprobante['Descuento'];
+    }
+
+    public function totalImpuestosTrasladados()
+    {
+        return $this->comprobante->impuestos['TotalImpuestosTrasladados'];
+    }
+
+    public function total()
+    {
+        return $this->comprobante['Total'];
+    }
+
+    public function totalLetra()
+    {
+        return NumerosEnLetras::convertir($this->total(), 'MXN', true);
+    }
+
+    public function uuid()
+    {
+        return $this->comprobante->complemento->timbreFiscalDigital['UUID'];
     }
 }

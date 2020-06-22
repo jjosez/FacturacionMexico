@@ -38,6 +38,12 @@ class CfdiPdfWrapper
         $this->pdf->ezSetY($this->pdf->y - $n);
     }
 
+    public function drawImage($file)
+    {
+        $y = $this->getCurrentY();
+        $this->pdf->addPngFromFile($file, 230, $y, 175);
+    }
+
     public function drawLine()
     {
         $x1 = $this->pdf->ez['leftMargin'];
@@ -58,6 +64,11 @@ class CfdiPdfWrapper
         return $this->pdf->ezStream(['compress'=>0]);
     }
 
+    public function restoreState()
+    {
+        $this->pdf->restoreState();
+    }
+
     public function setCurrentY($y)
     {
         $this->pdf->ezSetY($y);
@@ -66,10 +77,5 @@ class CfdiPdfWrapper
     public function saveState()
     {
         $this->pdf->saveState();
-    }
-
-    public function restoreState()
-    {
-        $this->pdf->restoreState();
     }
 }

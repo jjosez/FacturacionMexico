@@ -2,16 +2,15 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Base\Controller;
-use FacturaScripts\Dinamic\Lib\CFDI\Catalogos\UsoCfdi;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\CfdiData;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Dinamic\Lib\CFDI\Builder\CustomerCfdiBuilder;
-use FacturaScripts\Dinamic\Lib\CFDI\Builder\GlobalCfdiBuilder;
-use FacturaScripts\Dinamic\Lib\CFDI\CfdiReader;
-use FacturaScripts\Dinamic\Lib\CFDI\WebService\Profact;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF\CfdiPdf;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\CustomerCfdiBuilder;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\GlobalCfdiBuilder;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\UsoCfdi;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF\PDFCfdi;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\WebService\Profact;
 
 class EditCfdiCliente extends Controller
 {
@@ -152,29 +151,24 @@ class EditCfdiCliente extends Controller
         $this->toolBox()::log()->warning('Factura no encontrada');
     }
 
-    private function mensajeCfdiTimbrado()
-    {
-        $this->toolBox()::log()->notice('CFDI timbrado correctamente');
-    }
-
     private function guardarCfdi($xml)
     {
-        $reader = new CfdiReader($xml);
+        $reader = new CfdiQuickReader($xml);
 
-        $this->cfdi->razonreceptor = $this->factura->nombrecliente;
         $this->cfdi->codcliente = $this->factura->codcliente;
         $this->cfdi->coddivisa = $this->factura->coddivisa;
         $this->cfdi->estado = 'TIMBRADO';
-        $this->cfdi->folio = $this->factura->codigo;
-        $this->cfdi->formapago = 'CONTADO';
-        $this->cfdi->metodopago = 'EFECTIVO';
+        $this->cfdi->folio = $reader->folio();
+        $this->cfdi->formapago = $reader->formaPago();
         $this->cfdi->idfactura = $this->factura->idfactura;
+        $this->cfdi->metodopago = $reader->metodoPago();
+        $this->cfdi->razonreceptor = $this->factura->nombrecliente;
+        $this->cfdi->rfcreceptor = $reader->receptorRfc();
         $this->cfdi->serie = $this->factura->codserie;
-        $this->cfdi->tipocfdi = 'INGRESO';
+        $this->cfdi->tipocfdi = $reader->tipoComprobamte();
         $this->cfdi->totaldto = 0;
         $this->cfdi->total = $this->factura->total;
-        $this->cfdi->rfcreceptor = $this->factura->cifnif;
-        $this->cfdi->uuid = $reader->getUUID();
+        $this->cfdi->uuid = $reader->uuid();
 
         if ($this->cfdi->save()) {
             $cfdiXml = new CfdiData();
@@ -198,7 +192,8 @@ class EditCfdiCliente extends Controller
 
     private function downloadPdfAction()
     {
-        $pdf = new CfdiPdf($this->reader);
+        $dataView = new CfdiQuickReader($this->xml);
+        $pdf = new PDFCfdi($dataView);
 
         $pdf->testPdf();
     }

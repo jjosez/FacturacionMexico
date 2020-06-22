@@ -3,6 +3,7 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF;
 
+use FacturaScripts\Dinamic\Model\AttachedFile;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\RegimenFiscal;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\UsoCfdi;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReader;
@@ -92,11 +93,20 @@ class CfdiPdf
         $this->builder->addText($timbre['SelloCFD'], $options, 8);
     }
 
+    private function agregarLogo()
+    {
+        $logoFile = new AttachedFile();
+        if ($logoFile->loadFromCode(1) && file_exists($logoFile->path)) {
+            $this->builder->drawImage($logoFile->path);
+        }
+    }
+
     public function testPdf()
     {
         $this->agregarBloqueEncabezado();
         $this->agregarBloqueEmisor();
         $this->agregarBloqueReceptor();
+        $this->agregarLogo();
         $this->agregarBloqueTimbre();
 
         return $this->builder->getResult();

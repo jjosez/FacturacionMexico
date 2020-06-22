@@ -1,5 +1,120 @@
 [
     {
+        "name": "chillerlan/php-qrcode",
+        "version": "3.3.0",
+        "version_normalized": "3.3.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/chillerlan/php-qrcode.git",
+            "reference": "c8fcb2d0435279421fa03f6a3f217ccae9bddd59"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/chillerlan/php-qrcode/zipball/c8fcb2d0435279421fa03f6a3f217ccae9bddd59",
+            "reference": "c8fcb2d0435279421fa03f6a3f217ccae9bddd59",
+            "shasum": ""
+        },
+        "require": {
+            "chillerlan/php-settings-container": "^1.2",
+            "ext-mbstring": "*",
+            "php": "^7.2"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "^8.5",
+            "setasign/fpdf": "^1.8.2"
+        },
+        "suggest": {
+            "chillerlan/php-authenticator": "Yet another Google authenticator! Also creates URIs for mobile apps.",
+            "setasign/fpdf": "Required to use the QR FPDF output."
+        },
+        "time": "2020-06-04T16:47:37+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "chillerlan\\QRCode\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Kazuhiko Arase",
+                "homepage": "https://github.com/kazuhikoarase"
+            },
+            {
+                "name": "Smiley",
+                "email": "smiley@chillerlan.net",
+                "homepage": "https://github.com/codemasher"
+            },
+            {
+                "name": "Contributors",
+                "homepage": "https://github.com/chillerlan/php-qrcode/graphs/contributors"
+            }
+        ],
+        "description": "A QR code generator. PHP 7.2+",
+        "homepage": "https://github.com/chillerlan/php-qrcode",
+        "keywords": [
+            "phpqrcode",
+            "qr",
+            "qr code",
+            "qrcode",
+            "qrcode-generator"
+        ]
+    },
+    {
+        "name": "chillerlan/php-settings-container",
+        "version": "1.2.1",
+        "version_normalized": "1.2.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/chillerlan/php-settings-container.git",
+            "reference": "b9b0431dffd74102ee92348a63b4c33fc8ba639b"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/chillerlan/php-settings-container/zipball/b9b0431dffd74102ee92348a63b4c33fc8ba639b",
+            "reference": "b9b0431dffd74102ee92348a63b4c33fc8ba639b",
+            "shasum": ""
+        },
+        "require": {
+            "ext-json": "*",
+            "php": "^7.2"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "^8.3"
+        },
+        "time": "2019-09-10T00:09:44+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "chillerlan\\Settings\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Smiley",
+                "email": "smiley@chillerlan.net",
+                "homepage": "https://github.com/codemasher"
+            }
+        ],
+        "description": "A container class for immutable settings objects. Not a DI container. PHP 7.2+",
+        "homepage": "https://github.com/chillerlan/php-settings-container",
+        "keywords": [
+            "PHP7",
+            "Settings",
+            "container",
+            "helper"
+        ]
+    },
+    {
         "name": "eclipxe/cfdiutils",
         "version": "v2.12.9",
         "version_normalized": "2.12.9.0",
@@ -238,8 +353,8 @@
     },
     {
         "name": "symfony/process",
-        "version": "v5.1.0",
-        "version_normalized": "5.1.0.0",
+        "version": "v5.1.2",
+        "version_normalized": "5.1.2.0",
         "source": {
             "type": "git",
             "url": "https://github.com/symfony/process.git",
@@ -287,5 +402,44 @@
         ],
         "description": "Symfony Process Component",
         "homepage": "https://symfony.com"
+    },
+    {
+        "name": "villca/numeros-en-letras",
+        "version": "v1.2.0",
+        "version_normalized": "1.2.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/villca/Numeros-en-Letras.git",
+            "reference": "15b78a2cec778f2ec9cc742656836ae43ca3ce5c"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/villca/Numeros-en-Letras/zipball/15b78a2cec778f2ec9cc742656836ae43ca3ce5c",
+            "reference": "15b78a2cec778f2ec9cc742656836ae43ca3ce5c",
+            "shasum": ""
+        },
+        "require": {
+            "php": "^5.3.3 || ^7.0"
+        },
+        "time": "2018-01-13T23:20:14+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "NumerosEnLetras": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Jesus Villca",
+                "email": "24villca@gmail.com",
+                "homepage": "https://24villca.blogspot.com"
+            }
+        ],
+        "description": "Convierte cualquier número en letras con el valor correspondiente."
     }
 ]

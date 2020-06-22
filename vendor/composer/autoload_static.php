@@ -4,13 +4,18 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitb6af7957690d1fbca5bb0553fff71032
+class ComposerStaticInit24dbdebbee5bee8c797ae1d1bfa934b5
 {
     public static $files = array (
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
     );
 
     public static $prefixLengthsPsr4 = array (
+        'c' => 
+        array (
+            'chillerlan\\Settings\\' => 20,
+            'chillerlan\\QRCode\\' => 18,
+        ),
         'X' => 
         array (
             'XmlSchemaValidator\\' => 19,
@@ -28,6 +33,14 @@ class ComposerStaticInitb6af7957690d1fbca5bb0553fff71032
     );
 
     public static $prefixDirsPsr4 = array (
+        'chillerlan\\Settings\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/chillerlan/php-settings-container/src',
+        ),
+        'chillerlan\\QRCode\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/chillerlan/php-qrcode/src',
+        ),
         'XmlSchemaValidator\\' => 
         array (
             0 => __DIR__ . '/..' . '/eclipxe/xmlschemavalidator/src/XmlSchemaValidator',
@@ -50,6 +63,16 @@ class ComposerStaticInitb6af7957690d1fbca5bb0553fff71032
         ),
     );
 
+    public static $prefixesPsr0 = array (
+        'N' => 
+        array (
+            'NumerosEnLetras' => 
+            array (
+                0 => __DIR__ . '/..' . '/villca/numeros-en-letras/src',
+            ),
+        ),
+    );
+
     public static $classMap = array (
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
         'ValueError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
@@ -58,9 +81,10 @@ class ComposerStaticInitb6af7957690d1fbca5bb0553fff71032
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitb6af7957690d1fbca5bb0553fff71032::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitb6af7957690d1fbca5bb0553fff71032::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitb6af7957690d1fbca5bb0553fff71032::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit24dbdebbee5bee8c797ae1d1bfa934b5::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit24dbdebbee5bee8c797ae1d1bfa934b5::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit24dbdebbee5bee8c797ae1d1bfa934b5::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit24dbdebbee5bee8c797ae1d1bfa934b5::$classMap;
 
         }, null, ClassLoader::class);
     }

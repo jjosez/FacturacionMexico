@@ -7,7 +7,6 @@
 {% extends 'Master/MenuTemplate.html.twig' %}
 {% import 'Macro/Form.html.twig' as form %}
 {% set rfcGenerico =  (fsc.factura.cifnif == 'XAXX010101000') ? true : false %}
-{% set receptor = fsc.reader.getReceptor() %}
 {% block bodyHeaderOptions %}
     <div class="container-fluid mb-2">
         <div class="row">
@@ -16,7 +15,7 @@
                     <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.url() }}" title="Recargar">
                         <i class="fas fa-redo" aria-hidden="true"></i>
                     </a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ asset('ListCfdiCLiente') }}" title="Todos">
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ asset('ListCfdiCliente') }}" title="Todos">
                         <i class="fas fa-list" aria-hidden="true"></i>&nbsp;Todos
                     </a>
                     <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.factura.url() }}" title="Factura">
@@ -52,15 +51,14 @@
             <div class="card">
                 <div class="card-header">Cliente</div>
                 <div class="card-body">
-                    {% set uso = receptor.UsoCFDI %}
                     <div class="form-group">
-                        {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.getUsoCfdi(uso).descripcion, 'disabled') }}
+                        {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.reader.receptorUsoCfdi(), 'disabled') }}
                     </div>
                     <div class="form-group">
                         {{ form.inputtext('razonsocial', 'Razón social', fsc.factura.nombrecliente, 'disabled') }}
                     </div>
                     <div class="form-group">
-                        {{ form.inputtext('rfc', 'RFC', fsc.factura.cifnif, 'disabled') }}
+                        {{ form.inputtext('rfc', 'RFC', fsc.reader.receptorRfc(), 'disabled') }}
                     </div>
                 </div>
             </div>
@@ -104,7 +102,7 @@
             <div class="card-header">Conceptos</div>
             <div class="card-body">
                 <div class="table-responsive">
-                    {{ _self.drawTablaConceptos(fsc.reader.getConceptos(), fsc) }}
+                    {{ _self.drawTablaConceptos(fsc.reader.conceptos(), fsc) }}
                 </div>
             </div>
         </div>
@@ -117,21 +115,21 @@
                         <div class="d-flex pb-2">
                             <div class="flex-fill">
                                 <span><strong>NoCertificadoSAT:</strong></span>
-                                {{ fsc.reader.getTimbreFiscal().NoCertificadoSAT }}
+                                {{ fsc.reader.certificadoSAT() }}
                             </div>
                             <div class="flex-fill">
                                 <span><strong>RfcProvCertif:</strong></span>
-                                {{ fsc.reader.getTimbreFiscal().RfcProvCertif }}
+                                {{ fsc.reader.proveedorCertificacion() }}
                             </div>
                             <div class="flex-fill">
                                 <span><strong>FechaTimbrado:</strong></span>
-                                {{ fsc.reader.getTimbreFiscal().FechaTimbrado }}
+                                {{ fsc.reader.fechaTimbrado() }}
                             </div>
                         </div>
                         <span><strong>Sello CFD</strong></span>
-                        <p>{{ fsc.reader.getTimbreFiscal().SelloCFD }}</p>
+                        <p>{{ fsc.reader.selloCfd() }}</p>
                         <span><strong>Sello SAT</strong></span>
-                        <p>{{ fsc.reader.getTimbreFiscal().SelloSAT }}</p>
+                        <p>{{ fsc.reader.selloSat() }}</p>
                     </div>
                 </div>
             </div>

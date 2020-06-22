@@ -46,4 +46,20 @@ abstract class SatCatalogo
 
         return false;
     }
+
+    /**
+     * Returns the full descripption of key if exists else return empty strign
+     *
+     * @return string
+     */
+    public function getDescripcion($key)
+    {
+        foreach($this->all() as $item) {
+            if($item->id == $key) {
+                return "{$item->id} - {$item->descripcion}";
+            }
+        }
+
+        return '';
+    }
 }

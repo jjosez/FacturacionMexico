@@ -53,6 +53,7 @@ abstract class CfdiBuilder
     {
         $receptor = [
             'Rfc' => $this->factura->cifnif,
+            'Nombre' => $this->factura->nombrecliente,
             'UsoCFDI' => $this->uso,
         ];
 
