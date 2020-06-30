@@ -6,9 +6,10 @@
     </div>
 {% endmacro -%}
 
-{%- macro inputpassword(id, name, label) %}
+{%- macro inputpassword(id, name, label, value) %}
     <label for="{{ id }}">{{ label }}</label>
-    <input type="password" class="form-control" id="{{ id }}" name="{{ name }}" autocomplete="off">
+    <input type="password" id="{{ id }}" name="{{ name }}" class="form-control"
+           value="{{ value }}" autocomplete="off">
 {% endmacro -%}
 
 {%- macro inputselect(id, name, label, items, default) %}

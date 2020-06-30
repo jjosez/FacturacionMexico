@@ -36,6 +36,7 @@
 {% block body %}
     <form id="formNuevoCfdi" autocomplete="off" method="post">
         <input type="hidden" name="action" value='timbrar'>
+        <input type="hidden" id="codcliente" name="codcliente" value='{{ fsc.factura.codcliente }}'>
         <input type="hidden" name="invoice" value='{{ fsc.factura.idfactura }}'>
         <div class="container-fluid">
             <div class="card-deck mb-3">
@@ -77,8 +78,15 @@
                                 </label>
                             </div>
                         </div>
-                        {% set pagado = (fsc.factura.pagada) ? 'true' : 'false' %}
+                        {% if fsc.isFacturaEgreso() %}
+                            <div class="table-responsive">
+                                {{ _self.drawTablaRelacionados(fsc) }}
+                            </div>
+                            <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#cfdiRelacion">
+                                CFDIs Relacioandos</button>
+                        {% endif %}
                     </div>
+                    {% set pagado = (fsc.factura.pagada) ? 'true' : 'false' %}
                     {% if not fsc.factura.pagada %}
                         <div class="card-footer text-white bg-danger">
                             Factura no pagada
@@ -115,42 +123,56 @@
                 </div>
                 <div class="modal-body">
                     <pre>
-                        {{- fsc.cfdi.getXml() -}}
+                        {{- fsc.xml -}}
                     </pre>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
-    <script type="text/javascript">
-        $('form').submit(function(e) {
-            var currentForm = this;
-            var message = 'Esta acción necesita confirmación. ¿Está seguro de que desea continuar?';
-
-            e.preventDefault();
-            bootbox.confirm({
-                title: 'Confirmar',
-                message: message,
-                closeButton: false,
-                buttons: {
-                    cancel: {
-                        label: '<i class="fas fa-times"></i> Cancelar'
-                    },
-                    confirm: {
-                        label: '<i class="fas fa-check"></i> Continuar',
-                        className: "btn-warning"
-                    }
-                },
-                callback: function (result) {
-                    if (result) {
-                        currentForm.submit();
-                    }
-                }
-            });
-        });
-    </script>
+    <div class="modal fade" id="cfdiRelacion" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">CFDIs Relacionados</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <div class="form-group">
+                            {{ form.inputtext('tiporelacion', 'Tipo de relacion') }}
+                        </div>
+                        <label for="uuidrelacionado">CFDI a relacionar</label>
+                        <div class="input-group mb-3">
+                            <input type="text" id="uuidrelacionado" class="form-control" placeholder="UUID">
+                            <div class="input-group-append">
+                                <button type="button" id="getCfdiRelacionBtn" class="btn btn-success">Agregar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="table table-hover table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col">UUID</th>
+                            <th scope="col">Total</th>
+                            <th scope="col">Fecha</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tablaRelacionados">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ asset('Plugins/FacturacionMexico/Assets/JS/FacturacionMexico.js') }}"></script>
 {% endblock %}
 
 {%- macro drawTablaConceptos(conceptos, fsc) %}
@@ -181,6 +203,27 @@
     {% endfor %}
     </tbody>
 </table>
+{% endmacro -%}
+
+{%- macro drawTablaRelacionados(fsc) %}
+    <table class="table table-borderless table-hover">
+        <thead>
+        <tr>
+            <th scope="col">Factura</th>
+            <th scope="col">UUID</th>
+            <th scope="col">Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for relacionado in fsc.getCfdisRelacionados() %}
+            <tr>
+                <td>{{ relacionado.referencia }}</td>
+                <td>{{ relacionado.uuid }}</td>
+                <td>{{ relacionado.total }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 {% endmacro -%}
 
 

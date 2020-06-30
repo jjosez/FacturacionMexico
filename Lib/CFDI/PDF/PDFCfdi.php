@@ -19,7 +19,7 @@ class PDFCfdi extends PDFCfdiCore
         $this->data = $data;
     }
 
-    public function testPdf()
+    public function getPdf()
     {
         $this->insertPageNum();
         $this->insertPageHeader();
@@ -69,8 +69,11 @@ class PDFCfdi extends PDFCfdiCore
         $this->moveCursorPosition(5);
 
         $this->setCursorPosition($cursorPosition);
-        $this->writeText('Numero Certificado: 123456789', ['justification' => 'right'], 8);
-        $this->writeText('Tipo de comprobante: I', ['justification' => 'right'], 8);
+        $text = 'Numero Certificado: ' . $this->data->noCertificado();
+        $this->writeText($text, ['justification' => 'right'], 8);
+
+        $text = 'Tipo de comprobante: ' . $this->data->tipoComprobamte();
+        $this->writeText($text, ['justification' => 'right'], 8);
     }
 
     private function insertReceptor()
@@ -198,7 +201,7 @@ class PDFCfdi extends PDFCfdiCore
     {
         $data = array(
             [
-                'certsat' => $this->data->certificadoSAT(),
+                'certsat' => $this->data->noCertificadoSAT(),
                 'fechatimbre' => $this->data->fechaTimbrado(),
                 'rfcprov' => $this->data->proveedorCertif()
             ]
@@ -249,5 +252,4 @@ class PDFCfdi extends PDFCfdiCore
         $pattern = 'Pagina {PAGENUM} / {TOTALPAGENUM}';
         $this->pdf->ezStartPageNumbers(self::MARGIN_L, 30, 9, '', $pattern, 1);
     }
-
 }

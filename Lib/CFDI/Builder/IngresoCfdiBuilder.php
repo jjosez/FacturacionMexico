@@ -7,7 +7,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 
-class CustomerCfdiBuilder extends CfdiBuilder
+class IngresoCfdiBuilder extends CfdiBuilder
 {
     public function __construct(FacturaCliente $factura, Empresa $empresa, string $uso)
     {

@@ -77,6 +77,12 @@ class CfdiCliente extends Base\ModelClass
         return $this->loadFromCode('', $where);
     }
 
+    public function loadFromUUID($uuid)
+    {
+        $where = [new DataBaseWhere('uuid', $uuid)];
+        return $this->loadFromCode('', $where);
+    }
+
     public static function primaryColumn()
     {
         return 'idcfdi';

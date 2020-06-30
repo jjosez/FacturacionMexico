@@ -2,6 +2,7 @@
     "require": {        
         "eclipxe/cfdiutils": "^2.12",
         "chillerlan/php-qrcode": "^3.2",
-        "villca/numeros-en-letras": "^1.2"
+        "villca/numeros-en-letras": "^1.2",
+        "phpcfdi/finkok": "^0.2.7"
     }
 }

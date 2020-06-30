@@ -6,7 +6,6 @@
 #}
 {% extends 'Master/MenuTemplate.html.twig' %}
 {% import 'Macro/Form.html.twig' as form %}
-{% set rfcGenerico =  (fsc.factura.cifnif == 'XAXX010101000') ? true : false %}
 {% block bodyHeaderOptions %}
     <div class="container-fluid mb-2">
         <div class="row">
@@ -22,16 +21,12 @@
                         <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Factura
                     </a>
                     <form method="post">
-                        <input type="hidden" name="action" value="download-xml">
-                        <button type="submit" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-download" aria-hidden="true"></i>&nbsp;XML
-                        </button>
-                    </form>
-                    <form method="post">
-                        <input type="hidden" name="action" value="download-pdf">
-                        <button type="submit" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-file-pdf" aria-hidden="true"></i>&nbsp;PDF
-                        </button>
+                        <button type="submit" name="action" value="download-xml" class="btn btn-sm btn-primary ml-1">
+                            <i class="fas fa-download" aria-hidden="true"></i>&nbsp;XML</button>
+                        <button type="submit" name="action" value="download-pdf" class="btn btn-sm btn-primary">
+                            <i class="fas fa-file-pdf" aria-hidden="true"></i>&nbsp;PDF</button>
+                        <button type="submit" name="action" value="enviar-email" class="btn btn-sm btn-success">
+                            <i class="fas fa-envelope fa-fw"></i>&nbsp;Enviar</button>
                     </form>
                 </div>
             </div>
@@ -72,30 +67,23 @@
                         </div>
                         <div class="form-group col-6">
                             {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
+                            <small>Factura enviada el: {{ fsc.factura.femail }}</small>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="form-check">
-                            {% set disabled = (rfcGenerico | default is same as(true)) ? '' : 'disabled' %}
-                            {% set checked = (rfcGenerico | default is same as(true)) ? 'checked' : '' %}
-                            <input class="form-check-input" type="checkbox" id="globalInvoice"
-                                   name="globalinvoice" {{ disabled }} {{ checked }}>
-                            <label class="form-check-label" for="globalInvoice">
-                                Factura global
-                            </label>
+                    {% if fsc.isFacturaEgreso() %}
+                        <div class="table-responsive">
+                            {{ _self.drawTablaRelacionados(fsc) }}
                         </div>
-                    </div>
-                    {% set pagado = (fsc.factura.pagada) ? 'true' : 'false' %}
+                    {% endif %}
                 </div>
-                {% if not fsc.factura.pagada %}
-                    <div class="card-footer text-white bg-danger">
-                        Factura no pagada
-                    </div>
-                {% else %}
+                <form action="" method="post">
                     <div class="card-footer text-white text-right">
-                        <button type="submit" class="btn btn-primary">Generar CFDI</button>
+                        <form method="post">
+                            <button type="submit" name="action" value="cancelar" class="btn btn-danger">
+                                <i class="fas fa-skull" aria-hidden="true"></i>&nbsp;Cancelar</button>
+                        </form>
                     </div>
-                {% endif %}
+                </form>
             </div>
         </div>
         <div class="card">
@@ -156,34 +144,9 @@
         </div>
     </div>
     <script type="text/javascript">
-        $('form').submit(function (e) {
-            var currentForm = this;
-            var message = 'Esta acción necesita confirmación. ¿Está seguro de que desea continuar?';
 
-            e.preventDefault();
-            bootbox.confirm({
-                title: 'Confirmar',
-                message: message,
-                closeButton: false,
-                buttons: {
-                    cancel: {
-                        label: '<i class="fas fa-times"></i> Cancelar'
-                    },
-                    confirm: {
-                        label: '<i class="fas fa-check"></i> Continuar',
-                        className: "btn-warning"
-                    }
-                },
-                callback: function (result) {
-                    if (result) {
-                        currentForm.submit();
-                    }
-                }
-            });
-        });
     </script>
 {% endblock %}
-
 {%- macro drawTablaConceptos(conceptos, fsc) %}
     <table class="table table-striped">
         <thead class="thead-light">
@@ -207,6 +170,26 @@
                 <td>{{ concepto.claveunidad }}</td>
                 <td>{{ concepto.valorunitario }}</td>
                 <td>{{ concepto.importe }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endmacro -%}
+{%- macro drawTablaRelacionados(fsc) %}
+    <table class="table table-borderless table-hover">
+        <thead>
+        <tr>
+            <th scope="col">Factura</th>
+            <th scope="col">UUID</th>
+            <th scope="col">Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for relacionado in fsc.getCfdisRelacionados() %}
+            <tr>
+                <td>{{ relacionado.razonreceptor }}</td>
+                <td><a href="{{ relacionado.url() }}">{{ relacionado.uuid }}</a></td>
+                <td>{{ relacionado.total }}</td>
             </tr>
         {% endfor %}
         </tbody>

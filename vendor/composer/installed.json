@@ -183,6 +183,104 @@
         ]
     },
     {
+        "name": "eclipxe/enum",
+        "version": "v0.2.4",
+        "version_normalized": "0.2.4.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/eclipxe13/enum.git",
+            "reference": "08048fe76ea01be059d49757e832f460de53b342"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/eclipxe13/enum/zipball/08048fe76ea01be059d49757e832f460de53b342",
+            "reference": "08048fe76ea01be059d49757e832f460de53b342",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=7.2"
+        },
+        "require-dev": {
+            "friendsofphp/php-cs-fixer": "^2.4",
+            "phpstan/phpstan": "^0.12",
+            "phpunit/phpunit": "^8.0",
+            "psalm/phar": "^3.7",
+            "squizlabs/php_codesniffer": "^3.0"
+        },
+        "time": "2020-01-09T17:54:47+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Eclipxe\\Enum\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Carlos C Soto",
+                "email": "eclipxe13@gmail.com",
+                "homepage": "http://eclipxe.com.mx/"
+            }
+        ],
+        "description": "Enum based on the Brent Roose enum idea https://stitcher.io/blog/php-enums",
+        "homepage": "https://github.com/eclipxe13/enum",
+        "keywords": [
+            "enum",
+            "reflection"
+        ]
+    },
+    {
+        "name": "eclipxe/micro-catalog",
+        "version": "v0.1.2",
+        "version_normalized": "0.1.2.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/eclipxe13/micro-catalog.git",
+            "reference": "df0bd24b490b1b82f00caef47462e7dc62be8f79"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/eclipxe13/micro-catalog/zipball/df0bd24b490b1b82f00caef47462e7dc62be8f79",
+            "reference": "df0bd24b490b1b82f00caef47462e7dc62be8f79",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=7.2"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "^8.0"
+        },
+        "time": "2020-01-13T15:55:12+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Eclipxe\\MicroCatalog\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Carlos C Soto",
+                "email": "eclipxe13@gmail.com",
+                "homepage": "http://eclipxe.com.mx/"
+            }
+        ],
+        "description": "Micro catalog template class, useful to create value objects based on a known small catalog",
+        "homepage": "https://github.com/eclipxe13/micro-catalog",
+        "keywords": [
+            "catalog",
+            "generic"
+        ]
+    },
+    {
         "name": "eclipxe/xmlresourceretriever",
         "version": "v1.3.1",
         "version_normalized": "1.3.1.0",
@@ -288,28 +386,358 @@
         ]
     },
     {
-        "name": "symfony/polyfill-php80",
-        "version": "v1.17.0",
-        "version_normalized": "1.17.0.0",
+        "name": "phpcfdi/cfdi-expresiones",
+        "version": "v3.0.1",
+        "version_normalized": "3.0.1.0",
         "source": {
             "type": "git",
-            "url": "https://github.com/symfony/polyfill-php80.git",
-            "reference": "5e30b2799bc1ad68f7feb62b60a73743589438dd"
+            "url": "https://github.com/phpcfdi/cfdi-expresiones.git",
+            "reference": "e9b048bf7656d553d6d64c0f9bd9b0e83810c470"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/5e30b2799bc1ad68f7feb62b60a73743589438dd",
-            "reference": "5e30b2799bc1ad68f7feb62b60a73743589438dd",
+            "url": "https://api.github.com/repos/phpcfdi/cfdi-expresiones/zipball/e9b048bf7656d553d6d64c0f9bd9b0e83810c470",
+            "reference": "e9b048bf7656d553d6d64c0f9bd9b0e83810c470",
+            "shasum": ""
+        },
+        "require": {
+            "ext-dom": "*",
+            "php": ">=7.2"
+        },
+        "require-dev": {
+            "friendsofphp/php-cs-fixer": "^2.4",
+            "phpstan/phpstan": "^0.12",
+            "phpunit/phpunit": "^8.5",
+            "squizlabs/php_codesniffer": "^3.0"
+        },
+        "time": "2020-01-24T15:22:40+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "PhpCfdi\\CfdiExpresiones\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Carlos C Soto",
+                "email": "eclipxe13@gmail.com",
+                "homepage": "http://eclipxe.com.mx/"
+            }
+        ],
+        "description": "Genera expresiones de CFDI 3.3, CFDI 3.2 y RET 1.0",
+        "homepage": "https://github.com/phpcfdi/cfdi-expresiones",
+        "keywords": [
+            "cfdi",
+            "phpcfdi",
+            "sat"
+        ]
+    },
+    {
+        "name": "phpcfdi/credentials",
+        "version": "v1.1.1",
+        "version_normalized": "1.1.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/phpcfdi/credentials.git",
+            "reference": "5e1f391ad1643b8d4cf6306425fc4bf0d2b2b336"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/phpcfdi/credentials/zipball/5e1f391ad1643b8d4cf6306425fc4bf0d2b2b336",
+            "reference": "5e1f391ad1643b8d4cf6306425fc4bf0d2b2b336",
+            "shasum": ""
+        },
+        "require": {
+            "eclipxe/enum": "^0.2.0",
+            "ext-mbstring": "*",
+            "ext-openssl": "*",
+            "php": ">=7.2"
+        },
+        "require-dev": {
+            "ext-json": "*",
+            "friendsofphp/php-cs-fixer": "^2.4",
+            "phpstan/phpstan": "^0.12",
+            "phpunit/phpunit": "^8.4",
+            "squizlabs/php_codesniffer": "^3.0"
+        },
+        "time": "2020-01-23T16:00:32+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "PhpCfdi\\Credentials\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "phpCfdi",
+                "email": "contact@phpcfdi.com",
+                "homepage": "https://www.phpcfdi.com/"
+            }
+        ],
+        "description": "Library to use eFirma (fiel) and CSD (sellos) from SAT",
+        "homepage": "https://github.com/phpcfdi/credentials",
+        "keywords": [
+            "certificado",
+            "cfdi",
+            "efirma",
+            "fiel",
+            "sat",
+            "sello"
+        ]
+    },
+    {
+        "name": "phpcfdi/finkok",
+        "version": "v0.2.7",
+        "version_normalized": "0.2.7.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/phpcfdi/finkok.git",
+            "reference": "4d507c7a43aec65e685982c185807c1b2346297e"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/phpcfdi/finkok/zipball/4d507c7a43aec65e685982c185807c1b2346297e",
+            "reference": "4d507c7a43aec65e685982c185807c1b2346297e",
+            "shasum": ""
+        },
+        "require": {
+            "eclipxe/enum": "^0.2.0",
+            "eclipxe/micro-catalog": "^0.1.0",
+            "ext-dom": "*",
+            "ext-json": "*",
+            "ext-openssl": "*",
+            "ext-soap": "*",
+            "php": ">=7.2",
+            "phpcfdi/cfdi-expresiones": "^3.0",
+            "phpcfdi/credentials": "^1.0.1",
+            "phpcfdi/xml-cancelacion": "^1.1.0",
+            "psr/log": "^1.1",
+            "robrichards/xmlseclibs": "^3.0.4"
+        },
+        "require-dev": {
+            "eclipxe/cfdiutils": "^2.10",
+            "ext-fileinfo": "*",
+            "friendsofphp/php-cs-fixer": "^2.4",
+            "phpstan/phpstan": "^0.12",
+            "phpunit/phpunit": "^8.5",
+            "squizlabs/php_codesniffer": "^3.0",
+            "symfony/dotenv": "^5.0"
+        },
+        "time": "2020-02-10T18:50:34+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "PhpCfdi\\Finkok\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Carlos C Soto",
+                "email": "eclipxe13@gmail.com",
+                "homepage": "http://eclipxe.com.mx/"
+            }
+        ],
+        "description": "Librería para conectar con la API de servicios de FINKOK",
+        "homepage": "https://github.com/phpcfdi/finkok",
+        "keywords": [
+            "cfdi",
+            "finkok",
+            "phpcfdi",
+            "sat"
+        ]
+    },
+    {
+        "name": "phpcfdi/xml-cancelacion",
+        "version": "v1.1.0",
+        "version_normalized": "1.1.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/phpcfdi/xml-cancelacion.git",
+            "reference": "64352e30832d6627ce36c16538966799dd4d84ef"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/phpcfdi/xml-cancelacion/zipball/64352e30832d6627ce36c16538966799dd4d84ef",
+            "reference": "64352e30832d6627ce36c16538966799dd4d84ef",
+            "shasum": ""
+        },
+        "require": {
+            "eclipxe/enum": "^0.2",
+            "ext-dom": "*",
+            "ext-openssl": "*",
+            "php": ">=7.2",
+            "phpcfdi/credentials": "^1.1.1"
+        },
+        "require-dev": {
+            "friendsofphp/php-cs-fixer": "^2.4",
+            "phpstan/phpstan": "^0.12",
+            "phpunit/phpunit": "^8.3.5",
+            "robrichards/xmlseclibs": "^3.0.4",
+            "squizlabs/php_codesniffer": "^3.0"
+        },
+        "suggest": {
+            "robrichards/xmlseclibs": "Create document signatures (partially) using xmlseclibs"
+        },
+        "time": "2020-01-23T17:35:32+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "PhpCfdi\\XmlCancelacion\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Carlos C Soto",
+                "email": "eclipxe13@gmail.com"
+            }
+        ],
+        "description": "Genera documentos de cancelación de CFDI firmados (XMLSEC)",
+        "homepage": "https://github.com/phpcfdi/xml-cancelacion",
+        "keywords": [
+            "PeticionConsultaRelacionados",
+            "SolicitudAceptacionRechazo",
+            "cancelacion",
+            "cfdi",
+            "phpcfdi",
+            "sat"
+        ]
+    },
+    {
+        "name": "psr/log",
+        "version": "1.1.3",
+        "version_normalized": "1.1.3.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/php-fig/log.git",
+            "reference": "0f73288fd15629204f9d42b7055f72dacbe811fc"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/php-fig/log/zipball/0f73288fd15629204f9d42b7055f72dacbe811fc",
+            "reference": "0f73288fd15629204f9d42b7055f72dacbe811fc",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.3.0"
+        },
+        "time": "2020-03-23T09:12:05+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "1.1.x-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Psr\\Log\\": "Psr/Log/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "PHP-FIG",
+                "homepage": "http://www.php-fig.org/"
+            }
+        ],
+        "description": "Common interface for logging libraries",
+        "homepage": "https://github.com/php-fig/log",
+        "keywords": [
+            "log",
+            "psr",
+            "psr-3"
+        ]
+    },
+    {
+        "name": "robrichards/xmlseclibs",
+        "version": "3.1.0",
+        "version_normalized": "3.1.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/robrichards/xmlseclibs.git",
+            "reference": "8d8e56ca7914440a8c60caff1a865e7dff1d9a5a"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/robrichards/xmlseclibs/zipball/8d8e56ca7914440a8c60caff1a865e7dff1d9a5a",
+            "reference": "8d8e56ca7914440a8c60caff1a865e7dff1d9a5a",
+            "shasum": ""
+        },
+        "require": {
+            "ext-openssl": "*",
+            "php": ">= 5.4"
+        },
+        "time": "2020-04-22T17:19:51+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "RobRichards\\XMLSecLibs\\": "src"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "BSD-3-Clause"
+        ],
+        "description": "A PHP library for XML Security",
+        "homepage": "https://github.com/robrichards/xmlseclibs",
+        "keywords": [
+            "security",
+            "signature",
+            "xml",
+            "xmldsig"
+        ]
+    },
+    {
+        "name": "symfony/polyfill-php80",
+        "version": "v1.17.1",
+        "version_normalized": "1.17.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/symfony/polyfill-php80.git",
+            "reference": "4a5b6bba3259902e386eb80dd1956181ee90b5b2"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/4a5b6bba3259902e386eb80dd1956181ee90b5b2",
+            "reference": "4a5b6bba3259902e386eb80dd1956181ee90b5b2",
             "shasum": ""
         },
         "require": {
             "php": ">=7.0.8"
         },
-        "time": "2020-05-12T16:47:27+00:00",
+        "time": "2020-06-06T08:46:27+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
                 "dev-master": "1.17-dev"
+            },
+            "thanks": {
+                "name": "symfony/polyfill",
+                "url": "https://github.com/symfony/polyfill"
             }
         },
         "installation-source": "dist",

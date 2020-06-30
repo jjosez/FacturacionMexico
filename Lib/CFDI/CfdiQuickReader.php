@@ -37,7 +37,11 @@ class CfdiQuickReader
         return $builder->build($tfdXmlString);
     }
 
-    public function certificadoSAT()
+    public function noCertificado()
+    {
+        return $this->comprobante['NoCertificado'];
+    }
+    public function noCertificadoSAT()
     {
         return $this->comprobante->complemento->timbreFiscalDigital['NoCertificadoSAT'];
     }
@@ -116,6 +120,11 @@ class CfdiQuickReader
         return $this->comprobante['MetodoPago'];
     }
 
+    public function moneda()
+    {
+        return $this->comprobante['Moneda'];
+    }
+
     public function proveedorCertif()
     {
         return $this->comprobante->complemento->timbreFiscalDigital['RfcProvCertif'];
@@ -125,6 +134,11 @@ class CfdiQuickReader
     {
         $parameters = \CfdiUtils\ConsultaCfdiSat\RequestParameters::createFromCfdi($this->cfdi);
         return $parameters->expression();
+    }
+
+    public function receptorNombre()
+    {
+        return $this->comprobante->receptor['Nombre'];
     }
 
     public function receptorRfc()
@@ -147,6 +161,11 @@ class CfdiQuickReader
     public function selloSat()
     {
         return $this->comprobante->complemento->timbreFiscalDigital['SelloSat'];
+    }
+
+    public function serie()
+    {
+        return $this->comprobante['Serie'];
     }
 
     public function tipoComprobamte()

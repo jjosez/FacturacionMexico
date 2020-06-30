@@ -3,14 +3,13 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
-use FacturaScripts\Dinamic\Model\CfdiData;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\CustomerCfdiBuilder;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\GlobalCfdiBuilder;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\UsoCfdi;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiTools;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF\PDFCfdi;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\WebService\Profact;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\StampService\ProfactStampService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\StampService\FinkokStampService;
 
 class EditCfdiCliente extends Controller
 {
@@ -28,16 +27,6 @@ class EditCfdiCliente extends Controller
         $pagedata['showonmenu'] = false;
 
         return $pagedata;
-    }
-
-    public function getUsoCfdi($key = false)
-    {
-        $result = new UsoCfdi();
-
-        if (false === $key) {
-            return $result->all();
-        }
-        return $result->get($key);
     }
 
     public function privateCore(&$response, $user, $permissions)
@@ -71,12 +60,51 @@ class EditCfdiCliente extends Controller
             }
         }
 
-        /// Get any operations that have to be performed
-        $action = $this->request->request->get('action', '');
-        if (false === $this->execAction($action)) return;
-
         /// Set view template
         $this->setTemplate($template);
+
+        /// Get any operations that have to be performed
+        $action = $this->request->request->get('action', '');
+        $this->execAction($action);
+    }
+
+    public function getUsoCfdi($key = false)
+    {
+        $result = new UsoCfdi();
+
+        if (false === $key) {
+            return $result->all();
+        }
+        return $result->get($key);
+    }
+
+    public function getCfdisRelacionados()
+    {
+        $result = [];
+        $relacionado = new CfdiCliente();
+
+        foreach ($this->factura->parentDocuments() as $parent){
+            if ($relacionado->loadFromInvoice($parent->idfactura)) {
+                $result[] = $relacionado;
+            }
+            continue;
+        }
+        return $result;
+    }
+
+    public function getCfdiFromUUID()
+    {
+        $this->setTemplate(false);
+        $uuid = $this->request->request->get('uuid', false);
+        $codcliente = $this->request->request->get('codcliente', false);
+
+        $cfdi = new CfdiCliente();
+        if ($cfdi->loadFromUUID($uuid) && $cfdi->codcliente === $codcliente) {
+            $this->response->setContent(json_encode($cfdi));
+            return;
+        }
+
+        echo 'CFDI no encontrado o pertenece a otro cliente';
     }
 
     private function execAction($action)
@@ -90,15 +118,21 @@ class EditCfdiCliente extends Controller
                 $this->downloadPdfAction();
                 return false;
 
-            case 'timbrar':
-                $xml = $this->generarPreCfcdi();
-                if (false === $xml) {
-                    return true;
-                }
+            case 'cfdi-relacionado':
+                $this->getCfdiFromUUID();
+                return false;
 
-                if ($this->timbrarPreCfdi($xml)) {
-                    $this->guardarCfdi($xml);
+            case 'timbrar':
+                if ($this->generarCfdi() && $this->timbrarCfdi()) {
+                    $this->guardarCfdi();
+
+                    $this->reader = new CfdiQuickReader($this->xml);
+                    $this->setTemplate('CfdiCliente');
                 }
+                return true;
+
+            case 'cancelar':
+                $this->cancelarCfdi();
                 return true;
 
             default:
@@ -106,44 +140,56 @@ class EditCfdiCliente extends Controller
         }
     }
 
-    private function generarPreCfcdi()
+    private function generarCfdi()
     {
-        $code = $this->request->request->get('invoice', '');
-        if (false === $this->factura->loadFromCode($code)) return false;
+        if (false === $this->factura) return false;
 
-        $uso = $this->request->request->get('usocfdi', 'G01');
-        $isGlobal = $this->request->request->get('globalinvoice', false);
+        if ($this->isFacturaEgreso()) {
+            if (false === $this->hasParentsFacturaEgreso()) return false;
 
-        if ($isGlobal) {
-            $builder = new GlobalCfdiBuilder($this->factura, $this->empresa);
-        } else {
-            $builder = new CustomerCfdiBuilder($this->factura, $this->empresa, $uso);
+            return $this->xml = CfdiTools::buildCfdiEgreso($this->factura, $this->empresa, 'G02');
         }
 
-        $this->xml = $builder->getXml();
-
-        return $this->xml;
+        $global = $this->request->request->get('globalinvoice', false);
+        if ($global) {
+            return $this->xml = CfdiTools::buildCfdiGlobal($this->factura, $this->empresa);
+        } else {
+            $uso = $this->request->request->get('usocfdi', 'G03');
+            return $this->xml = CfdiTools::buildCfdiIngreso($this->factura, $this->empresa, $uso);
+        }
     }
 
-    private function timbrarPreCfdi(&$xml)
+    private function timbrarCfdi()
     {
-        $parametros = [
-            'idComprobante' => $this->factura->codigo,
-            'usuarioIntegrador' => 'mvpNUXmQfK8='
-        ];
+        //$service = new FinkokStampService('juanjoseprieto88@gmail.com', '5diQ597m6srkHY4_', true);
+        $service = new FinkokStampService('eku01', '9a4f67ac5a7a5bc889356a168a7b51685ffe224fb3e12a154a54f4023999', true);
+        $response = $service->timbrar($this->xml);
 
-        $ws = new Profact(true);
-        $result = $ws->timbrar($parametros, $xml);
-
-        if (false === $result) {
-            $response = $ws->getResponse();
-            $this->toolBox()::log()->warning(print_r($response, true));
+        if ($response->hasError()) {
+            $this->toolBox()::log()->warning($response->getMessage());
+            $this->toolBox()::log()->warning($response->getMessageDetail());
         } else {
-            $xml = $result;
-
+            $this->toolBox()::log()->notice($response->getMessage());
+            $this->xml = $response->getXml();
             return true;
         }
+
         return false;
+    }
+
+    private function cancelarCfdi()
+    {
+        $cerfile = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . $this->toolBox()::appSettings()::get('cfdi', 'cerfile');
+        $keyfile = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . $this->toolBox()::appSettings()::get('cfdi', 'keyfile');
+        $passphrase = $this->toolBox()::appSettings()::get('cfdi', 'passphrase');
+
+        $service = new FinkokStampService('eku01', '9a4f67ac5a7a5bc889356a168a7b51685ffe224fb3e12a154a54f4023999', true);
+        $service->cancelar($this->cfdi->uuid, $cerfile, $keyfile, $passphrase);
+
+        $status = $service->getSatStatus($this->empresa->cifnif, $this->cfdi->rfcreceptor, $this->cfdi->uuid, $this->cfdi->total);
+        $this->toolBox()::log()->warning('Estatus del comprobante: ' . $status->query());
+        $this->toolBox()::log()->warning('Es cancelable: ' . $status->cancellable());
+        $this->toolBox()::log()->warning('Estado de la cancelación: ' . $status->cancellation());
     }
 
     private function mensajeFacturaNoEncontrada()
@@ -151,33 +197,39 @@ class EditCfdiCliente extends Controller
         $this->toolBox()::log()->warning('Factura no encontrada');
     }
 
-    private function guardarCfdi($xml)
+    private function guardarCfdi()
     {
-        $reader = new CfdiQuickReader($xml);
-
-        $this->cfdi->codcliente = $this->factura->codcliente;
-        $this->cfdi->coddivisa = $this->factura->coddivisa;
-        $this->cfdi->estado = 'TIMBRADO';
-        $this->cfdi->folio = $reader->folio();
-        $this->cfdi->formapago = $reader->formaPago();
-        $this->cfdi->idfactura = $this->factura->idfactura;
-        $this->cfdi->metodopago = $reader->metodoPago();
-        $this->cfdi->razonreceptor = $this->factura->nombrecliente;
-        $this->cfdi->rfcreceptor = $reader->receptorRfc();
-        $this->cfdi->serie = $this->factura->codserie;
-        $this->cfdi->tipocfdi = $reader->tipoComprobamte();
-        $this->cfdi->totaldto = 0;
-        $this->cfdi->total = $this->factura->total;
-        $this->cfdi->uuid = $reader->uuid();
-
-        if ($this->cfdi->save()) {
-            $cfdiXml = new CfdiData();
-
-            $cfdiXml->idcfdi = $this->cfdi->idcfdi;
-            $cfdiXml->uuid = $this->cfdi->uuid;
-            $cfdiXml->xml = $xml;
-            $cfdiXml->save();
+        if (CfdiTools::saveCfdi($this->xml, $this->factura->codcliente, $this->factura->idfactura)) {
+            $this->toolBox()::log()->notice('CFDI guardado correctamente');
+        } else {
+            $this->toolBox()::log()->warning('Error al guardar el CFDI');
         }
+    }
+
+    public function isFacturaEgreso()
+    {
+        $serieEgreso =  $this->toolBox()::appSettings()::get('default', 'codserierec', 'R');
+
+        if ($serieEgreso === $this->factura->codserie) {
+            return true;
+        }
+        return false;
+    }
+    private function hasParentsFacturaEgreso()
+    {
+        if (true === empty($this->factura->parentDocuments())) {
+            $this->toolBox()::log()->warning('No tiene relacion con alguna factura de ingreso');
+            return false;
+        }
+
+        foreach ($this->factura->parentDocuments() as $document) {
+            if ($document->getStatus()->nombre !== 'Timbrado') {
+                $this->toolBox()::log()->warning('Primero se debe generar el cfdi de la factura relacionada');
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function downloadXmlAction()
@@ -195,6 +247,6 @@ class EditCfdiCliente extends Controller
         $dataView = new CfdiQuickReader($this->xml);
         $pdf = new PDFCfdi($dataView);
 
-        $pdf->testPdf();
+        $pdf->getPdf();
     }
 }

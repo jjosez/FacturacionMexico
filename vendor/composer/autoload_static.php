@@ -26,6 +26,23 @@ class ComposerStaticInit24dbdebbee5bee8c797ae1d1bfa934b5
             'Symfony\\Polyfill\\Php80\\' => 23,
             'Symfony\\Component\\Process\\' => 26,
         ),
+        'R' => 
+        array (
+            'RobRichards\\XMLSecLibs\\' => 23,
+        ),
+        'P' => 
+        array (
+            'Psr\\Log\\' => 8,
+            'PhpCfdi\\XmlCancelacion\\' => 23,
+            'PhpCfdi\\Finkok\\' => 15,
+            'PhpCfdi\\Credentials\\' => 20,
+            'PhpCfdi\\CfdiExpresiones\\' => 24,
+        ),
+        'E' => 
+        array (
+            'Eclipxe\\MicroCatalog\\' => 21,
+            'Eclipxe\\Enum\\' => 13,
+        ),
         'C' => 
         array (
             'CfdiUtils\\' => 10,
@@ -56,6 +73,38 @@ class ComposerStaticInit24dbdebbee5bee8c797ae1d1bfa934b5
         'Symfony\\Component\\Process\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/process',
+        ),
+        'RobRichards\\XMLSecLibs\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/robrichards/xmlseclibs/src',
+        ),
+        'Psr\\Log\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
+        ),
+        'PhpCfdi\\XmlCancelacion\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpcfdi/xml-cancelacion/src',
+        ),
+        'PhpCfdi\\Finkok\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpcfdi/finkok/src',
+        ),
+        'PhpCfdi\\Credentials\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpcfdi/credentials/src',
+        ),
+        'PhpCfdi\\CfdiExpresiones\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpcfdi/cfdi-expresiones/src',
+        ),
+        'Eclipxe\\MicroCatalog\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/eclipxe/micro-catalog/src',
+        ),
+        'Eclipxe\\Enum\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/eclipxe/enum/src',
         ),
         'CfdiUtils\\' => 
         array (

@@ -1,14 +1,14 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\WebService;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\StampService;
 
 use SoapClient;
 
 ini_set("soap.wsdl_cache_enabled", 1);
-class Profact
+class ProfactStampService
 {
-    const WS_TEST_URL = "https://cfdi33-pruebas.buzoncfdi.mx:1443/Timbrado.asmx?wsdl";
-    const WS_URL = "https://timbracfdi33.mx:1443/Timbrado.asmx?wsdl";
+    const SERVICE_URL_DEV = "https://cfdi33-pruebas.buzoncfdi.mx:1443/Timbrado.asmx?wsdl";
+    const SERVICE_URL = "https://timbracfdi33.mx:1443/Timbrado.asmx?wsdl";
 
     private $response;
 
@@ -16,10 +16,10 @@ class Profact
     {
         switch ($test) {
             case true:
-                $this->url = self::WS_TEST_URL;
+                $this->url = self::SERVICE_URL_DEV;
                 break;
             case false:
-                $this->url = self::WS_URL;
+                $this->url = self::SERVICE_URL;
                 break;
         }
 
@@ -27,9 +27,10 @@ class Profact
         $this->options = $this->getOptions($context);
     }
 
-    public function timbrar(array $params, $xml)
+    public function timbrar(array $params, $xml) : StampServiceResponse
     {
         libxml_disable_entity_loader(false);
+        $response = new StampServiceResponse();
 
         $parametros['xmlComprobanteBase64'] = base64_encode($xml);
         $parametros = array_merge($parametros, $params);
@@ -38,18 +39,31 @@ class Profact
         $this->response = $cliente->__soapCall('TimbraCFDI', array('parameters' => $parametros));
 
         if (!is_soap_fault($this->response)) {
-            $xml = $this->response->TimbraCFDIResult->anyType[3];
+            $result = $this->response->TimbraCFDIResult;
 
-            if ('' !== $xml) return $xml;
+            if ('' != $result->anyType[3]) {
+                $response->setResponse('success');
+                $response->setMessage('Factura timbrada correctamente');
+                $response->setXml($result->anyType[3]);
 
-            return false;
+                return $response;
+            }
+
+            $response->setResponse('error');
+            $response->setMessage($result->anyType[0]);
+            $detail = $result->anyType[1] . ': ' . $result->anyType[2];
+            $response->setMessageDetail($detail);
         } else {
             $this->errorLog("ERROR:\t" . $this->response->faultcode . " \t" . $this->response->faultstring);
             $this->error = $this->response->faultstring;
             $this->codigo_error = $this->response->faultcode;
+
+            $response->setResponse('error');
+            $response->setMessage($this->response->faultcode);
+            $response->setMessageDetail($this->response->faultstring);
         }
 
-        return false;
+        return $response;
     }
 
     public function getResponse()

@@ -4,7 +4,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder;
 
 
-use FacturaScripts\Core\Model\Empresa;
+use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 
 class GlobalCfdiBuilder extends CfdiBuilder

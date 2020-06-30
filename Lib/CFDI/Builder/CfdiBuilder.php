@@ -44,6 +44,13 @@ abstract class CfdiBuilder
         return $base * $iva / 100;
     }
 
+    protected function getAbsoluteValue($val)
+    {
+        if ($val < 0) $val = -$val;
+
+        return $val;
+    }
+
     protected function getTasaValue($iva)
     {
         return number_format($iva / 100, 6);
@@ -72,7 +79,7 @@ abstract class CfdiBuilder
 
     protected function setSello()
     {
-        $filename = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . 'CSD01_AAA010101AAA.key';
+        $filename = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'keyfile');
         $llave = file_get_contents($filename) ?: '';
 
         $this->creator->addSello($llave, '1234567a');
@@ -82,7 +89,7 @@ abstract class CfdiBuilder
     {
         $atributos = $this->getAtributosComprobante();
 
-        $certificado = new Certificado(CFDI_CERT_DIR . DIRECTORY_SEPARATOR . 'CSD01_AAA010101AAA.cer');
+        $certificado = new Certificado(CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'certfile'));
         $resolver = new XmlResolver(CFDI_XSLT_DIR);
 
         $this->creator = new CfdiCreator33($atributos, $certificado);
