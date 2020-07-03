@@ -2,8 +2,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Base\Controller;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\RegimenFiscal;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\UsoCfdi;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use XmlResourceRetriever\XsltRetriever;
 
 class CfdiSettings extends Controller
@@ -18,14 +17,9 @@ class CfdiSettings extends Controller
         return $pagedata;
     }
 
-    public function getRegimenFiscal()
+    public function catalogoSat()
     {
-        return new RegimenFiscal();
-    }
-
-    public function getUsoCfdi()
-    {
-        return new UsoCfdi();
+        return new CfdiCatalogo();
     }
 
     public function privateCore(&$response, $user, $permissions)
@@ -33,11 +27,9 @@ class CfdiSettings extends Controller
         parent::privateCore($response, $user, $permissions);
         $this->setTemplate(false);
 
-        /// Get any operations that have to be performed
         $action = $this->request->request->get('action', '');
         if (false === $this->execAction($action)) return;
 
-        /// Set view template
         $template = 'CfdiSettings';
         $this->setTemplate($template);
     }
@@ -51,6 +43,10 @@ class CfdiSettings extends Controller
 
             case 'save-settings':
                 $this->saveSettings();
+                return true;
+
+            case 'save-stamp-settings':
+                $this->saveStampServiceCredentials();
                 return true;
 
             default:
@@ -82,8 +78,6 @@ class CfdiSettings extends Controller
         $this->toolBox()::appSettings()->save();
 
         $this->saveCertsFiles();
-        $this->saveStampServiceCredentials();
-
         $this->toolBox()::log()->notice('Configuracion actualizada');
     }
 
@@ -94,7 +88,12 @@ class CfdiSettings extends Controller
 
         $token = $this->request->request->get('finkoktoken', '');
         $this->toolBox()::appSettings()->set('cfdi', 'finkoktoken', $token);
+
+        $testmode = ($this->request->request->get('testmode') === 'on') ? true : false;
+        $this->toolBox()::appSettings()->set('cfdi', 'testmode', $testmode);
+
         $this->toolBox()::appSettings()->save();
+        $this->toolBox()::log()->notice('Configuracion actualizada');
     }
 
     private function saveCertsFiles()

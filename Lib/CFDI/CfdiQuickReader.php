@@ -6,8 +6,6 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI;
 use CfdiUtils\Nodes\XmlNodeUtils;
 use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
 use CfdiUtils\XmlResolver\XmlResolver;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\RegimenFiscal;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\UsoCfdi;
 use NumerosEnLetras;
 
 class CfdiQuickReader
@@ -85,7 +83,7 @@ class CfdiQuickReader
 
     public function emisorRegimenFiscal()
     {
-        return (new RegimenFiscal())->getDescripcion(
+        return (new CfdiCatalogo())->regimenFiscal()->getDescripcion(
             $this->comprobante->emisor['RegimenFiscal']
         );
     }
@@ -148,7 +146,7 @@ class CfdiQuickReader
 
     public function receptorUsoCfdi()
     {
-        return (new UsoCfdi())->getDescripcion(
+        return (new CfdiCatalogo())->usoCfdi()->getDescripcion(
             $this->comprobante->receptor['UsoCFDI']
         );
     }

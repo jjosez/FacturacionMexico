@@ -19,8 +19,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Lib\ExtendedController;
-use FacturaScripts\Dinamic\Lib\CFDI\Catalogos\EstadoCfdi;
-use FacturaScripts\Dinamic\Lib\CFDI\Catalogos\TipoCfdi;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 
 /**
  * Controller to list the items in the TerminalPOS model
@@ -56,8 +55,8 @@ class ListCfdiCliente extends ExtendedController\ListController
 
         $this->addFilterAutocomplete('ListCfdiCliente', 'codcliente', 'customer', 'codcliente', 'clientes', 'codcliente', 'razonsocial');
         $this->addFilterPeriod('ListCfdiCliente', 'date', 'period', 'fecha');
-        $this->addFilterSelect('ListCfdiCliente', 'tipo', 'type', 'tipocfdi', TipoCfdi::all());
-        $this->addFilterSelect('ListCfdiCliente', 'estado', 'state', 'estado', EstadoCfdi::all());
+        $this->addFilterSelect('ListCfdiCliente', 'tipo', 'type', 'tipocfdi', CfdiCatalogo::tipoCfdi());
+        $this->addFilterSelect('ListCfdiCliente', 'estado', 'state', 'estado', CfdiCatalogo::estadoCfdi());
 
         $this->setSettings('ListCfdiCliente', 'btnNew', false);
         $this->setSettings('ListCfdiCliente', 'btnDelete', false);

@@ -26,8 +26,6 @@ class EditFacturaCliente
                     $this->redirect('EditCfdiCliente?invoice=' . $code);
                     break;
             }
-
-            return parent::execPreviousAction($action);
         };
     }
 }

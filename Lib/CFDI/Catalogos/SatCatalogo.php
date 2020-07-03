@@ -3,7 +3,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos;
 
 
-abstract class SatCatalogo
+class SatCatalogo
 {
     protected $catalogName;
 

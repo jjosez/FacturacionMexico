@@ -4,11 +4,10 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\UsoCfdi;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiTools;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF\PDFCfdi;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\StampService\ProfactStampService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\StampService\FinkokStampService;
 
 class EditCfdiCliente extends Controller
@@ -68,14 +67,9 @@ class EditCfdiCliente extends Controller
         $this->execAction($action);
     }
 
-    public function getUsoCfdi($key = false)
+    public function catalogoSat()
     {
-        $result = new UsoCfdi();
-
-        if (false === $key) {
-            return $result->all();
-        }
-        return $result->get($key);
+        return new CfdiCatalogo();
     }
 
     public function getCfdisRelacionados()
@@ -161,8 +155,11 @@ class EditCfdiCliente extends Controller
 
     private function timbrarCfdi()
     {
-        //$service = new FinkokStampService('juanjoseprieto88@gmail.com', '5diQ597m6srkHY4_', true);
-        $service = new FinkokStampService('eku01', '9a4f67ac5a7a5bc889356a168a7b51685ffe224fb3e12a154a54f4023999', true);
+        $username = $this->toolBox()::appSettings()::get('cfdi', 'finkokuser');
+        $testmode = $this->toolBox()::appSettings()::get('cfdi', 'testmode', true);
+        $token = $this->toolBox()::appSettings()::get('cfdi', 'finkoktoken');
+
+        $service = new FinkokStampService($username, $token, $testmode);
         $response = $service->timbrar($this->xml);
 
         if ($response->hasError()) {
@@ -179,11 +176,15 @@ class EditCfdiCliente extends Controller
 
     private function cancelarCfdi()
     {
+        $username = $this->toolBox()::appSettings()::get('cfdi', 'finkokuser');
+        $testmode = $this->toolBox()::appSettings()::get('cfdi', 'testmode', true);
+        $token = $this->toolBox()::appSettings()::get('cfdi', 'finkoktoken');
+
         $cerfile = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . $this->toolBox()::appSettings()::get('cfdi', 'cerfile');
         $keyfile = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . $this->toolBox()::appSettings()::get('cfdi', 'keyfile');
         $passphrase = $this->toolBox()::appSettings()::get('cfdi', 'passphrase');
 
-        $service = new FinkokStampService('eku01', '9a4f67ac5a7a5bc889356a168a7b51685ffe224fb3e12a154a54f4023999', true);
+        $service = new FinkokStampService($username, $token, $testmode);
         $service->cancelar($this->cfdi->uuid, $cerfile, $keyfile, $passphrase);
 
         $status = $service->getSatStatus($this->empresa->cifnif, $this->cfdi->rfcreceptor, $this->cfdi->uuid, $this->cfdi->total);
@@ -199,7 +200,7 @@ class EditCfdiCliente extends Controller
 
     private function guardarCfdi()
     {
-        if (CfdiTools::saveCfdi($this->xml, $this->factura->codcliente, $this->factura->idfactura)) {
+        if (CfdiTools::saveCfdi($this->xml, $this->factura)) {
             $this->toolBox()::log()->notice('CFDI guardado correctamente');
         } else {
             $this->toolBox()::log()->warning('Error al guardar el CFDI');
@@ -215,6 +216,7 @@ class EditCfdiCliente extends Controller
         }
         return false;
     }
+
     private function hasParentsFacturaEgreso()
     {
         if (true === empty($this->factura->parentDocuments())) {
@@ -244,8 +246,8 @@ class EditCfdiCliente extends Controller
 
     private function downloadPdfAction()
     {
-        $dataView = new CfdiQuickReader($this->xml);
-        $pdf = new PDFCfdi($dataView);
+        $reader = new CfdiQuickReader($this->xml);
+        $pdf = new PDFCfdi($reader);
 
         $pdf->getPdf();
     }

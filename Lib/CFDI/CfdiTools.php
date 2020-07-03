@@ -29,13 +29,13 @@ class CfdiTools
         return $builder->getXml();
     }
 
-    public static function saveCfdi(string $xml, $codliente, $idfactura)
+    public static function saveCfdi(string $xml, $factura)
     {
         $cfdi = new CfdiCliente();
         $reader = new CfdiQuickReader($xml);
 
-        $cfdi->codcliente = $codliente;
-        $cfdi->idfactura = $idfactura;
+        $cfdi->codcliente = $factura->codcliente;
+        $cfdi->idfactura = $factura->idfactura;
 
         $cfdi->coddivisa = $reader->moneda();
         $cfdi->estado = 'TIMBRADO';

@@ -50,12 +50,12 @@
                                     {% set defaultRegimen = appSettings.get('cfdi','regimen') %}
                                     <div class="form-group row">
                                         {{ form.inputselect('regimenFiscal', 'regimenfiscal', 'Régimen Fiscal',
-                                            fsc.getRegimenFiscal().all(), defaultRegimen) }}
+                                            fsc.catalogoSat().regimenFiscal().all(), defaultRegimen) }}
                                     </div>
                                     {% set defaultUso = appSettings.get('cfdi','uso') %}
                                     <div class="form-group row mb-4">
                                         {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI',
-                                            fsc.getUsoCfdi().all(), defaultUso) }}
+                                            fsc.catalogoSat().usoCfdi.all(), defaultUso) }}
                                     </div>
                                     <div class="form-group row">
                                         {% set text = appSettings.get('cfdi', 'cerfile', 'Certificado') %}
@@ -78,7 +78,7 @@
                             <div class="tab-pane container fade" id="wscredentials">
                                 <div class="row"><small>** Solicite su informacion de acceso para poder utilizar el servicio de timbrado.</small></div>
                                 <form action="{{ fsc.url() }}" autocomplete="off" method="post">
-                                    <input type="hidden" name="action" value='save-ws-settings'>
+                                    <input type="hidden" name="action" value='save-stamp-settings'>
                                     <div class="form-group row">
                                         {% set text = appSettings.get('cfdi', 'finkokuser', '') %}
                                         {{ form.inputtext('finkokuser', 'Usuario', text) }}
@@ -88,6 +88,13 @@
                                         {% set text = appSettings.get('cfdi', 'finkoktoken', '') %}
                                         {{ form.inputpassword('finkoktoken', 'finkoktoken', 'Token',text) }}
                                         <small class="form-text text-muted">Token de acceso al servicio</small>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="form-check">
+                                            {% set checked = (appSettings.get('cfdi', 'testmode') is same as(true)) ? ' checked' : '' %}
+                                            <input class="form-check-input" type="checkbox" id="testMode" name="testmode"{{ checked }}>
+                                            <label class="form-check-label" for="testMode">Modo prueba</label>
+                                        </div>
                                     </div>
                                     <div class="row">
                                         <button type="submit" class="btn btn-primary ml-auto">Guardar</button>
