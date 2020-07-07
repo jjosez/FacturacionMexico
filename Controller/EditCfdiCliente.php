@@ -139,9 +139,12 @@ class EditCfdiCliente extends Controller
         if (false === $this->factura) return false;
 
         if ($this->isFacturaEgreso()) {
-            if (false === $this->hasParentsFacturaEgreso()) return false;
+            $relacion['tiporelacion'] = $this->request->request->get('tiporelacion', false);
+            $relacion['relacionados'] = $this->request->request->get('relacionados', []);
 
-            return $this->xml = CfdiTools::buildCfdiEgreso($this->factura, $this->empresa, 'G02');
+            if (false === $this->testFacturaEgresoParents($relacion['relacionados'])) return false;
+
+            return $this->xml = CfdiTools::buildCfdiEgreso($this->factura, $this->empresa, 'G02', $relacion);
         }
 
         $global = $this->request->request->get('globalinvoice', false);
@@ -149,6 +152,7 @@ class EditCfdiCliente extends Controller
             return $this->xml = CfdiTools::buildCfdiGlobal($this->factura, $this->empresa);
         } else {
             $uso = $this->request->request->get('usocfdi', 'G03');
+
             return $this->xml = CfdiTools::buildCfdiIngreso($this->factura, $this->empresa, $uso);
         }
     }
@@ -217,22 +221,37 @@ class EditCfdiCliente extends Controller
         return false;
     }
 
-    private function hasParentsFacturaEgreso()
+    private function testFacturaEgresoParents(array $parents)
     {
-        if (true === empty($this->factura->parentDocuments())) {
-            $this->toolBox()::log()->warning('No tiene relacion con alguna factura de ingreso');
+        if (true === empty($parents)) {
+            $this->toolBox()::log()->warning('Se debe relacionar con un cfdi de ingreso');
             return false;
         }
 
-        foreach ($this->factura->parentDocuments() as $document) {
-            if ($document->getStatus()->nombre !== 'Timbrado') {
-                $this->toolBox()::log()->warning('Primero se debe generar el cfdi de la factura relacionada');
+        $parentCfdi = new CfdiCliente();
+        foreach ($parents as $parent) {
+            if (false === $parentCfdi->loadFromUUID($parent)) {
+                $this->toolBox()::log()->warning('Cfdi relacionado no encontrado');
+                return false;
+            } elseif ($this->factura->codcliente !== $parentCfdi->codcliente) {
+                $this->toolBox()::log()->warning('Cfdi relacionado no coincide receptor');
                 return false;
             }
-        }
 
+            if (empty($this->factura->codigorect) || empty($this->factura->idfacturarect)) {
+                $parentInvoice = new FacturaCliente();
+
+                if ($parentInvoice->loadFromCode($parentCfdi->idfactura)) {
+                    $this->factura->codigorect = $parentInvoice->codigo;
+                    $this->factura->idfacturarect = $parentInvoice->idfactura;
+
+                    return $this->factura->save();
+                }
+            }
+        }
         return true;
     }
+
 
     private function downloadXmlAction()
     {

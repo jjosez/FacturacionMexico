@@ -21,25 +21,26 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 use FacturaScripts\Core\Model\Base;
 
 /**
- * Operaciones realizadas terminales POS.
+ * Relacion entre cefdi con su tipo de relacion.
  *
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
-class CfdiData extends Base\ModelClass
+class CfdiRelacion extends Base\ModelClass
 {
     use Base\ModelTrait;
 
+    public $idrelacion;
     public $idcfdi;
-    public $xml;
+    public $tiporelacion;
     public $uuid;
 
     public static function primaryColumn()
     {
-        return 'uuid';
+        return 'idrelacion';
     }
 
     public static function tableName()
     {
-        return 'cfdisdata';
+        return 'cfdisrelacionados';
     }
 }

@@ -35,6 +35,19 @@ class CfdiQuickReader
         return $builder->build($tfdXmlString);
     }
 
+    public function cfdiRelacionado() {
+        $result = [];
+        $relacionados = $this->comprobante->cfdirelacionados;
+        $result['tiporelacion'] = $relacionados['TipoRelacion'];
+
+        foreach ($relacionados() as $relacionado)
+        {
+            $result['relacionados'] = ['uuid' => $relacionado['UUID']];
+        }
+
+        return $result;
+    }
+
     public function noCertificado()
     {
         return $this->comprobante['NoCertificado'];

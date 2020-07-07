@@ -45,8 +45,10 @@ class CfdiCliente extends Base\ModelClass
     public $razonreceptor;
     public $rfcreceptor;
     public $tipocfdi;
+    public $tiporelacion;
     public $total;
     public $uuid;
+    public $uuidrelacionado;
     public $version;
 
     public function clear()
@@ -55,8 +57,6 @@ class CfdiCliente extends Base\ModelClass
 
         $this->fecha = date(self::DATETIME_STYLE);
         $this->fechamod = date(self::DATETIME_STYLE);
-        $this->tipocfdi = 'I';
-        $this->total = 0.0;
         $this->version = '3.3';
     }
 

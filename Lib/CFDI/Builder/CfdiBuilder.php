@@ -122,4 +122,17 @@ abstract class CfdiBuilder
             echo $assert, PHP_EOL;
         }
     }
+
+    public function setDocumentosRelacionados(array $foliosfiascales, string $tiporelacion)
+    {
+        foreach ($foliosfiascales as $folio) {
+            $this->comprobante->addCfdiRelacionado([
+                'UUID' => $folio,
+            ]);
+        }
+
+        $this->comprobante->getCfdiRelacionados()->addAttributes([
+            'TipoRelacion' => $tiporelacion
+        ]);
+    }
 }

@@ -60,15 +60,16 @@
             <div class="card">
                 <div class="card-header">Factura</div>
                 <div class="card-body">
+                    <div class="form-group">
+                        {% set lugarexpedicion = fsc.empresa.ciudad %}
+                        {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', lugarexpedicion, 'disabled') }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
+                        <small>Factura enviada el: {{ fsc.factura.femail }}</small>
+                    </div>
                     <div class="form-row">
-                        <div class="form-group col-6">
-                            {% set lugarexpedicion = fsc.empresa.ciudad %}
-                            {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', lugarexpedicion, 'disabled') }}
-                        </div>
-                        <div class="form-group col-6">
-                            {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
-                            <small>Factura enviada el: {{ fsc.factura.femail }}</small>
-                        </div>
+
                     </div>
                     {% if fsc.isFacturaEgreso() %}
                         <div class="table-responsive">
@@ -89,6 +90,7 @@
         <div class="card">
             <div class="card-header">Conceptos</div>
             <div class="card-body">
+                {{ dump(fsc.reader.cfdiRelacionado()) }}
                 <div class="table-responsive">
                     {{ _self.drawTablaConceptos(fsc.reader.conceptos(), fsc) }}
                 </div>
@@ -143,9 +145,6 @@
             </div>
         </div>
     </div>
-    <script type="text/javascript">
-
-    </script>
 {% endblock %}
 {%- macro drawTablaConceptos(conceptos, fsc) %}
     <table class="table table-striped">

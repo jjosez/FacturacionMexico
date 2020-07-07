@@ -89,6 +89,11 @@
         <null>NO</null>
     </column>
     <column>
+        <name>tiporelacion</name>
+        <type>character varying(2)</type>
+        <null>YES</null>
+    </column>
+    <column>
         <name>total</name>
         <type>double precision</type>
         <null>NO</null>
@@ -97,6 +102,11 @@
         <name>uuid</name>
         <type>character varying(36)</type>
         <null>NO</null>
+    </column>
+    <column>
+        <name>uuidrelacionado</name>
+        <type>character varying(36)</type>
+        <null>YES</null>
     </column>
     <column>
         <name>version</name>

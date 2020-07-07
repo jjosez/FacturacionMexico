@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : cfdisdata.xml
+    Author     : Juan José Prieto Dzul 
+    Description:
+        Structure for the cfdisdata table.
+-->
+<table>
+    <column>
+        <name>idrelacion</name>
+        <type>serial</type>
+        <null>NO</null>
+        <default>nextval('cfdisrelacionados_idrelacion_seq'::regclass)</default>
+    </column>
+    <column>
+        <name>idcfdi</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>tiporelacion</name>
+        <type>character varying(4)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>uuid</name>
+        <type>character varying(36)</type>
+        <null>NO</null>
+    </column>
+    <constraint>
+        <name>cfdisrelacionados_pkey</name>
+        <type>PRIMARY KEY (idrelacion)</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdisrelacionados_cfdisclientes</name>
+        <type>FOREIGN KEY (idcfdi) REFERENCES cfdisclientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdisrelacionados_cfdisclientes_relacionado</name>
+        <type>FOREIGN KEY (uuid) REFERENCES cfdisclientes (uuid) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+</table>

@@ -59,14 +59,12 @@
                 <div class="card">
                     <div class="card-header">Factura</div>
                     <div class="card-body">
-                        <div class="form-row">
-                            <div class="form-group col-6">
-                                {% set lugarexpedicion = fsc.empresa.ciudad %}
-                                {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', lugarexpedicion, 'disabled') }}
-                            </div>
-                            <div class="form-group col-6">
-                                {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
-                            </div>
+                        <div class="form-group">
+                            {% set lugarexpedicion = fsc.empresa.ciudad %}
+                            {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', lugarexpedicion, 'disabled') }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
                         </div>
                         <div class="form-group">
                             <div class="form-check">
@@ -78,13 +76,6 @@
                                 </label>
                             </div>
                         </div>
-                        {% if fsc.isFacturaEgreso() %}
-                            <div class="table-responsive">
-                                {{ _self.drawTablaRelacionados(fsc) }}
-                            </div>
-                            <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#cfdiRelacion">
-                                CFDIs Relacioandos</button>
-                        {% endif %}
                     </div>
                     {% set pagado = (fsc.factura.pagada) ? 'true' : 'false' %}
                     {% if not fsc.factura.pagada %}
@@ -98,15 +89,14 @@
                     {% endif %}
                 </div>
             </div>
-            <div class="row">
-                <div class="col">
-                    <div class="card">
-                        <div class="card-header">Conceptos</div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                {{ _self.drawTablaConceptos(fsc.factura.getLines(), fsc) }}
-                            </div>
-                        </div>
+            {% if fsc.isFacturaEgreso() %}
+                {{ _self.blockCfdiRelacionado(fsc) }}
+            {% endif %}
+            <div class="card">
+                <div class="card-header">Conceptos</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        {{ _self.drawTablaConceptos(fsc.factura.getLines(), fsc) }}
                     </div>
                 </div>
             </div>
@@ -128,46 +118,6 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="cfdiRelacion" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">CFDIs Relacionados</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div>
-                        <div class="form-group">
-                            {{ form.inputtext('tiporelacion', 'Tipo de relacion') }}
-                        </div>
-                        <label for="uuidrelacionado">CFDI a relacionar</label>
-                        <div class="input-group mb-3">
-                            <input type="text" id="uuidrelacionado" class="form-control" placeholder="UUID">
-                            <div class="input-group-append">
-                                <button type="button" id="getCfdiRelacionBtn" class="btn btn-success">Agregar</button>
-                            </div>
-                        </div>
-                    </div>
-                    <table class="table table-hover table-striped">
-                        <thead>
-                        <tr>
-                            <th scope="col">UUID</th>
-                            <th scope="col">Total</th>
-                            <th scope="col">Fecha</th>
-                        </tr>
-                        </thead>
-                        <tbody id="tablaRelacionados">
-                        </tbody>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -206,25 +156,54 @@
 {% endmacro -%}
 
 {%- macro drawTablaRelacionados(fsc) %}
-    <table class="table table-borderless table-hover">
+    <table class="table table-borderless table-sm" id="tablaRelacionados">
         <thead>
         <tr>
-            <th scope="col">Factura</th>
+            <th scope="col">Receptor</th>
             <th scope="col">UUID</th>
             <th scope="col">Total</th>
+            <th scope="col" style="width: 90px">Accion</th>
         </tr>
         </thead>
         <tbody>
         {% for relacionado in fsc.getCfdisRelacionados() %}
             <tr>
-                <td>{{ relacionado.referencia }}</td>
-                <td>{{ relacionado.uuid }}</td>
+                <td>{{ relacionado.razonreceptor }}</td>
+                <td><input type="hidden" name="relacionados[]" value="{{ relacionado.uuid }}">
+                    {{ relacionado.uuid }}</td>
                 <td>{{ relacionado.total }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 {% endmacro -%}
+
+{%- macro blockCfdiRelacionado(fsc) %}
+    <div class="card">
+        <div class="card-header">Facturas relacionadas</div>
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group col-12 col-md-6">
+                    {{ form.inputselect('tiporelacion', 'tiporelacion', 'Tipo de relación',
+                        fsc.catalogoSat().tipoRelacion().all(), '01') }}
+                </div>
+                <div class="form-group col-12 col-md-6">
+                    <label for="uuidrelacionado">Folio fiscal</label>
+                    <div class="input-group">
+                        <input type="text" id="uuidrelacionado" class="form-control" placeholder="UUID">
+                        <div class="input-group-append">
+                            <button type="button" id="addCfdiRelacionBtn" class="btn btn-warning">Agregar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                {{ _self.drawTablaRelacionados(fsc) }}
+            </div>
+        </div>
+    </div>
+{% endmacro -%}
+
 
 
 

@@ -1,4 +1,6 @@
-function getCfdiFromUUID() {
+const relatedTable = document.getElementById('tablaRelacionados');
+
+function addCfdiFromUUID() {
     var codcliente = document.getElementById('codcliente').value;
     var uuid = document.getElementById('uuidrelacionado').value;
 
@@ -14,18 +16,47 @@ function getCfdiFromUUID() {
         dataType: "json",
         data: data,
         success: function (results) {
-           console.log(results)
+            addRelatedCfdi(results);
+            console.log(results)
         },
         error: function (xhr, status, error) {
-            console.log('Error:', xhr.responseText)
+            console.log('ERROR:', xhr.responseText)
         }
     });
 }
 
-function addCfdiRelacionado(result) {
-    var row = '<tr>'
-        + '';
+function addRelatedCfdi(result) {
+    var row = relatedTable.insertRow();
 
+    var cellRazonSocial = row.insertCell(0);
+    cellRazonSocial.innerHTML = result.razonreceptor;
+
+    var cellFolioFiscal = row.insertCell(1);
+    cellFolioFiscal.innerHTML = result.uuid;
+
+    var element = document.createElement('input');
+    element.type = 'hidden';
+    element.name = 'relacionados[]';
+    element.value = result.uuid;
+    cellFolioFiscal.appendChild(element);
+
+    var cellTotal = row.insertCell(2);
+    cellTotal.innerHTML = result.total;
+
+    var cellAction = row.insertCell(3);
+    var button = document.createElement('input');
+    button.setAttribute('type', 'button');
+    button.setAttribute('value', 'X');
+    button.setAttribute('onclick', 'removeRelatedCfdi(this)');
+    button.className = 'btn btn-danger';
+
+    cellAction.appendChild(button);
+}
+
+function removeRelatedCfdi(button) {
+    var row = button.parentNode.parentNode;
+
+    relatedTable.deleteRow(row.rowIndex);
 }
 
 $(document).ready(function () {
@@ -55,7 +86,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#getCfdiRelacionBtn').click(function () {
-        getCfdiFromUUID();
+    $('#addCfdiRelacionBtn').click(function () {
+        addCfdiFromUUID();
     });
 })
