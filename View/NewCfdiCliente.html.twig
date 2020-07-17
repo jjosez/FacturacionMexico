@@ -89,17 +89,8 @@
                     {% endif %}
                 </div>
             </div>
-            {% if fsc.isFacturaEgreso() %}
-                {{ _self.blockCfdiRelacionado(fsc) }}
-            {% endif %}
-            <div class="card">
-                <div class="card-header">Conceptos</div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        {{ _self.drawTablaConceptos(fsc.factura.getLines(), fsc) }}
-                    </div>
-                </div>
-            </div>
+            {{ _self.blockCfdiRelacionados(fsc) }}
+            {{ _self.blockCfdiConceptos(fsc.factura.getLines(), fsc) }}
         </div>
     </form>
     <div class="modal fade" id="xmlModal" tabindex="-1" role="dialog">
@@ -125,60 +116,44 @@
     <script src="{{ asset('Plugins/FacturacionMexico/Assets/JS/FacturacionMexico.js') }}"></script>
 {% endblock %}
 
-{%- macro drawTablaConceptos(conceptos, fsc) %}
-<table class="table table-striped">
-    <thead class="thead-light">
-    <tr>
-        <th scope="col">Cantidad</th>
-        <th scope="col">Descripcion</th>
-        <th scope="col">Clave SAT</th>
-        <th scope="col">Unidad</th>
-        <th scope="col">Precio</th>
-        <th scope="col">IVA</th>
-        <th scope="col">Total</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for linea in conceptos %}
-        {% set familia = linea.getProducto().getFamilia() %}
-        <tr>
-            <td>{{ linea.referencia }}</td>
-            <td>{{ linea.descripcion }}</td>
-            <td>{{ familia.clavesat }}</td>
-            <td>{{ familia.claveunidad }}</td>
-            <td>{{ linea.pvpunitario }}</td>
-            <td>{{ linea.iva }}</td>
-            <td>{{ linea.pvptotal }}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+{%- macro blockCfdiConceptos(conceptos, fsc) %}
+    <div class="card">
+        <div class="card-header">Conceptos</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="thead-light">
+                    <tr>
+                        <th scope="col">Cantidad</th>
+                        <th scope="col">Descripcion</th>
+                        <th scope="col">Clave SAT</th>
+                        <th scope="col">Unidad</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col">IVA</th>
+                        <th scope="col">Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for linea in conceptos %}
+                        {% set familia = linea.getProducto().familia() %}
+                        <tr>
+                            <td>{{ linea.referencia }}</td>
+                            <td>{{ linea.descripcion }}</td>
+                            <td>{{ familia.clavesat }}</td>
+                            <td>{{ familia.claveunidad }}</td>
+                            <td>{{ linea.pvpunitario }}</td>
+                            <td>{{ linea.iva }}</td>
+                            <td>{{ linea.pvptotal }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 {% endmacro -%}
 
-{%- macro drawTablaRelacionados(fsc) %}
-    <table class="table table-borderless table-sm" id="tablaRelacionados">
-        <thead>
-        <tr>
-            <th scope="col">Receptor</th>
-            <th scope="col">UUID</th>
-            <th scope="col">Total</th>
-            <th scope="col" style="width: 90px">Accion</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for relacionado in fsc.getCfdisRelacionados() %}
-            <tr>
-                <td>{{ relacionado.razonreceptor }}</td>
-                <td><input type="hidden" name="relacionados[]" value="{{ relacionado.uuid }}">
-                    {{ relacionado.uuid }}</td>
-                <td>{{ relacionado.total }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-{% endmacro -%}
-
-{%- macro blockCfdiRelacionado(fsc) %}
+{%- macro blockCfdiRelacionados(fsc) %}
     <div class="card">
         <div class="card-header">Facturas relacionadas</div>
         <div class="card-body">
@@ -198,7 +173,26 @@
                 </div>
             </div>
             <div class="table-responsive">
-                {{ _self.drawTablaRelacionados(fsc) }}
+                <table class="table table-borderless table-sm" id="tablaRelacionados">
+                    <thead>
+                    <tr>
+                        <th scope="col">Receptor</th>
+                        <th scope="col">UUID</th>
+                        <th scope="col">Total</th>
+                        <th scope="col" style="width: 90px">Accion</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for relacionado in fsc.getCfdisRelacionados() %}
+                        <tr>
+                            <td>{{ relacionado.razonreceptor }}</td>
+                            <td><input type="hidden" name="relacionados[]" value="{{ relacionado.uuid }}">
+                                {{ relacionado.uuid }}</td>
+                            <td>{{ relacionado.total }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

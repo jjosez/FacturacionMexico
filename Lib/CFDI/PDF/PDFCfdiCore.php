@@ -39,11 +39,6 @@ class PDFCfdiCore
         $this->moveCursorPosition($lineBreak);
     }
 
-    protected function moveCursorPosition(int $n)
-    {
-        $this->pdf->ezSetDy(-$n);
-    }
-
     protected function writeTextBold(string $text, array $options = [], $fontSize = '', $lineBreak = 0)
     {
         $fontSize = $fontSize ?: self::FONT_SIZE;
@@ -51,6 +46,20 @@ class PDFCfdiCore
         $text = $this->textBold($text);
         $this->pdf->ezText($text, $fontSize, $options);
         $this->moveCursorPosition($lineBreak);
+    }
+
+    protected function writeTextWrapped(float $width, string $text, array $options = [], $fontSize = '', $lineBreak = 0)
+    {
+        $fontSize = $fontSize ?: self::FONT_SIZE;
+        $newText = wordwrap($text, 60);
+
+        $this->pdf->ezText($newText, $fontSize, $options);
+        $this->moveCursorPosition($lineBreak);
+    }
+
+    protected function moveCursorPosition(int $n)
+    {
+        $this->pdf->ezSetDy(-$n);
     }
 
     protected function textBold($text)

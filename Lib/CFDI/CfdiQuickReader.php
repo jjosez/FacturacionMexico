@@ -35,7 +35,8 @@ class CfdiQuickReader
         return $builder->build($tfdXmlString);
     }
 
-    public function cfdiRelacionado() {
+    public function cfdiRelacionados()
+    {
         $result = [];
         $relacionados = $this->comprobante->cfdirelacionados;
         $result['tiporelacion'] = $relacionados['TipoRelacion'];
@@ -152,6 +153,11 @@ class CfdiQuickReader
         return $this->comprobante->receptor['Nombre'];
     }
 
+    public function receptorIdTrib()
+    {
+        return $this->comprobante->receptor['NumRegIdTrib'];
+    }
+
     public function receptorRfc()
     {
         return $this->comprobante->receptor['Rfc'];
@@ -206,7 +212,7 @@ class CfdiQuickReader
 
     public function totalLetra()
     {
-        return NumerosEnLetras::convertir($this->total(), 'MXN', true);
+        return NumerosEnLetras::convertir($this->total(), $this->comprobante['Moneda'], true);
     }
 
     public function uuid()

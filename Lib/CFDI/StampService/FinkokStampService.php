@@ -55,7 +55,9 @@ class FinkokStampService
             return true;
         } elseif ($documentInfo->documentStatus() == 205) {
             $descripcion =  'UUID: ' . $uuid . ' No encontrado en el SAT';
+            $this->errorLog($descripcion);
         }
+        $this->errorLog($documentInfo->cancellationSatatus());
 
         return false;
     }
@@ -65,5 +67,13 @@ class FinkokStampService
         $finkok = new QuickFinkok($this->finkokSettings);
 
         return $finkok->satStatus($emisor, $receptor, $uuid, $total);
+    }
+
+    private function errorLog($string)
+    {
+        $logFile = CFDI_DIR . DIRECTORY_SEPARATOR . 'Log' . DIRECTORY_SEPARATOR . 'log.txt';
+        $file = fopen($logFile, 'a');
+        fwrite($file, date('c') . "\t" . $string . "\n\n");
+        fclose($file);
     }
 }

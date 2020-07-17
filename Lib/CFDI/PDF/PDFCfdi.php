@@ -23,8 +23,8 @@ class PDFCfdi extends PDFCfdiCore
     {
         $this->insertPageNum();
         $this->insertPageHeader();
-        $this->insertEmisor();
         $this->insertReceptor();
+        $this->insertEmisor();
         $this->insertLogo();
         $this->insertTablaConceptos();
         $this->insertTablaTotales();
@@ -57,36 +57,43 @@ class PDFCfdi extends PDFCfdiCore
 
     private function insertEmisor()
     {
-        $cursorPosition = $this->getCursorPosition();
-
         $this->writeTextBold('Emisor:');
         $this->moveCursorPosition(4);
 
         $this->writeText($this->reader->emisorNombre(), [], 8);
         $this->writeText($this->reader->emisorRfc(), [], 8);
 
-        $this->writeText($this->reader->emisorRegimenFiscal(), [], 8);
+        $this->writeTextWrapped(60, $this->reader->emisorRegimenFiscal(), [], 8);
         $this->moveCursorPosition(5);
 
-        $this->setCursorPosition($cursorPosition);
-        $text = 'Numero Certificado: ' . $this->reader->noCertificado();
-        $this->writeText($text, ['justification' => 'right'], 8);
+        $text = 'Numero certificado: ' . $this->reader->noCertificado();
+        $this->writeText($text, [], 8);
 
         $text = 'Tipo de comprobante: ' . $this->reader->tipoComprobamte();
-        $this->writeText($text, ['justification' => 'right'], 8);
+        $this->writeText($text, [], 8);
     }
 
     private function insertReceptor()
     {
-        $this->setCursorPosition(675);
-        $this->writeTextBold('Receptor:');
+        $cursorPosition = $this->getCursorPosition();
+        $options = ['justification' => 'right'];
+
+        $this->writeTextBold('Receptor:', $options);
         $this->moveCursorPosition(4);
 
-        $this->writeText($this->reader->receptorRfc());
+        $this->writeText($this->reader->receptorNombre(), $options, 8);
+        if ('XEXX010101000' === $this->reader->receptorRfc()) {
+            $this->writeText($this->reader->receptorIdTrib(), $options, 8);
+        }
+        $this->writeText($this->reader->receptorRfc(), $options, 8);
+        $this->moveCursorPosition(4);
 
-        $text = 'Uso CFDI: ' . $this->reader->receptorUsoCfdi();
-        $this->writeText($text, [], 8);
+        $text = 'Uso cfdi: ' . $this->reader->receptorUsoCfdi();
+        $this->writeText($text, ['justification' => 'right'], 8);
+        $this->setCursorPosition($cursorPosition);
+    }
 
+    private function insertPagos() {
         $this->moveCursorPosition(10);
         $text = 'Metodo de pago: ' . $this->reader->metodoPago()
             . ' Forma de pago: ' . $this->reader->formaPago();
@@ -103,6 +110,7 @@ class PDFCfdi extends PDFCfdiCore
 
     private function insertTablaConceptos()
     {
+        $this->setCursorPosition(640);
         $data = $this->reader->conceptosData();
 
         $cols = [

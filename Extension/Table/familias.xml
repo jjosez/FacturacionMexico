@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : familias.xml
+    Author     : Carlos Garcia Gomez
+    Description:
+        Structure for the familias table.
+-->
+<table>
+    <column>
+        <name>clavesat</name>
+        <type>character varying(8)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>claveunidad</name>
+        <type>character varying(4)</type>
+        <null>NO</null>
+    </column>
+</table>

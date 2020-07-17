@@ -14,6 +14,6 @@ class Familia extends ParentModel
 
         $madre = $this->get($this->madre);
         $this->clavesat = ($madre) ? $this->madre->clavesat : '01010101';
-        $this->claveunidad = 'Pieza';
+        $this->claveunidad = 'H87';
     } 
 }

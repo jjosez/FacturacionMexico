@@ -24,19 +24,11 @@
 
 <view>
     <columns>        
-        <column name="code" order="100">
-            <widget type="text" fieldname="codfamilia" onclick="EditFamilia" />
-        </column>
-        <column name="clavesat" order="110">
+        <column name="Clave prod. SAT" order="110">
             <widget type="text" fieldname="clavesat"/>
         </column>
-        <column name="description" order="120">
-            <widget type="textarea" fieldname="descripcion" />
-        </column>
-        <column name="parent" order="200">
-            <widget type="select" fieldname="madre" onclick="EditFamilia">
-                <values source="familias" fieldcode="codfamilia" fieldtitle="descripcion"></values>
-            </widget>
+        <column name="Clave UM SAT" order="110">
+            <widget type="text" fieldname="claveunidad"/>
         </column>
     </columns>
 </view>

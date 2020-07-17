@@ -22,7 +22,7 @@ class IngresoCfdiBuilder extends CfdiBuilder
             'Fecha' => $this->getFechaFactura($this->factura->fecha, $this->factura->hora),
             'FormaPago' => $this->factura->codpago,
             'Moneda' => $this->factura->coddivisa,
-            'TipoCambio' => '1',
+            'TipoCambio' => $this->factura->tasaconv,
             'TipoDeComprobante' => $this->tipo,
             'MetodoPago' => 'PUE',
             'LugarExpedicion' => $this->empresa->codpostal,
@@ -36,22 +36,16 @@ class IngresoCfdiBuilder extends CfdiBuilder
             $producto = $linea->getProducto();
 
             $this->comprobante->addConcepto([
-                'ClaveProdServ' => $producto->getFamilia()->clavesat,
+                'ClaveProdServ' => $producto->familia()->clavesat,
                 'NoIdentificacion' => $linea->referencia,
                 'Cantidad' => $linea->cantidad,
-                'ClaveUnidad' => $producto->getUnidadMedida(),
+                'ClaveUnidad' => $producto->familia()->claveunidad,
                 'Unidad' => 'PIEZA',
                 'Descripcion' => $linea->descripcion,
                 'ValorUnitario' => $linea->pvpunitario,
                 'Importe' => $linea->pvpsindto,
                 'Descuento' => $linea->dtopor
-            ])->addTraslado([
-                'Impuesto' => $linea->codimpuesto,
-                'Base' => $linea->pvptotal,
-                'TipoFactor' => 'Tasa',
-                'TasaOCuota' =>  $this->getTasaValue($linea->iva),
-                'Importe' => $this->getIvaFromValue($linea->pvptotal, $linea->iva)
-            ]);
+            ])->addTraslado($this->buildConceptoTraslado($linea));
         }
 
         $this->creator->addSumasConceptos(null, 2);

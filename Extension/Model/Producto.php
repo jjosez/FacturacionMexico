@@ -5,7 +5,7 @@ use FacturaScripts\Dinamic\Model\Familia;
 
 class Producto
 {
-    public function getFamilia()
+    public function familia()
     {
         return function () {
             $familia = new Familia();

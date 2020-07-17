@@ -6,11 +6,14 @@ use CfdiUtils\Certificado\Certificado;
 use CfdiUtils\CfdiCreator33;
 use CfdiUtils\XmlResolver\XmlResolver;
 use FacturaScripts\Core\App\AppSettings;
+use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 
 abstract class CfdiBuilder
 {
+    const RFC_EXTRANJERO = 'XEXX010101000';
+
     protected $comprobante;
     protected $creator;
     protected $empresa;
@@ -58,11 +61,30 @@ abstract class CfdiBuilder
 
     protected function setDatosCliente()
     {
-        $receptor = [
-            'Rfc' => $this->factura->cifnif,
-            'Nombre' => $this->factura->nombrecliente,
-            'UsoCFDI' => $this->uso,
-        ];
+        $fiscalID = $this->factura->cifnif;
+        $customer = (new Cliente())->get($this->factura->codcliente);
+
+        if ($customer->cifnif !== $fiscalID) {
+            throw new \Exception('El ID Fiscal del cliente ' . $fiscalID
+                . 'no coincide con el de la Factura ' . $this->factura->cifnif
+            );
+        }
+
+        if ($customer->tipoidfiscal === 'RFC') {
+            $receptor = [
+                'Rfc' => $customer->cifnif,
+                'Nombre' => $customer->razonsocial,
+                'UsoCFDI' => $this->uso,
+            ];
+        } else {
+            $receptor = [
+                'Rfc' => self::RFC_EXTRANJERO,
+                'Nombre' => $customer->razonsocial,
+                'UsoCFDI' => 'P01',
+                'NumRegIdTrib' => $customer->cifnif,
+                'ResidenciaFiscal' => $this->factura->codpais
+            ];
+        }
 
         $this->comprobante->addReceptor($receptor);
     }
@@ -80,16 +102,17 @@ abstract class CfdiBuilder
     protected function setSello()
     {
         $filename = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'keyfile');
+        $password = AppSettings::get('cfdi', 'passphrase');
         $llave = file_get_contents($filename) ?: '';
 
-        $this->creator->addSello($llave, '1234567a');
+        $this->creator->addSello($llave, $password);
     }
 
     private function inicializaComprobante()
     {
         $atributos = $this->getAtributosComprobante();
 
-        $certificado = new Certificado(CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'certfile'));
+        $certificado = new Certificado(CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'cerfile'));
         $resolver = new XmlResolver(CFDI_XSLT_DIR);
 
         $this->creator = new CfdiCreator33($atributos, $certificado);
@@ -125,6 +148,10 @@ abstract class CfdiBuilder
 
     public function setDocumentosRelacionados(array $foliosfiascales, string $tiporelacion)
     {
+        if (empty($foliosfiascales)) {
+            return;
+        }
+
         foreach ($foliosfiascales as $folio) {
             $this->comprobante->addCfdiRelacionado([
                 'UUID' => $folio,
@@ -134,5 +161,24 @@ abstract class CfdiBuilder
         $this->comprobante->getCfdiRelacionados()->addAttributes([
             'TipoRelacion' => $tiporelacion
         ]);
+    }
+
+    protected function buildConceptoTraslado($linea)
+    {
+        $traslado = [];
+        $tipoFactor = ($linea->iva > 0) ? 'Tasa' : 'Exento';
+
+        $traslado['Base'] = $linea->pvptotal;
+        $traslado['TipoFactor'] = $tipoFactor;
+
+        if ($tipoFactor === 'Exento') {
+            $traslado['Impuesto'] = '002';
+        } else {
+            $traslado['Impuesto'] = $linea->codimpuesto;
+            $traslado['TasaOCuota'] = $this->getTasaValue($linea->iva);
+            $traslado['Importe'] = $this->getIvaFromValue($linea->pvptotal, $linea->iva);
+        }
+
+        return $traslado;
     }
 }

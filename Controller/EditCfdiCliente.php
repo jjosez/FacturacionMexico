@@ -86,7 +86,7 @@ class EditCfdiCliente extends Controller
         return $result;
     }
 
-    public function getCfdiFromUUID()
+    private function findCfdiRequest()
     {
         $this->setTemplate(false);
         $uuid = $this->request->request->get('uuid', false);
@@ -101,6 +101,16 @@ class EditCfdiCliente extends Controller
         echo 'CFDI no encontrado o pertenece a otro cliente';
     }
 
+    public function loadCfdiFromUUID($uuid)
+    {
+        $cfdi = new CfdiCliente();
+        if ($cfdi->loadFromUUID($uuid)) {
+            return $cfdi;
+        }
+
+        return false;
+    }
+
     private function execAction($action)
     {
         switch ($action) {
@@ -113,7 +123,7 @@ class EditCfdiCliente extends Controller
                 return false;
 
             case 'cfdi-relacionado':
-                $this->getCfdiFromUUID();
+                $this->findCfdiRequest();
                 return false;
 
             case 'timbrar':
@@ -152,18 +162,16 @@ class EditCfdiCliente extends Controller
             return $this->xml = CfdiTools::buildCfdiGlobal($this->factura, $this->empresa);
         } else {
             $uso = $this->request->request->get('usocfdi', 'G03');
+            $relacion['tiporelacion'] = $this->request->request->get('tiporelacion', false);
+            $relacion['relacionados'] = $this->request->request->get('relacionados', []);
 
-            return $this->xml = CfdiTools::buildCfdiIngreso($this->factura, $this->empresa, $uso);
+            return $this->xml = CfdiTools::buildCfdiIngreso($this->factura, $this->empresa, $uso, $relacion);
         }
     }
 
     private function timbrarCfdi()
     {
-        $username = $this->toolBox()::appSettings()::get('cfdi', 'finkokuser');
-        $testmode = $this->toolBox()::appSettings()::get('cfdi', 'testmode', true);
-        $token = $this->toolBox()::appSettings()::get('cfdi', 'finkoktoken');
-
-        $service = new FinkokStampService($username, $token, $testmode);
+        $service = $this->stampServiceProvider();
         $response = $service->timbrar($this->xml);
 
         if ($response->hasError()) {
@@ -180,21 +188,17 @@ class EditCfdiCliente extends Controller
 
     private function cancelarCfdi()
     {
-        $username = $this->toolBox()::appSettings()::get('cfdi', 'finkokuser');
-        $testmode = $this->toolBox()::appSettings()::get('cfdi', 'testmode', true);
-        $token = $this->toolBox()::appSettings()::get('cfdi', 'finkoktoken');
-
         $cerfile = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . $this->toolBox()::appSettings()::get('cfdi', 'cerfile');
         $keyfile = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . $this->toolBox()::appSettings()::get('cfdi', 'keyfile');
         $passphrase = $this->toolBox()::appSettings()::get('cfdi', 'passphrase');
 
-        $service = new FinkokStampService($username, $token, $testmode);
-        $service->cancelar($this->cfdi->uuid, $cerfile, $keyfile, $passphrase);
+        $service = $this->stampServiceProvider();
 
-        $status = $service->getSatStatus($this->empresa->cifnif, $this->cfdi->rfcreceptor, $this->cfdi->uuid, $this->cfdi->total);
-        $this->toolBox()::log()->warning('Estatus del comprobante: ' . $status->query());
-        $this->toolBox()::log()->warning('Es cancelable: ' . $status->cancellable());
-        $this->toolBox()::log()->warning('Estado de la cancelación: ' . $status->cancellation());
+        if ($service->cancelar($this->cfdi->uuid, $cerfile, $keyfile, $passphrase)) {
+            $this->toolBox()::log()->notice('Cfdi cancelado correctamente');
+        } else {
+            $this->toolBox()::log()->error('No se pudo cancelar el cfdi');
+        }
     }
 
     private function mensajeFacturaNoEncontrada()
@@ -209,6 +213,16 @@ class EditCfdiCliente extends Controller
         } else {
             $this->toolBox()::log()->warning('Error al guardar el CFDI');
         }
+    }
+
+    private function statusCfdi()
+    {
+        $service = $this->stampServiceProvider();
+
+        $status = $service->getSatStatus($this->empresa->cifnif, $this->cfdi->rfcreceptor, $this->cfdi->uuid, $this->cfdi->total);
+        $this->toolBox()::log()->warning('Estatus del comprobante: ' . $status->query());
+        $this->toolBox()::log()->warning('Es cancelable: ' . $status->cancellable());
+        $this->toolBox()::log()->warning('Estado de la cancelación: ' . $status->cancellation());
     }
 
     public function isFacturaEgreso()
@@ -269,5 +283,14 @@ class EditCfdiCliente extends Controller
         $pdf = new PDFCfdi($reader);
 
         $pdf->getPdf();
+    }
+
+    private function stampServiceProvider()
+    {
+        $username = $this->toolBox()::appSettings()::get('cfdi', 'stampuser');
+        $testmode = $this->toolBox()::appSettings()::get('cfdi', 'testmode', true);
+        $token = $this->toolBox()::appSettings()::get('cfdi', 'stamptoken');
+
+        return new FinkokStampService($username, $token, $testmode);
     }
 }

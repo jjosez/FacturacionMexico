@@ -68,34 +68,19 @@
                         {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
                         <small>Factura enviada el: {{ fsc.factura.femail }}</small>
                     </div>
-                    <div class="form-row">
-
-                    </div>
-                    {% if fsc.isFacturaEgreso() %}
-                        <div class="table-responsive">
-                            {{ _self.drawTablaRelacionados(fsc) }}
-                        </div>
-                    {% endif %}
                 </div>
-                <form action="" method="post">
-                    <div class="card-footer text-white text-right">
-                        <form method="post">
-                            <button type="submit" name="action" value="cancelar" class="btn btn-danger">
-                                <i class="fas fa-skull" aria-hidden="true"></i>&nbsp;Cancelar</button>
-                        </form>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-header">Conceptos</div>
-            <div class="card-body">
-                {{ dump(fsc.reader.cfdiRelacionado()) }}
-                <div class="table-responsive">
-                    {{ _self.drawTablaConceptos(fsc.reader.conceptos(), fsc) }}
+                <div class="card-footer text-white text-right">
+                    <form id="cancelarCfdiForm" method="post">
+                        <input type="hidden" name="action" value="cancelar">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-skull" aria-hidden="true"></i>&nbsp;Cancelar
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
+        {{ _self.blockCfdiRelacionados(fsc.reader.cfdiRelacionados(), fsc) }}
+        {{ _self.blockCfdiConceptos(fsc.reader.conceptos(), fsc) }}
         <div class="card">
             <div class="card-header">SAT</div>
             <div class="card-body">
@@ -145,55 +130,110 @@
             </div>
         </div>
     </div>
+    <script>
+        $(document).ready(function () {
+            $('#cancelarCfdiForm').submit(function (e) {
+                var currentForm = this;
+                var message = 'Esta a punto de cancelar este CFDI. ¿Está seguro de que desea continuar?';
+
+                e.preventDefault();
+                bootbox.confirm({
+                    title: 'Confirmar',
+                    message: message,
+                    closeButton: false,
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fas fa-times"></i> Cancelar'
+                        },
+                        confirm: {
+                            label: '<i class="fas fa-check"></i> Continuar',
+                            className: "btn-warning"
+                        }
+                    },
+                    callback: function (result) {
+                        if (result) {
+                            currentForm.submit();
+                        }
+                    }
+                });
+            });
+        })
+    </script>
 {% endblock %}
-{%- macro drawTablaConceptos(conceptos, fsc) %}
-    <table class="table table-striped">
-        <thead class="thead-light">
-        <tr>
-            <th scope="col">Cantidad</th>
-            <th scope="col">No. identificacion</th>
-            <th scope="col">Descripcion</th>
-            <th scope="col">Clave SAT</th>
-            <th scope="col">Clave UM</th>
-            <th scope="col">Precio</th>
-            <th scope="col">Total</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for concepto in conceptos %}
-            <tr>
-                <td>{{ concepto.cantidad }}</td>
-                <td>{{ concepto.noidentificacion }}</td>
-                <td>{{ concepto.descripcion }}</td>
-                <td>{{ concepto.ClaveProdServ }}</td>
-                <td>{{ concepto.claveunidad }}</td>
-                <td>{{ concepto.valorunitario }}</td>
-                <td>{{ concepto.importe }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+
+{%- macro blockCfdiConceptos(conceptos, fsc) %}
+    <div class="card">
+        <div class="card-header">Conceptos</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="thead-light">
+                    <tr>
+                        <th scope="col">Cantidad</th>
+                        <th scope="col">No. identificacion</th>
+                        <th scope="col">Descripcion</th>
+                        <th scope="col">Clave SAT</th>
+                        <th scope="col">Clave UM</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col">Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for concepto in conceptos %}
+                        <tr>
+                            <td>{{ concepto.cantidad }}</td>
+                            <td>{{ concepto.noidentificacion }}</td>
+                            <td>{{ concepto.descripcion }}</td>
+                            <td>{{ concepto.ClaveProdServ }}</td>
+                            <td>{{ concepto.claveunidad }}</td>
+                            <td>{{ concepto.valorunitario }}</td>
+                            <td>{{ concepto.importe }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 {% endmacro -%}
-{%- macro drawTablaRelacionados(fsc) %}
-    <table class="table table-borderless table-hover">
-        <thead>
-        <tr>
-            <th scope="col">Factura</th>
-            <th scope="col">UUID</th>
-            <th scope="col">Total</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for relacionado in fsc.getCfdisRelacionados() %}
-            <tr>
-                <td>{{ relacionado.razonreceptor }}</td>
-                <td><a href="{{ relacionado.url() }}">{{ relacionado.uuid }}</a></td>
-                <td>{{ relacionado.total }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-{% endmacro -%}
+
+{% macro blockCfdiRelacionados(relacion, fsc) %}
+    {%- if relacion.relacionados %}
+        <div class="card">
+            <div class="card-header">Facturas relacionadas</div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-12">
+                        <strong>Tipo de relacion:</strong> {{ fsc.catalogoSat().tipoRelacion().getDescripcion(relacion.tiporelacion) }}
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="thead-light">
+                        <tr>
+                            <th scope="col">Cliente</th>
+                            <th scope="col">UUID</th>
+                            <th scope="col">Total</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for relacionado in relacion.relacionados %}
+                            {% set cfdi = fsc.loadCfdiFromUUID(relacionado) %}
+                            <tr>
+                                <td>{{ cfdi.razonreceptor }}</td>
+                                <td><a href="{{ cfdi.url() }}">{{ cfdi.uuid }}</a></td>
+                                <td>{{ cfdi.total }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif -%}
+{% endmacro %}
+
+
 
 
 

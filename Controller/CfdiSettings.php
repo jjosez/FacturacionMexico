@@ -83,11 +83,11 @@ class CfdiSettings extends Controller
 
     private function saveStampServiceCredentials()
     {
-        $user = $this->request->request->get('finkokuser', '');
-        $this->toolBox()::appSettings()->set('cfdi', 'finkokuser', $user);
+        $user = $this->request->request->get('stampuser', '');
+        $this->toolBox()::appSettings()->set('cfdi', 'stampuser', $user);
 
-        $token = $this->request->request->get('finkoktoken', '');
-        $this->toolBox()::appSettings()->set('cfdi', 'finkoktoken', $token);
+        $token = $this->request->request->get('stamptoken', '');
+        $this->toolBox()::appSettings()->set('cfdi', 'stamptoken', $token);
 
         $testmode = ($this->request->request->get('testmode') === 'on') ? true : false;
         $this->toolBox()::appSettings()->set('cfdi', 'testmode', $testmode);

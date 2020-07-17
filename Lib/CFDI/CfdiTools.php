@@ -8,7 +8,6 @@ use FacturaScripts\Dinamic\Model\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\EgresoCfdiBuilder;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\GlobalCfdiBuilder;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\IngresoCfdiBuilder;
-use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiRelacion;
 
 class CfdiTools
 {
@@ -19,9 +18,10 @@ class CfdiTools
         return $builder->getXml();
     }
 
-    public static function buildCfdiIngreso($factura, $empresa, $uso)
+    public static function buildCfdiIngreso($factura, $empresa, $uso, $relacion)
     {
         $builder = new IngresoCfdiBuilder($factura, $empresa, $uso);
+        $builder->setDocumentosRelacionados($relacion['relacionados'], $relacion['tiporelacion']);
         return $builder->getXml();
     }
 
@@ -53,28 +53,16 @@ class CfdiTools
         $cfdi->uuid = $reader->uuid();
 
         if ($cfdi->save()) {
-            $cfdiXml = new CfdiData();
+            $factura->idestado = 11;
+            $factura->save();
 
-            $cfdiXml->idcfdi = $cfdi->idcfdi;
-            $cfdiXml->uuid = $cfdi->uuid;
-            $cfdiXml->xml = $xml;
+            $cfdiData = new CfdiData();
 
-            if ($cfdiXml->save()) {
-                $relacionados = $reader->cfdiRelacionado();
+            $cfdiData->idcfdi = $cfdi->idcfdi;
+            $cfdiData->uuid = $cfdi->uuid;
+            $cfdiData->xml = $xml;
 
-                foreach ($relacionados['relacionados'] as $relacionado) {
-                    $cfdiRelacionado = new CfdiCliente();
-
-                    if ($cfdiRelacionado->loadFromUUID($relacionado)) {
-                        $cfdiRelacionado->cfdirelacionado = $cfdi->idcfdi;
-                        $cfdiRelacionado->tiporelacion = $relacionados['tiporelacion'];
-                        $cfdiRelacionado->uuidrelacionado = $cfdi->uuid;
-
-                        $cfdiRelacionado->save();
-                    }
-                }
-                return true;
-            }
+            return $cfdiData->save();
         }
 
         return false;
