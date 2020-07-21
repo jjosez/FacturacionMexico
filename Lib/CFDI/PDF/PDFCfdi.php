@@ -21,6 +21,18 @@ class PDFCfdi extends PDFCfdiCore
 
     public function getPdf()
     {
+        $this->buildPdf();
+        return $this->pdf->ezStream(['compress' => 0]);
+    }
+
+    public function getPdfBuffer()
+    {
+        $this->buildPdf();
+        return $this->pdf->ezOutput();
+    }
+
+    private function buildPdf()
+    {
         $this->insertPageNum();
         $this->insertPageHeader();
         $this->insertReceptor();
@@ -30,8 +42,6 @@ class PDFCfdi extends PDFCfdiCore
         $this->insertTablaTotales();
         $this->insertTimbreFiscal();
         $this->insertPageFooter();
-
-        return $this->getResult();
     }
 
     private function insertPageHeader()

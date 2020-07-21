@@ -51,7 +51,7 @@ class PDFCfdiCore
     protected function writeTextWrapped(float $width, string $text, array $options = [], $fontSize = '', $lineBreak = 0)
     {
         $fontSize = $fontSize ?: self::FONT_SIZE;
-        $newText = wordwrap($text, 60);
+        $newText = wordwrap($text, $width);
 
         $this->pdf->ezText($newText, $fontSize, $options);
         $this->moveCursorPosition($lineBreak);

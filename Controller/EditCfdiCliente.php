@@ -2,6 +2,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Base\Controller;
+use FacturaScripts\Dinamic\Lib\EmailTools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
@@ -124,6 +125,10 @@ class EditCfdiCliente extends Controller
 
             case 'cfdi-relacionado':
                 $this->findCfdiRequest();
+                return false;
+
+            case 'enviar-email':
+                $this->enviarCfdiEmail();
                 return false;
 
             case 'timbrar':
@@ -266,6 +271,15 @@ class EditCfdiCliente extends Controller
         return true;
     }
 
+    private function stampServiceProvider()
+    {
+        $username = $this->toolBox()::appSettings()::get('cfdi', 'stampuser');
+        $testmode = $this->toolBox()::appSettings()::get('cfdi', 'testmode', true);
+        $token = $this->toolBox()::appSettings()::get('cfdi', 'stamptoken');
+
+        return new FinkokStampService($username, $token, $testmode);
+    }
+
 
     private function downloadXmlAction()
     {
@@ -285,12 +299,49 @@ class EditCfdiCliente extends Controller
         $pdf->getPdf();
     }
 
-    private function stampServiceProvider()
+    private function enviarCfdiEmail()
     {
-        $username = $this->toolBox()::appSettings()::get('cfdi', 'stampuser');
-        $testmode = $this->toolBox()::appSettings()::get('cfdi', 'testmode', true);
-        $token = $this->toolBox()::appSettings()::get('cfdi', 'stamptoken');
+        $filesPath = FS_FOLDER . '/MyFiles/';
+        $cliente = $this->factura->getSubject();
 
-        return new FinkokStampService($username, $token, $testmode);
+        if (!$cliente->email) {
+            $this->toolBox()::log()->warning('El cliente no tiene asignado algun Email');
+            return;
+        }
+
+        $filename = $this->cfdi->uuid;
+
+        $pdf = (new PDFCfdi($this->reader))->getPdfBuffer();
+        file_put_contents($filesPath . $filename . '.pdf', $pdf);
+        file_put_contents($filesPath . $filename . '.xml', $this->xml);
+
+        $emailTools = new EmailTools();
+        $mail = $emailTools->newMail();
+        $mail->Subject = 'Facturacion - ' . $this->empresa->nombrecorto;
+
+        $emailTools->addEmails($mail, $cliente->email);
+
+        $emailTools->addAttachment($mail, $filename . '.pdf');
+        $emailTools->addAttachment($mail, $filename . '.xml');
+
+        $data = [
+            'company' => $this->empresa->nombre,
+            'body' => 'En este correo se anexa su comprobante fiscal.'
+        ];
+
+        $body = $emailTools->getTemplateHtml($data);
+        $mail->msgHTML($body);
+
+        if ($emailTools->send($mail)) {
+            $this->toolBox()::i18nLog()->info('send-mail-ok');
+        }
+
+        if (file_exists($filesPath . $filename . '.pdf')) {
+            unlink($filesPath . $filename . '.pdf');
+        }
+
+        if (file_exists($filesPath . $filename . '.xml')) {
+            unlink($filesPath . $filename . '.xml');
+        }
     }
 }

@@ -62,7 +62,8 @@ abstract class CfdiBuilder
     protected function setDatosCliente()
     {
         $fiscalID = $this->factura->cifnif;
-        $customer = (new Cliente())->get($this->factura->codcliente);
+        $customer = $this->factura->getSubject();
+        //$customer = (new Cliente())->get($this->factura->codcliente);
 
         if ($customer->cifnif !== $fiscalID) {
             throw new \Exception('El ID Fiscal del cliente ' . $fiscalID
