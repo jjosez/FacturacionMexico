@@ -2,11 +2,11 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder;
 
+use _HumbugBox3ab8cff0fda0\___PHPSTORM_HELPERS\this;
 use CfdiUtils\Certificado\Certificado;
 use CfdiUtils\CfdiCreator33;
 use CfdiUtils\XmlResolver\XmlResolver;
 use FacturaScripts\Core\App\AppSettings;
-use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 
@@ -18,6 +18,9 @@ abstract class CfdiBuilder
     protected $creator;
     protected $empresa;
     protected $factura;
+    protected $llaveprivada;
+    protected $certificado;
+    protected $secreto;
     protected $tipo;
     protected $uso;
 
@@ -102,21 +105,21 @@ abstract class CfdiBuilder
 
     protected function setSello()
     {
-        $filename = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'keyfile');
-        $password = AppSettings::get('cfdi', 'passphrase');
-        $llave = file_get_contents($filename) ?: '';
+        // $filename = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'keyfile');
+        // $password = AppSettings::get('cfdi', 'passphrase');
+        // $llave = file_get_contents($filename) ?: '';
 
-        $this->creator->addSello($llave, $password);
+        $this->creator->addSello($this->llaveprivada, $this->secreto);
     }
 
     private function inicializaComprobante()
     {
         $atributos = $this->getAtributosComprobante();
 
-        $certificado = new Certificado(CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'cerfile'));
+        //$certificado = new Certificado(CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'cerfile'));
         $resolver = new XmlResolver(CFDI_XSLT_DIR);
 
-        $this->creator = new CfdiCreator33($atributos, $certificado);
+        $this->creator = new CfdiCreator33($atributos, $this->certificado);
         $this->creator->setXmlResolver($resolver);
 
         $this->comprobante = $this->creator->comprobante();
@@ -181,5 +184,25 @@ abstract class CfdiBuilder
         }
 
         return $traslado;
+    }
+
+    protected function tasaCambio(string $moneda, float $tasa)
+    {
+        if ('MXN' == $moneda) {
+            return 1;
+        }
+
+        return $tasa;
+    }
+
+    public function setCertificado(String $filename) :void
+    {
+        $this->certificado = new Certificado($filename);
+    }
+
+    public function setLlavePrivada(String $filename, String $secreto)
+    {
+        $this->llaveprivada = file_get_contents($filename) ?: '';
+        $this->secreto = $secreto;
     }
 }

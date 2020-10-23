@@ -1,0 +1,43 @@
+{% import 'Macro/Form.html.twig' as form %}
+<div class="card mb-3">
+    <div class="card-header">Facturas relacionadas</div>
+    <div class="card-body">
+        <div class="form-row">
+            <div class="form-group col-12 col-md-6">
+                {{ form.inputselect('tiporelacion', 'tiporelacion', 'Tipo de relación',
+                    fsc.catalogoSat().tipoRelacion().all(), '01') }}
+            </div>
+            <div class="form-group col-12 col-md-6">
+                <label for="uuidrelacionado">Folio fiscal</label>
+                <div class="input-group">
+                    <input type="text" id="uuidrelacionado" class="form-control" placeholder="UUID">
+                    <div class="input-group-append">
+                        <button type="button" id="addCfdiRelacionBtn" class="btn btn-warning">Agregar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-borderless table-sm" id="tablaRelacionados">
+                <thead>
+                <tr>
+                    <th scope="col">Receptor</th>
+                    <th scope="col">UUID</th>
+                    <th scope="col">Total</th>
+                    <th scope="col" style="width: 90px">Accion</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for relacionado in fsc.getCfdisRelacionados() %}
+                    <tr>
+                        <td>{{ relacionado.razonreceptor }}</td>
+                        <td><input type="hidden" name="relacionados[]" value="{{ relacionado.uuid }}">
+                            {{ relacionado.uuid }}</td>
+                        <td>{{ relacionado.total }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

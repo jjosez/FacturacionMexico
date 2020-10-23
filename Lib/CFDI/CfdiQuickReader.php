@@ -85,6 +85,21 @@ class CfdiQuickReader
         return $result;
     }
 
+    public function conceptosTraslados($concepto)
+    {
+        $result = [];
+
+        foreach(($concepto->impuestos->traslados)() as $traslado) {
+            $result[] = [
+                'impuesto' => $traslado['impuesto'],
+                'tasa' => $traslado['tasaocuota'],
+                'importe' => $traslado['importe'],
+            ];
+        }
+
+        return $result;
+    }
+
     public function emisorNombre()
     {
         return $this->comprobante->emisor['Nombre'];

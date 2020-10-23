@@ -39,6 +39,7 @@
         <input type="hidden" id="codcliente" name="codcliente" value='{{ fsc.factura.codcliente }}'>
         <input type="hidden" name="invoice" value='{{ fsc.factura.idfactura }}'>
         <div class="container-fluid">
+            {{ include('NewCfdiWizard.html.twig') }}
             <div class="card-deck mb-3">
                 <div class="card">
                     <div class="card-header">Cliente</div>
@@ -114,6 +115,22 @@
         </div>
     </div>
     <script src="{{ asset('Plugins/FacturacionMexico/Assets/JS/FacturacionMexico.js') }}"></script>
+    <script src="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/js/jquery.smartWizard.min.js') }}"></script>
+
+    <script>
+        $(document).ready(function(){
+            $('#newcfdiwizard').smartWizard({
+                theme: 'dots',
+                keyboardSettings: {
+                    keyNavigation: false
+                },
+                lang: {
+                    next: 'Siguiente',
+                    previous: 'Anterior'
+                },
+            });
+        });
+    </script>
 {% endblock %}
 
 {%- macro blockCfdiConceptos(conceptos, fsc) %}
@@ -154,7 +171,7 @@
 {% endmacro -%}
 
 {%- macro blockCfdiRelacionados(fsc) %}
-    <div class="card">
+    <div class="card mb-3">
         <div class="card-header">Facturas relacionadas</div>
         <div class="card-body">
             <div class="form-row">

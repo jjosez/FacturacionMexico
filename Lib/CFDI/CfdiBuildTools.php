@@ -3,37 +3,51 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI;
 
-use CfdiUtils\Certificado\Certificado;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\EgresoCfdiBuilder;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\GlobalCfdiBuilder;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\IngresoCfdiBuilder;
 
-class CfdiTools
+class CfdiBuildTools
 {
-    public function __construct(Certificado $certificado, $llave, $secreto)
-    {
+    private $cert;
+    private $key;
+    private $passPhrase;
 
+    public function __construct(string $certFile, string $keyFile, string $passPhrase)
+    {
+        $this->cert = $certFile;
+        $this->key = $keyFile;
+        $this->passPhrase = $passPhrase ?: '';
     }
 
-    public static function buildCfdiEgreso($factura, $empresa, $uso, $relacion)
+    public function buildCfdiEgreso($factura, $empresa, $uso, $relacion)
     {
         $builder = new EgresoCfdiBuilder($factura, $empresa, $uso);
+        $builder->setCertificado($this->cert);
+        $builder->setLlavePrivada($this->key, $this->passPhrase);
         $builder->setDocumentosRelacionados($relacion['relacionados'], $relacion['tiporelacion']);
+
         return $builder->getXml();
     }
 
-    public static function buildCfdiIngreso($factura, $empresa, $uso, $relacion)
+    public function buildCfdiIngreso($factura, $empresa, $uso, $relacion)
     {
         $builder = new IngresoCfdiBuilder($factura, $empresa, $uso);
+        $builder->setCertificado($this->cert);
+        $builder->setLlavePrivada($this->key, $this->passPhrase);
         $builder->setDocumentosRelacionados($relacion['relacionados'], $relacion['tiporelacion']);
+
         return $builder->getXml();
     }
 
-    public static function buildCfdiGlobal($factura, $empresa)
+    public function buildCfdiGlobal($factura, $empresa)
     {
         $builder = new GlobalCfdiBuilder($factura, $empresa);
+        $builder->setCertificado($this->cert);
+        $builder->setLlavePrivada($this->key, $this->passPhrase);
+
         return $builder->getXml();
     }
 

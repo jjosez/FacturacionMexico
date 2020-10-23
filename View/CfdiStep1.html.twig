@@ -1,0 +1,70 @@
+{% import 'Macro/Form.html.twig' as form %}
+<div class="card-deck mb-3">
+    <div class="card">
+        <div class="card-header">Cliente</div>
+        <div class="card-body">
+            <div class="form-group mb-4">
+                {% set defaultUso = appSettings.get('cfdi','uso') %}
+                {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI',
+                    fsc.catalogoSat().usoCfdi().all(), defaultUso) }}
+            </div>
+            <div class="form-group">
+                {{ form.inputtext('razonsocial', 'Razón social', fsc.factura.nombrecliente, 'disabled') }}
+            </div>
+            <div class="form-group">
+                {{ form.inputtext('rfc', 'RFC', fsc.factura.cifnif, 'disabled') }}
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">Factura</div>
+        <div class="card-body">
+            <div class="form-group">
+                {% set lugarexpedicion = fsc.empresa.ciudad %}
+                {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', lugarexpedicion, 'disabled') }}
+            </div>
+            <div class="form-group">
+                {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header">Conceptos</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="thead-light">
+                <tr>
+                    <th scope="col">Cantidad</th>
+                    <th scope="col">No. identificacion</th>
+                    <th scope="col">Descripcion</th>
+                    <th scope="col">Clave SAT</th>
+                    <th scope="col">Unidad</th>
+                    <th scope="col">Precio</th>
+                    <th scope="col">Total</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for linea in fsc.factura.getLines() %}
+                    {% set familia = linea.getProducto().familia() %}
+                    <tr>
+                        <td>{{ linea.cantidad }}</td>
+                        <td>{{ linea.referencia }}</td>
+                        <td>{{ linea.descripcion }}</td>
+                        <td>{{ familia.clavesat }}</td>
+                        <td>{{ familia.claveunidad }}</td>
+                        <td>{{ linea.pvpunitario }}</td>
+                        <td>{{ linea.pvptotal }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right text-muted" >Impuesto:</td>
+                        <td>{{ linea.iva }} %</td>
+                        <td>{{ linea.pvptotal * linea.iva / 100 }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

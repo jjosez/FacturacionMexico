@@ -15,7 +15,7 @@ class Producto
         };
     }
 
-    public function getUnidadMedida()
+    public function unidadMedidaSAT()
     {
         return function () {
             return 'H87';

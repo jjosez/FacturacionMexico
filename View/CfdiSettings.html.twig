@@ -43,7 +43,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="tab-content">
-                            <div class="tab-pane container active" id="general">
+                            <div class="tab-pane container-fluid active" id="general">
                                 <form action="{{ fsc.url() }}" autocomplete="off" enctype="multipart/form-data"
                                       method="post">
                                     <input type="hidden" name="action" value='save-settings'>
@@ -56,6 +56,13 @@
                                     <div class="form-group row mb-4">
                                         {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI',
                                             fsc.catalogoSat().usoCfdi.all(), defaultUso) }}
+                                    </div>
+                                    <div class="row">
+                                        <div class="alert alert-warning col" role="alert">
+                                            <strong>¡Importante!</strong>
+                                            <p>Es responsabilidad del administrador mantener segura tu instalacion, debido a la importancia de mantener segura tu llave privada.
+                                            De igual forma puedes omitir esta informacion e ingresarla cada vez que envies un CFDI al PAC para su timbrado.</p>
+                                        </div>
                                     </div>
                                     <div class="form-group row">
                                         {% set text = appSettings.get('cfdi', 'cerfile', 'Certificado') %}
@@ -75,7 +82,7 @@
                                     </div>
                                 </form>
                             </div>
-                            <div class="tab-pane container fade" id="wscredentials">
+                            <div class="tab-pane container-fluid fade" id="wscredentials">
                                 <div class="row"><small>** Solicite su informacion de acceso para poder utilizar el servicio de timbrado.</small></div>
                                 <form action="{{ fsc.url() }}" autocomplete="off" method="post">
                                     <input type="hidden" name="action" value='save-stamp-settings'>
@@ -101,7 +108,7 @@
                                     </div>
                                 </form>
                             </div>
-                            <div class="tab-pane container fade" id="libfiles">
+                            <div class="tab-pane container-fluid fade" id="libfiles">
                                 <div class="row">
                                     <p>Almacen de recursos locales para agilizar el proceso de generacion de la cadena
                                         original.</p>

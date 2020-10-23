@@ -7,6 +7,7 @@ use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiBuildTools;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiTools;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF\PDFCfdi;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\StampService\FinkokStampService;
@@ -56,7 +57,7 @@ class EditCfdiCliente extends Controller
                 $this->xml = $this->cfdi->getXml();
                 $this->reader = new CfdiQuickReader($this->xml);
             } else {
-                $template = 'NewCfdiCliente';
+                $template = 'NuevoCfdiCliente';
             }
         }
 
@@ -79,10 +80,13 @@ class EditCfdiCliente extends Controller
         $relacionado = new CfdiCliente();
 
         foreach ($this->factura->parentDocuments() as $parent){
+            if ($parent->modelClassName() !== 'FacturaCliente') {
+                continue;
+            }
+
             if ($relacionado->loadFromInvoice($parent->idfactura)) {
                 $result[] = $relacionado;
             }
-            continue;
         }
         return $result;
     }
@@ -128,7 +132,7 @@ class EditCfdiCliente extends Controller
                 return false;
 
             case 'enviar-email':
-                $this->enviarCfdiEmail();
+                $this->sendEmailAction();
                 return false;
 
             case 'timbrar':
@@ -153,24 +157,33 @@ class EditCfdiCliente extends Controller
     {
         if (false === $this->factura) return false;
 
+        $cerfile = $this->request->files->get('cerfile', false);
+        $keyfile = $this->request->files->get('keyfile', false);
+        $passPhrase = $this->request->request->get('passphrase', false);
+
+        $cfdiTools = new CfdiBuildTools($cerfile->getRealPath(), $keyfile->getRealPath(), $passPhrase);
+
         if ($this->isFacturaEgreso()) {
             $relacion['tiporelacion'] = $this->request->request->get('tiporelacion', false);
             $relacion['relacionados'] = $this->request->request->get('relacionados', []);
 
             if (false === $this->testFacturaEgresoParents($relacion['relacionados'])) return false;
 
-            return $this->xml = CfdiTools::buildCfdiEgreso($this->factura, $this->empresa, 'G02', $relacion);
+            //return $this->xml = CfdiTools::buildCfdiEgreso($this->factura, $this->empresa, 'G02', $relacion);
+            return $this->xml = $cfdiTools->buildCfdiEgreso($this->factura, $this->empresa, 'G02', $relacion);
         }
 
         $global = $this->request->request->get('globalinvoice', false);
         if ($global) {
-            return $this->xml = CfdiTools::buildCfdiGlobal($this->factura, $this->empresa);
+            //return $this->xml = CfdiTools::buildCfdiGlobal($this->factura, $this->empresa);
+            return $this->xml = $cfdiTools->buildCfdiGlobal($this->factura, $this->empresa);
         } else {
             $uso = $this->request->request->get('usocfdi', 'G03');
             $relacion['tiporelacion'] = $this->request->request->get('tiporelacion', false);
             $relacion['relacionados'] = $this->request->request->get('relacionados', []);
 
-            return $this->xml = CfdiTools::buildCfdiIngreso($this->factura, $this->empresa, $uso, $relacion);
+            //return $this->xml = CfdiTools::buildCfdiIngreso($this->factura, $this->empresa, $uso, $relacion);
+            return $this->xml = $cfdiTools->buildCfdiIngreso($this->factura, $this->empresa, $uso, $relacion);
         }
     }
 
@@ -299,7 +312,7 @@ class EditCfdiCliente extends Controller
         $pdf->getPdf();
     }
 
-    private function enviarCfdiEmail()
+    private function sendEmailAction()
     {
         $filesPath = FS_FOLDER . '/MyFiles/';
         $cliente = $this->factura->getSubject();

@@ -103,7 +103,8 @@ class PDFCfdi extends PDFCfdiCore
         $this->setCursorPosition($cursorPosition);
     }
 
-    private function insertPagos() {
+    private function insertPagos()
+    {
         $this->moveCursorPosition(10);
         $text = 'Metodo de pago: ' . $this->reader->metodoPago()
             . ' Forma de pago: ' . $this->reader->formaPago();

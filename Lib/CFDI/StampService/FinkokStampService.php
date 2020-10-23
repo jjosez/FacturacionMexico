@@ -23,24 +23,24 @@ class FinkokStampService
 
     public function timbrar(string $precfdi) : StampServiceResponse
     {
-        $result = new StampServiceResponse();
+        $response = new StampServiceResponse();
         $finkok = new QuickFinkok($this->finkokSettings);
         $stampResult = $finkok->stamp($precfdi);
 
         if ($stampResult->hasAlerts()) {
-            $result->setResponse('error');
+            $response->setResponse('error');
             foreach ($stampResult->alerts() as $alert) {
-                $result->setMessage('Error al timbrar el documento');
-                $result->setMessageDetail($alert->message());
+                $response->setMessage('Error al timbrar el documento');
+                $response->setMessageDetail($alert->message());
             }
         } else {
-            $result->setResponse('success');
-            $result->setMessage('Factura timbrada correctamente');
-            $result->setXml($stampResult->xml());
-            $result->setUUID($stampResult->uuid());
+            $response->setResponse('success');
+            $response->setMessage('Factura timbrada correctamente');
+            $response->setXml($stampResult->xml());
+            $response->setUUID($stampResult->uuid());
         }
 
-        return $result;
+        return $response;
     }
 
     public function cancelar($uuid, $cerfile, $keyfile, $password)

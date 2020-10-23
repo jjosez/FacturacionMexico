@@ -22,7 +22,7 @@ class IngresoCfdiBuilder extends CfdiBuilder
             'Fecha' => $this->getFechaFactura($this->factura->fecha, $this->factura->hora),
             'FormaPago' => $this->factura->codpago,
             'Moneda' => $this->factura->coddivisa,
-            'TipoCambio' => $this->factura->tasaconv,
+            'TipoCambio' => ($this->factura->coddivisa === 'MXN') ? '1' : $this->factura->tasaconv,
             'TipoDeComprobante' => $this->tipo,
             'MetodoPago' => 'PUE',
             'LugarExpedicion' => $this->empresa->codpostal,

@@ -125,7 +125,7 @@ class PDFCfdiCore
 
     protected function getUsablePageWidth()
     {
-        return $this->pageWidth - self::MARGIN_L - self::MARGIN_R;
+        return $this->pageWidth - (self::MARGIN_L + self::MARGIN_R);
     }
 
     protected function setCursorPosition($y)
