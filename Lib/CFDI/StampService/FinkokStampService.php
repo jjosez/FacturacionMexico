@@ -1,16 +1,20 @@
 <?php
 
-
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\StampService;
 
 use PhpCfdi\Credentials\Credential;
 use PhpCfdi\Finkok\FinkokEnvironment;
 use PhpCfdi\Finkok\FinkokSettings;
 use PhpCfdi\Finkok\QuickFinkok;
+use PhpCfdi\XmlCancelacion\Models\CancelDocument;
+use PhpCfdi\XmlCancelacion\Models\CancelReason;
+use PhpCfdi\XmlCancelacion\Models\Uuid;
 
 class FinkokStampService
 {
     private $finkokSettings;
+
+    private $cancellationDocument;
 
     public function __construct($username, $password, $test = false)
     {
@@ -32,44 +36,73 @@ class FinkokStampService
             foreach ($stampResult->alerts() as $alert) {
                 $response->setMessage('Error al timbrar el documento');
                 $response->setMessageDetail($alert->message());
+                $response->setMessageErrorCode($alert->errorCode());
+
+                if ('307' === $alert->errorCode() && $alert->workProcessId()) {
+                    $response->setUuid($alert->workProcessId());
+                    $response->setPreviousSign(true);
+                }
             }
         } else {
             $response->setResponse('success');
             $response->setMessage('Factura timbrada correctamente');
             $response->setXml($stampResult->xml());
-            $response->setUUID($stampResult->uuid());
+            $response->setUuid($stampResult->uuid());
         }
 
         return $response;
     }
 
-    public function cancelar($uuid, $cerfile, $keyfile, $password)
+    public function getTimbradoPrevio(string $precfdi) : StampServiceResponse
     {
-        $credential = Credential::openFiles($cerfile, $keyfile, $password);
+        $response = new StampServiceResponse();
         $finkok = new QuickFinkok($this->finkokSettings);
+        $stampResult = $finkok->stamped($precfdi);
 
-        $result = $finkok->cancel($credential, $uuid);
+        if ($stampResult->hasAlerts()) {
+            $response->setResponse('error');
+            foreach ($stampResult->alerts() as $alert) {
+                $response->setMessage('Error al obtener el documento');
+                $response->setMessageDetail($alert->message());
+                $response->setMessageErrorCode($alert->errorCode());
+            }
+        } else {
+            $response->setResponse('success');
+            $response->setMessage('CFDI obtenido correctamente');
+            $response->setXml($stampResult->xml());
+            $response->setUuid($stampResult->uuid());
+        }
+
+        return $response;
+    }
+
+    public function cancelar(string $uuid, array $credentials, string $substitute = ''): bool
+    {
+        $credential = Credential::openFiles($credentials['certificado'], $credentials['llave'], $credentials['secreto']);
+        $document = CancelDocument::newWithErrorsUnrelated($uuid);
+
+        $finkok = new QuickFinkok($this->finkokSettings);
+        $result = $finkok->cancel($credential, $document);
         $documentInfo = $result->documents()->first();
 
         if ($documentInfo->documentStatus() == 202 || $documentInfo->documentStatus() == 201) {
             return true;
         } elseif ($documentInfo->documentStatus() == 205) {
-            $descripcion =  'UUID: ' . $uuid . ' No encontrado en el SAT';
-            $this->errorLog($descripcion);
+            $this->errorLog('UUID: ' . $uuid . ' No encontrado en el SAT');
         }
-        $this->errorLog($documentInfo->cancellationSatatus());
+        $this->errorLog($documentInfo->cancellationStatus());
 
         return false;
     }
 
-    public function getSatStatus($emisor, $receptor, $uuid, $total)
+    public function getSatStatus(array $query)
     {
         $finkok = new QuickFinkok($this->finkokSettings);
 
-        return $finkok->satStatus($emisor, $receptor, $uuid, $total);
+        return $finkok->satStatus($query['emisor'], $query['receptor'], $query['uuid'], $query['total']);
     }
 
-    private function errorLog($string)
+    private function errorLog($string): void
     {
         $logFile = CFDI_DIR . DIRECTORY_SEPARATOR . 'Log' . DIRECTORY_SEPARATOR . 'log.txt';
         $file = fopen($logFile, 'a');

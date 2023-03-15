@@ -19,10 +19,10 @@ class PDFCfdi extends PDFCfdiCore
         $this->reader = $reader;
     }
 
-    public function getPdf()
+    public function downloadPDF()
     {
         $this->buildPdf();
-        return $this->pdf->ezStream(['compress' => 0]);
+        $this->pdf->ezStream(['compress' => 0]);
     }
 
     public function getPdfBuffer()

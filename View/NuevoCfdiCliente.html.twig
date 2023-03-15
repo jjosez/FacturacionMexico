@@ -8,24 +8,25 @@
 {% import 'Macro/Form.html.twig' as form %}
 {% block css %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/css/smart_wizard_all.css') }}">
+    <link rel="stylesheet"
+          href="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/css/smart_wizard_all.css') }}">
 {% endblock %}
 {% set rfcGenerico =  (fsc.factura.cifnif == 'XAXX010101000') ? true : false %}
 {% block bodyHeaderOptions %}
     <div class="container-fluid mb-2">
         <div class="row">
             <div class="col">
-                <div class="btn-group bg-white">
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.url() }}" title="Recargar">
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-dark" href="" title="Recargar">
                         <i class="fas fa-redo" aria-hidden="true"></i>
                     </a>
-                    <a class="btn btn-sm btn-outline-primary" href="{{ fsc.factura.url() }}" title="Recargar">
-                        <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Factura
+                    <a class="btn btn-sm btn-info" href="{{ fsc.factura.url() }}" title="{{ fsc.factura.codigo }}">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;{{ fsc.factura.codigo }}
                     </a>
-                    <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#xmlModal">
-                        <i class="fas fa-file-code" aria-hidden="true"></i>&nbsp;XML
-                    </button>
                 </div>
+                <a class="btn btn-sm btn-info" data-toggle="modal" data-target="#xmlModal">
+                    <i class="fas fa-code" aria-hidden="true"></i>&nbsp;XML
+                </a>
             </div>
             <div class="col text-right">
                 <h1 class="h3">
@@ -46,34 +47,29 @@
             <div id="newcfdiwizard" class="sw sw-justified">
                 <ul class="nav">
                     <li>
-                        <a class="nav-link" href="#step-1">
-                            Datos generales y Conceptos
-                        </a>
+                        <a class="nav-link" href="#step-1">Datos generales y Conceptos</a>
                     </li>
                     <li>
-                        <a class="nav-link" href="#step-2">
-                            CFDIs Relacionados
-                        </a>
+                        <a class="nav-link" href="#step-2">CFDIs Relacionados</a>
                     </li>
                     <li>
-                        <a class="nav-link" href="#step-3">
-                            Enviar al PAC
-                        </a>
+                        <a class="nav-link" href="#step-3">Enviar al PAC</a>
                     </li>
                 </ul>
                 <div class="tab-content">
                     <div id="step-1" class="tab-pane" role="tabpanel">
-                        {{ include('CfdiStep1.html.twig') }}
+                        {{ include('Cfdi-1.html.twig') }}
                     </div>
                     <div id="step-2" class="tab-pane" role="tabpanel">
-                        {{ include('CfdiStep2.html.twig') }}
+                        {{ include('Cfdi-2.html.twig') }}
                     </div>
                     <div id="step-3" class="tab-pane" role="tabpanel">
                         <div class="alert alert-warning" role="alert">
                             {% if appSettings.get('cfdi','testmode') %}
                                 <strong><i class="fas fa-info-circle"></i> Modo prueba activado.</strong>
                             {% endif %}
-                            <p>La informaacion del certificado y la llave privada solo se usara para el presente CFDI, no se almacenarán.</p>
+                            <p>La informaacion del certificado y la llave privada solo se usara para el presente CFDI,
+                                no se almacenarán.</p>
                         </div>
                         <div class="card mb-3">
                             <div class="card-header">Certificado y llave privada</div>
@@ -100,7 +96,8 @@
                                     <div class="form-check">
                                         {% set disabled = (rfcGenerico | default is same as(true)) ? '' : 'disabled' %}
                                         {% set checked = (rfcGenerico | default is same as(true)) ? 'checked' : '' %}
-                                        <input class="form-check-input" type="checkbox" id="globalInvoice" name="globalinvoice" {{ disabled }} {{ checked }}>
+                                        <input class="form-check-input" type="checkbox" id="globalInvoice"
+                                               name="globalinvoice" {{ disabled }} {{ checked }}>
                                         <label class="form-check-label" for="globalInvoice">
                                             Factura global
                                         </label>
@@ -147,7 +144,7 @@
     <script src="{{ asset('Plugins/FacturacionMexico/Assets/JS/FacturacionMexico.js') }}"></script>
     <script src="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/js/jquery.smartWizard.min.js') }}"></script>
     <script>
-        $(document).ready(function(){
+        $(document).ready(function () {
             $('#newcfdiwizard').smartWizard({
                 theme: 'arrows',
                 keyboardSettings: {

@@ -11,18 +11,35 @@ define('CFDI_XSLT_URL', 'http://www.sat.gob.mx/sitio_internet/cfd/3/cadenaorigin
 require_once __DIR__ . '/vendor/autoload.php';
 
 use FacturaScripts\Core\Base\InitClass;
+use FacturaScripts\Core\Model\FormaPago;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 
 class Init extends InitClass
 {
 
     public function init()
     {
+        $this->loadExtension(new Extension\Controller\EditCliente());
         $this->loadExtension(new Extension\Controller\EditFacturaCliente());
         $this->loadExtension(new Extension\Model\Producto());
     }
 
     public function update()
     {
+        $this->setMetodosDePago();
+    }
 
+    protected function setMetodosDePago()
+    {
+        $formaPago = new FormaPago();
+        foreach (CfdiCatalogo::formaPago()->all() as $satFormaPago) {
+            if ($formaPago->loadFromCode($satFormaPago->id)) {
+                continue;
+            }
+
+            $formaPago->codpago = $satFormaPago->id;
+            $formaPago->descripcion = $satFormaPago->descripcion;
+            $formaPago->save();
+        }
     }
 }

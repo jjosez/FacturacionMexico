@@ -33,13 +33,13 @@ class CfdiData extends Base\ModelClass
     public $xml;
     public $uuid;
 
-    public static function primaryColumn()
+    public static function primaryColumn(): string
     {
         return 'uuid';
     }
 
-    public static function tableName()
+    public static function tableName(): string
     {
-        return 'cfdisdata';
+        return 'cfdis_data';
     }
 }

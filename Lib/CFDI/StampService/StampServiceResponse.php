@@ -2,16 +2,28 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\StampService;
 
+use Cassandra\Exception\TruncateException;
+
 class StampServiceResponse
 {
     private $message;
+    /**
+     * @var string
+     */
     private $messageDetail;
     private $response;
     private $xml;
     private $uuid;
+    private $messageErrorCode;
+
+    /**
+     * @var bool
+     */
+    private $previousSign;
 
     public function __construct()
     {
+        $this->previousSign = false;
     }
 
     /**
@@ -68,13 +80,42 @@ class StampServiceResponse
         $this->xml = $xml;
     }
 
-    public function setUUID($uuid)
+    public function setUuid(string $uuid): void
     {
         $this->uuid = $uuid;
     }
 
-    public function uuid()
+    public function getUuid(): string
     {
         return $this->uuid;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMessageErrorCode(): string
+    {
+        return $this->messageErrorCode;
+    }
+
+    /**
+     * @param string $messageErrorCode
+     */
+    public function setMessageErrorCode(string $messageErrorCode): void
+    {
+        $this->messageErrorCode = $messageErrorCode;
+    }
+
+    public function hasPreviousSign(): bool
+    {
+        return $this->previousSign;
+    }
+
+    /**
+     * @param bool $previousSign
+     */
+    public function setPreviousSign(bool $previousSign): void
+    {
+        $this->previousSign = $previousSign;
     }
 }

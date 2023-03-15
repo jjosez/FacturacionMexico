@@ -3,9 +3,12 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI;
 
+use CfdiUtils\Cfdi;
+use CfdiUtils\ConsultaCfdiSat\RequestParameters;
 use CfdiUtils\Nodes\XmlNodeUtils;
 use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
 use CfdiUtils\XmlResolver\XmlResolver;
+use InvalidArgumentException;
 use NumerosEnLetras;
 
 class CfdiQuickReader
@@ -16,10 +19,10 @@ class CfdiQuickReader
     public function __construct($xml)
     {
         if (empty($xml)) {
-            throw new \InvalidArgumentException('XML invalido');
+            throw new InvalidArgumentException('XML invalido');
         }
 
-        $this->cfdi = \CfdiUtils\Cfdi::newFromString($xml);
+        $this->cfdi = Cfdi::newFromString($xml);
         $this->comprobante = $this->cfdi->getQuickReader();
     }
 
@@ -157,60 +160,60 @@ class CfdiQuickReader
         return $this->comprobante->complemento->timbreFiscalDigital['RfcProvCertif'];
     }
 
-    public function qrCodeUrl()
+    public function qrCodeUrl(): string
     {
-        $parameters = \CfdiUtils\ConsultaCfdiSat\RequestParameters::createFromCfdi($this->cfdi);
+        $parameters = RequestParameters::createFromCfdi($this->cfdi);
         return $parameters->expression();
     }
 
-    public function receptorNombre()
+    public function receptorNombre(): string
     {
         return $this->comprobante->receptor['Nombre'];
     }
 
-    public function receptorIdTrib()
+    public function receptorIdTrib(): string
     {
         return $this->comprobante->receptor['NumRegIdTrib'];
     }
 
-    public function receptorRfc()
+    public function receptorRfc(): string
     {
         return $this->comprobante->receptor['Rfc'];
     }
 
-    public function receptorUsoCfdi()
+    public function receptorUsoCfdi(): string
     {
         return (new CfdiCatalogo())->usoCfdi()->getDescripcion(
             $this->comprobante->receptor['UsoCFDI']
         );
     }
 
-    public function selloCfd()
+    public function selloCfd(): string
     {
         return $this->comprobante->complemento->timbreFiscalDigital['SelloCFD'];
     }
 
-    public function selloSat()
+    public function selloSat(): string
     {
         return $this->comprobante->complemento->timbreFiscalDigital['SelloSat'];
     }
 
-    public function serie()
+    public function serie(): string
     {
         return $this->comprobante['Serie'];
     }
 
-    public function tipoComprobamte()
-    {
-        return $this->comprobante['TipoDeComprobante'];
-    }
-
-    public function subTotal()
+    public function subTotal(): string
     {
         return $this->comprobante['SubTotal'];
     }
 
-    public function totalDescuentos()
+    public function tipoComprobamte(): string
+    {
+        return $this->comprobante['TipoDeComprobante'];
+    }
+
+    public function totalDescuentos(): string
     {
         return $this->comprobante['Descuento'];
     }
@@ -233,5 +236,10 @@ class CfdiQuickReader
     public function uuid()
     {
         return $this->comprobante->complemento->timbreFiscalDigital['UUID'];
+    }
+
+    public function version()
+    {
+        return $this->comprobante['Version'];
     }
 }

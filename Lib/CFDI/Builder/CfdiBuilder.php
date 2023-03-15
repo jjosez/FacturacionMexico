@@ -2,10 +2,11 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder;
 
-use _HumbugBox3ab8cff0fda0\___PHPSTORM_HELPERS\this;
 use CfdiUtils\Certificado\Certificado;
-use CfdiUtils\CfdiCreator33;
+use CfdiUtils\CfdiCreator40;
+use CfdiUtils\Elements\Cfdi40\Comprobante;
 use CfdiUtils\XmlResolver\XmlResolver;
+use Exception;
 use FacturaScripts\Core\App\AppSettings;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
@@ -14,38 +15,62 @@ abstract class CfdiBuilder
 {
     const RFC_EXTRANJERO = 'XEXX010101000';
 
+    /**
+     * @var Comprobante
+     */
     protected $comprobante;
+
+    /**
+     * @var CfdiCreator40
+     */
     protected $creator;
+
+    /**
+     * @var Empresa
+     */
     protected $empresa;
+
+    /**
+     * @var FacturaCliente
+     */
     protected $factura;
+
+    /**
+     * @var string
+     */
     protected $llaveprivada;
+
+    /**
+     * @var
+     */
     protected $certificado;
+
+    /**
+     * @var string
+     */
     protected $secreto;
-    protected $tipo;
-    protected $uso;
 
-    public function __construct(FacturaCliente $factura, Empresa $empresa, string $tipo, string $uso)
+    /**
+     * @var string
+     */
+    protected $tipoComprobante;
+
+    public function __construct(FacturaCliente $factura, string $tipo)
     {
-        if (null === $factura) {
-            throw new \Error('Parametros incorrectos');
-        }
-
-        $this->empresa = $empresa;
+        $this->empresa = $factura->getCompany();
         $this->factura = $factura;
-        $this->tipo = $tipo;
-        $this->uso = $uso;
+        $this->tipoComprobante = $tipo;
         $this->inicializaComprobante();
     }
 
     abstract protected function getAtributosComprobante();
-    abstract protected function setConceptos();
 
-    protected function getFechaFactura($f, $h)
+    protected function getFechaFactura($f, $h): string
     {
         return date("Y-m-d", strtotime($f)) . 'T' . date("H:i:s", strtotime($h));
     }
 
-    protected function getIvaFromValue($base, $iva, $round = 2)
+    protected function getIvaFromValue($base, $iva, $round = 2): float
     {
         return $base * $iva / 100;
     }
@@ -57,19 +82,23 @@ abstract class CfdiBuilder
         return $val;
     }
 
-    protected function getTasaValue($iva)
+    protected function getTasaValue($iva): string
     {
         return number_format($iva / 100, 6);
     }
 
-    protected function setDatosCliente()
+    abstract protected function setConceptos();
+
+    /**
+     * @throws Exception
+     */
+    protected function setReceptor(): void
     {
         $fiscalID = $this->factura->cifnif;
         $customer = $this->factura->getSubject();
-        //$customer = (new Cliente())->get($this->factura->codcliente);
 
         if ($customer->cifnif !== $fiscalID) {
-            throw new \Exception('El ID Fiscal del cliente ' . $fiscalID
+            throw new Exception('El ID Fiscal del cliente ' . $fiscalID
                 . 'no coincide con el de la Factura ' . $this->factura->cifnif
             );
         }
@@ -78,7 +107,9 @@ abstract class CfdiBuilder
             $receptor = [
                 'Rfc' => $customer->cifnif,
                 'Nombre' => $customer->razonsocial,
-                'UsoCFDI' => $this->uso,
+                'UsoCFDI' => $customer->usocfdi,
+                'RegimenFiscalReceptor' => $customer->regimenfiscal,
+                'DomicilioFiscalReceptor' => '97780',
             ];
         } else {
             $receptor = [
@@ -93,7 +124,7 @@ abstract class CfdiBuilder
         $this->comprobante->addReceptor($receptor);
     }
 
-    protected function setDatosEmpresa()
+    protected function setEmisor(): void
     {
         $regimen = AppSettings::get('cfdi', 'regimen');
         $emisor = [
@@ -103,44 +134,47 @@ abstract class CfdiBuilder
         $this->comprobante->addEmisor($emisor);
     }
 
-    protected function setSello()
+    protected function setSello(): void
     {
-        // $filename = CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'keyfile');
-        // $password = AppSettings::get('cfdi', 'passphrase');
-        // $llave = file_get_contents($filename) ?: '';
-
         $this->creator->addSello($this->llaveprivada, $this->secreto);
     }
 
-    private function inicializaComprobante()
+    private function inicializaComprobante(): void
     {
         $atributos = $this->getAtributosComprobante();
-
-        //$certificado = new Certificado(CFDI_CERT_DIR . DIRECTORY_SEPARATOR . AppSettings::get('cfdi', 'cerfile'));
         $resolver = new XmlResolver(CFDI_XSLT_DIR);
 
-        $this->creator = new CfdiCreator33($atributos, $this->certificado);
+        $this->creator = new CfdiCreator40($atributos);
         $this->creator->setXmlResolver($resolver);
 
         $this->comprobante = $this->creator->comprobante();
     }
 
-    private function buildComprobante()
+    /**
+     * @throws Exception
+     */
+    protected function buildComprobante(): void
     {
-        $this->setDatosCliente();
-        $this->setDatosEmpresa();
+        $this->setReceptor();
+        $this->setEmisor();
         $this->setConceptos();
         $this->setSello();
     }
 
-    public function getXml()
+    /**
+     * @throws Exception
+     */
+    public function getXml(): string
     {
         $this->buildComprobante();
 
         return $this->creator->asXml();
     }
 
-    public function getValidacion()
+    /**
+     * @throws Exception
+     */
+    public function getValidacion(): void
     {
         $this->buildComprobante();
         $asserts = $this->creator->validate();
@@ -150,24 +184,26 @@ abstract class CfdiBuilder
         }
     }
 
-    public function setDocumentosRelacionados(array $foliosfiascales, string $tiporelacion)
+    public function setDocumentosRelacionados(array $foliosfiascales, string $tiporelacion): void
     {
         if (empty($foliosfiascales)) {
             return;
         }
 
         foreach ($foliosfiascales as $folio) {
-            $this->comprobante->addCfdiRelacionado([
-                'UUID' => $folio,
+            $this->comprobante->addCfdiRelacionados([
+                'TipoRelacion' => $tiporelacion
+            ])->addCfdiRelacionado([
+                'UUID' => $folio
             ]);
         }
 
-        $this->comprobante->getCfdiRelacionados()->addAttributes([
+        /*$this->comprobante->getCfdiRelacionados()->addAttributes([
             'TipoRelacion' => $tiporelacion
-        ]);
+        ]);*/
     }
 
-    protected function buildConceptoTraslado($linea)
+    protected function buildConceptoTraslado($linea): array
     {
         $traslado = [];
         $tipoFactor = ($linea->iva > 0) ? 'Tasa' : 'Exento';
@@ -186,7 +222,7 @@ abstract class CfdiBuilder
         return $traslado;
     }
 
-    protected function tasaCambio(string $moneda, float $tasa)
+    protected function tasaCambio(string $moneda, float $tasa): float
     {
         if ('MXN' == $moneda) {
             return 1;
@@ -195,14 +231,18 @@ abstract class CfdiBuilder
         return $tasa;
     }
 
-    public function setCertificado(String $filename) :void
+    public function setCertificado(string $filename): void
     {
-        $this->certificado = new Certificado($filename);
+        $certificado = new Certificado($filename);
+        $this->creator->putCertificado($certificado);
+        //$this->certificado = new Certificado($filename);
     }
 
-    public function setLlavePrivada(String $filename, String $secreto)
+    public function setLlavePrivada(string $llaveprivada, string $secreto): void
     {
-        $this->llaveprivada = file_get_contents($filename) ?: '';
+
+        //$this->llaveprivada = file_get_contents($filename) ?: '';
+        $this->llaveprivada = $llaveprivada;
         $this->secreto = $secreto;
     }
 }

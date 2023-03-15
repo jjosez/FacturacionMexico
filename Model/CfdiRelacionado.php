@@ -37,13 +37,13 @@ class CfdiRelacionado extends Base\ModelClass
     public $uuid;
     public $uuidrelacionado;
 
-    public static function primaryColumn()
+    public static function primaryColumn(): string
     {
         return 'idrelacion';
     }
 
-    public static function tableName()
+    public static function tableName(): string
     {
-        return 'cfdisrelacionados';
+        return 'cfdis_relacionados';
     }
 }

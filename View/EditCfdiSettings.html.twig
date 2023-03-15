@@ -1,25 +1,26 @@
 {#
 /**
- *  This file is part of EasyPOS plugin for FacturaScripts
+ *  This file is part of FacturacionMexico plugin for FacturaScripts
  *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
 #}
 {% extends 'Master/MenuTemplate.html.twig' %}
 {% import 'Macro/Form.html.twig' as form %}
 {% block bodyHeaderOptions %}
+    {% set pageData = fsc.getPageData() %}
     <div class="container-fluid mb-2">
         <div class="row">
             <div class="col-1">
-                <div class="btn-group bg-white">
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.url() }}" title="Recargar">
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-secondary" href="{{ fsc.url() }}" title="{{ i18n.trans('refresh') }}">
                         <i class="fas fa-redo" aria-hidden="true"></i>
                     </a>
                 </div>
             </div>
             <div class="col-11 text-right">
-                <h1 class="h3">
-                    Ajustes para la emisión de CFDI
-                    <i class="fas fa-cogs fa-fw" aria-hidden="true"></i>
+                <h1 class="h4">
+                    {{ fsc.title }}
+                    <i class="{{ pageData.icon }} fa-fw" aria-hidden="true"></i>
                 </h1>
             </div>
         </div>
@@ -29,39 +30,73 @@
 {% block body %}
     <div class="container-fluid">
         <div class="row">
-            <div class="col-3">
+            <div class="col-lg-2">
                 <div class="nav flex-column nav-pills">
                     <a class="nav-link active show" data-toggle="pill" href="#general">
-                        <i class="fas fa-building fa-fw"></i> Empresa</a>
+                        <i class="fas fa-building fa-fw"></i> General</a>
+                    <a class="nav-link" data-toggle="pill" href="#satcredentials">
+                        <i class="fas fa-file-contract fa-fw"></i> SAT</a>
                     <a class="nav-link" data-toggle="pill" href="#wscredentials">
                         <i class="fas fa-file-contract fa-fw"></i> PAC</a>
                     <a class="nav-link" data-toggle="pill" href="#libfiles">
                         <i class="fas fa-cloud-download-alt fa-fw"></i> Archivos</a>
                 </div>
             </div>
-            <div class="col">
-                <div class="card">
+            <div class="col-lg-10">
+                <div class="card shadow">
                     <div class="card-body">
                         <div class="tab-content">
                             <div class="tab-pane container-fluid active" id="general">
-                                <form action="{{ fsc.url() }}" autocomplete="off" enctype="multipart/form-data"
-                                      method="post">
-                                    <input type="hidden" name="action" value='save-settings'>
+                                <form action="{{ fsc.url() }}" autocomplete="off" method="post">
+                                    <input type="hidden" name="action" value='save-cfdi-settings'>
                                     {% set defaultRegimen = appSettings.get('cfdi','regimen') %}
                                     <div class="form-group row">
                                         {{ form.inputselect('regimenFiscal', 'regimenfiscal', 'Régimen Fiscal',
-                                            fsc.catalogoSat().regimenFiscal().all(), defaultRegimen) }}
+                                            fsc.getCatalogoSat().regimenFiscal().all(), defaultRegimen) }}
                                     </div>
                                     {% set defaultUso = appSettings.get('cfdi','uso') %}
                                     <div class="form-group row mb-4">
                                         {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI',
-                                            fsc.catalogoSat().usoCfdi.all(), defaultUso) }}
+                                            fsc.getCatalogoSat().usoCfdi.all(), defaultUso) }}
                                     </div>
+                                    {% set estadoFactura = appSettings.get('cfdi','estadotimbrada') %}
+                                    <div class="form-group row mb-4">
+                                        <label for="estadoFacturaTimbrado">Estado Factura Cfdi Timbrado</label>
+                                        <select id="estadoFacturaTimbrado" name="estadotimbrada" class="form-control" required>
+                                            <option value="">----</option>
+                                            {% for item in fsc.getInvoiceStatus() %}
+                                                <option value="{{ item.idestado }}" {% if estadoFactura == item.idestado %} selected {% endif %}>
+                                                    {{ item.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% set estadoFactura = appSettings.get('cfdi','estadocancelada') %}
+                                    <div class="form-group row mb-4">
+                                        <label for="estadoFacturaCancelada">Estado Factura Cfdi Cancelado</label>
+                                        <select id="estadoFacturaCancelada" name="estadocancelada" class="form-control">
+                                            <option value="">----</option>
+                                            {% for item in fsc.getInvoiceStatus() %}
+                                                <option value="{{ item.idestado }}" {% if estadoFactura == item.idestado %} selected {% endif %}>
+                                                    {{ item.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <button type="submit" class="btn btn-primary ml-auto">Guardar</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="tab-pane container-fluid" id="satcredentials">
+                                <form action="{{ fsc.url() }}" autocomplete="off" enctype="multipart/form-data"
+                                      method="post">
+                                    <input type="hidden" name="action" value='save-sat-credentials'>
                                     <div class="row">
                                         <div class="alert alert-warning col" role="alert">
                                             <strong>¡Importante!</strong>
-                                            <p>Es responsabilidad del administrador mantener segura tu instalacion, debido a la importancia de mantener segura tu llave privada.
-                                            De igual forma puedes omitir esta informacion e ingresarla cada vez que envies un CFDI al PAC para su timbrado.</p>
+                                            <p>Es responsabilidad del administrador mantener segura tu instalacion,
+                                                debido a la importancia de mantener segura tu llave privada.
+                                                De igual forma puedes omitir esta informacion e ingresarla cada vez que
+                                                envies un CFDI al PAC para su timbrado.</p>
                                         </div>
                                     </div>
                                     <div class="form-group row">
@@ -83,7 +118,8 @@
                                 </form>
                             </div>
                             <div class="tab-pane container-fluid fade" id="wscredentials">
-                                <div class="row"><small>** Solicite su informacion de acceso para poder utilizar el servicio de timbrado.</small></div>
+                                <div class="row"><small>** Solicite su informacion de acceso para poder utilizar el
+                                        servicio de timbrado.</small></div>
                                 <form action="{{ fsc.url() }}" autocomplete="off" method="post">
                                     <input type="hidden" name="action" value='save-stamp-settings'>
                                     <div class="form-group row">
@@ -99,7 +135,8 @@
                                     <div class="form-group row">
                                         <div class="form-check">
                                             {% set checked = (appSettings.get('cfdi', 'testmode') is same as(true)) ? ' checked' : '' %}
-                                            <input class="form-check-input" type="checkbox" id="testMode" name="testmode"{{ checked }}>
+                                            <input class="form-check-input" type="checkbox" id="testMode"
+                                                   name="testmode"{{ checked }}>
                                             <label class="form-check-label" for="testMode">Modo prueba</label>
                                         </div>
                                     </div>
@@ -128,13 +165,10 @@
                                         <div class="spinner-grow text-primary" role="status">
                                             <span class="sr-only">Loading...</span>
                                         </div>
-                                        <div class="spinner-grow text-primary" role="status">
-                                        </div>
-                                        <div class="spinner-grow text-primary" role="status">
-                                        </div>
+                                        <div class="spinner-grow text-primary" role="status"></div>
+                                        <div class="spinner-grow text-primary" role="status"></div>
                                     </div>
-                                    <div id="downloadResponse" class="col alert" role="alert">
-                                    </div>
+                                    <div id="downloadResponse" class="col alert" role="alert"></div>
                                 </div>
                                 <div class="row">
                                     <button type="submit" id="sourceDownloadBtn" class="btn btn-primary ml-auto">

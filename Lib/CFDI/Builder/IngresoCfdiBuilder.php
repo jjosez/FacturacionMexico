@@ -4,17 +4,16 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder;
 
 
-use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 
 class IngresoCfdiBuilder extends CfdiBuilder
 {
-    public function __construct(FacturaCliente $factura, Empresa $empresa, string $uso)
+    public function __construct(FacturaCliente $factura)
     {
-        parent::__construct($factura, $empresa, 'I', $uso);
+        parent::__construct($factura, 'I');
     }
 
-    protected function getAtributosComprobante()
+    protected function getAtributosComprobante(): array
     {
         return [
             "Serie" => $this->factura->codserie,
@@ -23,8 +22,9 @@ class IngresoCfdiBuilder extends CfdiBuilder
             'FormaPago' => $this->factura->codpago,
             'Moneda' => $this->factura->coddivisa,
             'TipoCambio' => ($this->factura->coddivisa === 'MXN') ? '1' : $this->factura->tasaconv,
-            'TipoDeComprobante' => $this->tipo,
+            'TipoDeComprobante' => $this->tipoComprobante,
             'MetodoPago' => 'PUE',
+            'Exportacion' => '01',
             'LugarExpedicion' => $this->empresa->codpostal,
             'Descuento' => 0.00,
         ];
@@ -40,6 +40,7 @@ class IngresoCfdiBuilder extends CfdiBuilder
                 'NoIdentificacion' => $linea->referencia,
                 'Cantidad' => $linea->cantidad,
                 'ClaveUnidad' => $producto->familia()->claveunidad,
+                'ObjetoImp' => '02',
                 'Unidad' => 'PIEZA',
                 'Descripcion' => $linea->descripcion,
                 'ValorUnitario' => $linea->pvpunitario,

@@ -7,6 +7,10 @@
 -->
 <table>
     <column>
+        <name>cfdiglobal</name>
+        <type>boolean</type>
+    </column>
+    <column>
         <name>cfdirelacionado</name>
         <type>integer</type>
         <null>YES</null>
@@ -27,7 +31,7 @@
     </column>
     <column>
         <name>fecha</name>
-        <type>timestamp</type>
+        <type>date</type>
     </column>
     <column>
         <name>fechamod</name>
@@ -48,7 +52,11 @@
         <name>formapago</name>
         <type>character varying(100)</type>
         <null>NO</null>
-    </column>  
+    </column>
+    <column>
+        <name>hora</name>
+        <type>time</type>
+    </column>
     <column>
         <name>idcfdi</name>
         <type>serial</type>
@@ -114,20 +122,20 @@
         <null>NO</null>
     </column>
     <constraint>
-        <name>cfdisclientes_pkey</name>
+        <name>cfdis_clientes_pkey</name>
         <type>PRIMARY KEY (idcfdi)</type>
     </constraint>
     <constraint>
-        <name>ca_cfdisclientes_empresas</name>
+        <name>ca_cfdis_clientes_empresas</name>
         <type>FOREIGN KEY (idempresa) REFERENCES empresas (idempresa) ON DELETE RESTRICT ON UPDATE CASCADE</type>
     </constraint>
     <constraint>
-        <name>ca_cfdisclientes_facturascli</name>
+        <name>ca_cfdis_clientes_facturascli</name>
         <type>FOREIGN KEY (idfactura) REFERENCES facturascli (idfactura) ON DELETE RESTRICT ON UPDATE CASCADE</type>
     </constraint>
     <constraint>
-        <name>ca_cfdisclientes_relacion</name>
-        <type>FOREIGN KEY (cfdirelacionado) REFERENCES cfdisclientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+        <name>ca_cfdis_clientes_relacion</name>
+        <type>FOREIGN KEY (cfdirelacionado) REFERENCES cfdis_clientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
     </constraint>
     <constraint>
         <name>uniq_uuid_cfdisclientes</name>

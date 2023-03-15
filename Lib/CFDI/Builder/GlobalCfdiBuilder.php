@@ -4,7 +4,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder;
 
 
-use FacturaScripts\Dinamic\Model\Empresa;
+use CfdiUtils\Nodes\Node;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 
 class GlobalCfdiBuilder extends CfdiBuilder
@@ -14,15 +14,13 @@ class GlobalCfdiBuilder extends CfdiBuilder
      * GlobalCfdiBuilder constructor.
      *
      * @param FacturaCliente $factura
-     * @param Empresa $empresa
-     * @param string $uso set as SAT requirement 'P01' por definir.
      */
-    public function __construct(FacturaCliente $factura, Empresa $empresa, string $uso = 'P01')
+    public function __construct(FacturaCliente $factura)
     {
-        parent::__construct($factura, $empresa, 'I', $uso);
+        parent::__construct($factura, 'I');
     }
 
-    protected function getAtributosComprobante()
+    protected function getAtributosComprobante(): array
     {
         return [
             "Serie" => $this->factura->codserie,
@@ -31,24 +29,31 @@ class GlobalCfdiBuilder extends CfdiBuilder
             'FormaPago' => $this->factura->codpago,
             'Moneda' => $this->factura->coddivisa,
             'TipoCambio' => '1',
-            'TipoDeComprobante' => $this->tipo,
+            'TipoDeComprobante' => $this->tipoComprobante,
+            'Exportacion' => '01',
             'MetodoPago' => 'PUE',
             'LugarExpedicion' => $this->empresa->codpostal,
             'Descuento' => 0.00,
         ];
     }
 
-    protected function setDatosCliente()
+    protected function setReceptor(): void
     {
+        $customer = $this->factura->getSubject();
+
+        // UsoCFDI set as SAT requirement 'S01' Sin efectos fiscales.
         $receptor = [
-            'Rfc' => $this->factura->cifnif,
-            'UsoCFDI' => $this->uso,
+            'Rfc' => $customer->cifnif,
+            'Nombre' => 'PUBLICO EN GENERAL',
+            'UsoCFDI' => $customer->usocfdi,
+            'RegimenFiscalReceptor' => $customer->regimenfiscal,
+            'DomicilioFiscalReceptor' => '97780',
         ];
 
         $this->comprobante->addReceptor($receptor);
     }
 
-    protected function setConceptos()
+    protected function setConceptos(): void
     {
         foreach ($this->factura->parentDocuments() as $parent) {
             $this->comprobante->addConcepto([
@@ -56,6 +61,7 @@ class GlobalCfdiBuilder extends CfdiBuilder
                 'NoIdentificacion' => $parent->primaryDescription(),
                 'Cantidad' => 1,
                 'ClaveUnidad' => 'ACT',
+                'ObjetoImp' => '02',
                 'Descripcion' => 'Venta',
                 'ValorUnitario' => $parent->netosindto,
                 'Importe' => $parent->netosindto,
@@ -64,11 +70,28 @@ class GlobalCfdiBuilder extends CfdiBuilder
                 'Impuesto' => '002',
                 'Base' => $parent->netosindto,
                 'TipoFactor' => 'Tasa',
-                'TasaOCuota' =>  $this->getTasaValue(16),
+                'TasaOCuota' => $this->getTasaValue(16),
                 'Importe' => $parent->totaliva,
             ]);
         }
 
-        $this->creator->addSumasConceptos(null, 2);
+        $this->creator->addSumasConceptos();
+    }
+
+    protected function setInformacionGlobal()
+    {
+        $nodo = new Node('cfdi:InformacionGlobal', [
+            'Periodicidad' => '01',
+            'Meses' => date('m', strtotime($this->factura->fecha)),
+            'Año' => date('Y', strtotime($this->factura->fecha))
+        ]);
+        $this->comprobante->addChild($nodo);
+    }
+
+
+    protected function buildComprobante(): void
+    {
+        $this->setInformacionGlobal();
+        parent::buildComprobante();
     }
 }

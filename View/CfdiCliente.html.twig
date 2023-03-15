@@ -10,24 +10,55 @@
     <div class="container-fluid mb-2">
         <div class="row">
             <div class="col">
-                <div class="btn-group bg-white">
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.url() }}" title="Recargar">
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-dark" href="{{ fsc.url() }}" title="Recargar">
                         <i class="fas fa-redo" aria-hidden="true"></i>
                     </a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ asset('ListCfdiCliente') }}" title="Todos">
+                    <a class="btn btn-sm btn-secondary" href="{{ asset('ListCfdiCliente') }}" title="Todos">
                         <i class="fas fa-list" aria-hidden="true"></i>&nbsp;Todos
                     </a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.factura.url() }}" title="Factura">
-                        <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Factura
+                    <a class="btn btn-sm btn-info" href="{{ fsc.factura.url() }}" title="{{ fsc.factura.codigo }}">
+                        <i class="fas fa-file-invoice" aria-hidden="true"></i>
+                        {{ fsc.factura.codigo }}
                     </a>
-                    <form method="post">
-                        <button type="submit" name="action" value="download-xml" class="btn btn-sm btn-primary ml-1">
-                            <i class="fas fa-download" aria-hidden="true"></i>&nbsp;XML</button>
-                        <button type="submit" name="action" value="download-pdf" class="btn btn-sm btn-primary">
-                            <i class="fas fa-file-pdf" aria-hidden="true"></i>&nbsp;PDF</button>
-                        <button type="submit" name="action" value="enviar-email" class="btn btn-sm btn-success">
-                            <i class="fas fa-envelope fa-fw"></i>&nbsp;Enviar</button>
-                    </form>
+                </div>
+
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
+                            aria-expanded="false">Exportar
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="{{ fsc.url() }}&amp;action=download-pdf" target="_blank" class="dropdown-item">
+                            <i class="fas fa-file-pdf fa-fw" aria-hidden="true"></i>&nbsp;Archivo PDF
+                        </a>
+                        <a href="{{ fsc.url() }}&amp;action=download-xml" class="dropdown-item">
+                            <i class="fas fa-download fa-fw" aria-hidden="true"></i>&nbsp;Archivo XML
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="{{ fsc.url() }}&amp;action=enviar-email" class="dropdown-item">
+                            <i class="fas fa-envelope fa-fw"></i>&nbsp;Email
+                        </a>
+                    </div>
+                </div>
+
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown"
+                            aria-expanded="false">
+                        PAC
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="{{ fsc.url() }}&amp;action=status"
+                           class="dropdown-item">
+                            <i class="fas fa-info-circle fa-fw"></i>&nbsp;Consultar Estado
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <form id="cancelarCfdiForm" method="post">
+                            <input type="hidden" name="action" value="cancelar">
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="fas fa-skull fa-fw" aria-hidden="true"></i>&nbsp;Cancelar
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
             <div class="col text-right">
@@ -42,6 +73,16 @@
 
 {% block body %}
     <div class="container-fluid">
+        {% if 'Cancelado' == fsc.cfdi.estado %}
+            <div class="alert alert-danger" role="alert">
+                <strong>Cancelado</strong>
+            </div>
+        {% endif %}
+        {% if fsc.cfdi.fechamail is null %}
+            <div class="alert alert-info" role="alert">
+                Aun no se ha enviado el email.
+            </div>
+        {% endif %}
         <div class="card-deck mb-3">
             <div class="card">
                 <div class="card-header">Cliente</div>
@@ -69,18 +110,33 @@
                         <small>Factura enviada el: {{ fsc.factura.femail }}</small>
                     </div>
                 </div>
-                <div class="card-footer text-white text-right">
-                    <form id="cancelarCfdiForm" method="post">
-                        <input type="hidden" name="action" value="cancelar">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-skull" aria-hidden="true"></i>&nbsp;Cancelar
-                        </button>
-                    </form>
-                </div>
             </div>
         </div>
         {{ _self.blockCfdiRelacionados(fsc.reader.cfdiRelacionados(), fsc) }}
         {{ _self.blockCfdiConceptos(fsc.reader.conceptos(), fsc) }}
+        <div class="card mb-3">
+            <div class="card-header">Totales</div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead class="thead-light">
+                    <tr>
+                        <th scope="col">Subtotal:</th>
+                        <th scope="col">Descuento:</th>
+                        <th scope="col">Impuesto:</th>
+                        <th scope="col">Total:</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td class="text-right">{{ fsc.factura.neto }}</td>
+                        <td class="text-right">0</td>
+                        <td class="text-right">{{ fsc.factura.totaliva }}</td>
+                        <td class="text-right">{{ fsc.cfdi.total }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <div class="card">
             <div class="card-header">SAT</div>
             <div class="card-body">
@@ -191,7 +247,7 @@
                         </tr>
                         {% for traslado in fsc.reader.conceptosTraslados(concepto) %}
                             <tr>
-                                <td colspan="3" class="text-right" >Impuesto: {{ traslado.impuesto }}</td>
+                                <td colspan="3" class="text-right">Impuesto: {{ traslado.impuesto }}</td>
                                 <td colspan="2" class="text-right">Tasa: {{ traslado.tasa }}</td>
                                 <td colspan="2" class="text-right">Importe: {{ traslado.importe }}</td>
                             </tr>
@@ -206,12 +262,13 @@
 
 {% macro blockCfdiRelacionados(relacion, fsc) %}
     {%- if relacion.relacionados %}
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-header">Facturas relacionadas</div>
             <div class="card-body">
                 <div class="form-row">
                     <div class="form-group col-12">
-                        <strong>Tipo de relacion:</strong> {{ fsc.catalogoSat().tipoRelacion().getDescripcion(relacion.tiporelacion) }}
+                        <strong>Tipo de
+                            relacion:</strong> {{ fsc.getCatalogoSat().tipoRelacion().getDescripcion(relacion.tiporelacion) }}
                     </div>
                 </div>
                 <div class="table-responsive">

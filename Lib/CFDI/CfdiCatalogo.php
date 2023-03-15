@@ -9,9 +9,14 @@ class CfdiCatalogo
     public static function estadoCfdi()
     {
         return [
-            ['code' => 'T', 'description' => 'Timbrado'],
-            ['code' => 'C', 'description' => 'Cancelado']
+            ['code' => 'Timbrado', 'description' => 'Timbrado'],
+            ['code' => 'Cancelado', 'description' => 'Cancelado']
         ];
+    }
+
+    public static function formaPago()
+    {
+        return new SatCatalogo('c_FormaPago.json');
     }
 
     public static function regimenFiscal()
@@ -32,7 +37,7 @@ class CfdiCatalogo
         return new SatCatalogo('c_TipoRelacion.json');
     }
 
-    public function usoCfdi()
+    public static function usoCfdi()
     {
         return new SatCatalogo('c_UsoCFDI.json');
     }

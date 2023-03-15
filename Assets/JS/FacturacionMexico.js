@@ -20,7 +20,7 @@ function addCfdiFromUUID() {
             console.log(results)
         },
         error: function (xhr, status, error) {
-            console.log('ERROR:', xhr.responseText)
+            alert('ERROR: ' + xhr.responseText)
         }
     });
 }

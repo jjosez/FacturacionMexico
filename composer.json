@@ -1,9 +1,9 @@
 {
     "require": {        
-        "eclipxe/cfdiutils": "^2.12",
-        "chillerlan/php-qrcode": "^3.2",
+        "eclipxe/cfdiutils": "^2.23",
+        "chillerlan/php-qrcode": "^4.3",
         "villca/numeros-en-letras": "^1.2",
-        "phpcfdi/finkok": "^0.2.7",
-        "techlab/smartwizard": "^5.1"
+        "phpcfdi/finkok": "^0.5.2",
+        "techlab/smartwizard": "^6.0"
     }
 }

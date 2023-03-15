@@ -26,7 +26,7 @@
         <type>PRIMARY KEY (uuid)</type>
     </constraint>
     <constraint>
-        <name>ca_cfdisdata_cfdisclientes</name>
-        <type>FOREIGN KEY (idcfdi) REFERENCES cfdisclientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+        <name>ca_cfdisdata_cfdis_clientes</name>
+        <type>FOREIGN KEY (idcfdi) REFERENCES cfdis_clientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
     </constraint>
 </table>

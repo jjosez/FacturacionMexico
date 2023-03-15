@@ -23,7 +23,7 @@
 -->
 
 <view>
-    <columns> 
+    <columns>
         <column name="invoice" order="100">
             <widget type="select" fieldname="idfactura" onclick="EditFacturaCliente">
                 <values source="facturascli" fieldcode="idfactura" fieldtitle="codigo"/>
@@ -44,10 +44,18 @@
             <widget type="text" fieldname="tipocfdi"/>
         </column>
         <column name="amount" display="right" order="150">
-            <widget type="money" fieldname="total" />
-        </column> 
+            <widget type="money" fieldname="total"/>
+        </column>
         <column name="date" display="right" order="160">
-            <widget type="date" fieldname="fecha" />
-        </column>        
+            <widget type="date" fieldname="fecha"/>
+        </column>
     </columns>
+    <rows>
+        <row type="status">
+            <option color="danger" fieldname="estado">Cancelado</option>
+            <option color="warning" fieldname="tipocfdi">E</option>
+            <option color="info" fieldname="cfdiglobal">true</option>
+        </row>
+    </rows>
+
 </view>

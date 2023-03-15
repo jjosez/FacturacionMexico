@@ -42,11 +42,11 @@
         <type>PRIMARY KEY (idrelacion)</type>
     </constraint>
     <constraint>
-        <name>ca_cfdisrelacionados_cfdisclientes</name>
-        <type>FOREIGN KEY (idcfdi) REFERENCES cfdisclientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+        <name>ca_cfdisrelacionados_cfdis_clientes</name>
+        <type>FOREIGN KEY (idcfdi) REFERENCES cfdis_clientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
     </constraint>
     <constraint>
         <name>ca_cfdisrelacionados_relacion</name>
-        <type>FOREIGN KEY (cfdirelacionado) REFERENCES cfdisclientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+        <type>FOREIGN KEY (cfdirelacionado) REFERENCES cfdis_clientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
     </constraint>
 </table>

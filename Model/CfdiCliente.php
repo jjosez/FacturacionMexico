@@ -34,7 +34,8 @@ class CfdiCliente extends Base\ModelClass
     public $codcliente;
     public $coddivisa;
     public $estado;
-    public $fecha; 
+    public $fecha;
+    public $hora;
     public $fechamod;   
     public $fechaemail;
     public $formapago;
@@ -55,9 +56,8 @@ class CfdiCliente extends Base\ModelClass
     {
         parent::clear();
 
-        $this->fecha = date(self::DATETIME_STYLE);
-        $this->fechamod = date(self::DATETIME_STYLE);
-        $this->version = '3.3';
+        $this->fecha = date(self::DATE_STYLE);
+        $this->hora = date(self::HOUR_STYLE);
     }
 
     public function getXml()
@@ -77,19 +77,19 @@ class CfdiCliente extends Base\ModelClass
         return $this->loadFromCode('', $where);
     }
 
-    public function loadFromUUID($uuid)
+    public function loadFromUuid($uuid)
     {
         $where = [new DataBaseWhere('uuid', $uuid)];
         return $this->loadFromCode('', $where);
     }
 
-    public static function primaryColumn()
+    public static function primaryColumn(): string
     {
         return 'idcfdi';
     }
 
-    public static function tableName()
+    public static function tableName(): string
     {
-        return 'cfdisclientes';
+        return 'cfdis_clientes';
     }
 }

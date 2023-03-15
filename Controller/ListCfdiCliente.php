@@ -37,7 +37,7 @@ class ListCfdiCliente extends ExtendedController\ListController
     public function getPageData()
     {
         $pagedata = parent::getPageData();
-        $pagedata['title'] = 'customers-cfdi';
+        $pagedata['title'] = 'CFDI Clientes';
         $pagedata['icon'] = 'fas fa-file-invoice';
         $pagedata['menu'] = 'CFDI';
 
@@ -49,8 +49,13 @@ class ListCfdiCliente extends ExtendedController\ListController
      */
     protected function createViews()
     {
-        $this->addView('ListCfdiCliente', 'CfdiCliente', 'customers-cfdi', 'fas fa-file-invoice');
-        $this->addSearchFields('ListCfdiCliente', ['razonreceptor','rfcreceptor']);
+        $this->createMainView();
+    }
+
+    protected function createMainView($viewName = 'ListCfdiCliente')
+    {
+        $this->addView($viewName, 'CfdiCliente', 'CFDI Clientes', 'fas fa-file-invoice');
+        $this->addSearchFields('ListCfdiCliente', ['razonreceptor','rfcreceptor', 'uuid']);
         $this->addOrderBy('ListCfdiCliente', ['fecha'], 'date', 2);
 
         $this->addFilterAutocomplete('ListCfdiCliente', 'codcliente', 'customer', 'codcliente', 'clientes', 'codcliente', 'razonsocial');
