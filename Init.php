@@ -31,14 +31,21 @@ class Init extends InitClass
 
     protected function setMetodosDePago()
     {
+        $formaPagoFiltro = ['01','02','03','04', '28', '99'];
         $formaPago = new FormaPago();
+
         foreach (CfdiCatalogo::formaPago()->all() as $satFormaPago) {
+            if (false === in_array($satFormaPago->id, $formaPagoFiltro)) {
+                continue;
+            }
+
             if ($formaPago->loadFromCode($satFormaPago->id)) {
                 continue;
             }
 
             $formaPago->codpago = $satFormaPago->id;
             $formaPago->descripcion = $satFormaPago->descripcion;
+            $formaPago->pagado = true;
             $formaPago->save();
         }
     }
