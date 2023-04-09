@@ -3,7 +3,9 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Base\Controller;
+use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\Email\NewMail;
+use FacturaScripts\Dinamic\Model\AlbaranCliente;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
@@ -138,6 +140,14 @@ class EditCfdiCliente extends Controller
     private function execAction($action): void
     {
         switch ($action) {
+            case 'albaran':
+                $code = $this->request->get('code');
+                $remision = new AlbaranCliente();
+                $remision->loadFromCode($code);
+
+                $remision->idestado = 8;
+                $remision->save();
+                return;
             case 'download-xml':
                 $this->downloadInvoiceXML();
                 return;
@@ -213,7 +223,7 @@ class EditCfdiCliente extends Controller
     {
         $cliente = $this->factura->getSubject();
 
-        if (!$cliente->email) {
+        if (! $cliente->email) {
             $this->toolBox()::log()->warning('El cliente no tiene asignado algun Email');
             return;
         }
@@ -229,13 +239,14 @@ class EditCfdiCliente extends Controller
 
         $email->addAddress($cliente->email, $cliente->nombre);
         $email->title = 'Facturacion - ' . $this->empresa->nombrecorto;
-        $email->text = 'En este correo se anexa su comprobante fiscal.';
+        $email->text = 'Envio de su comprobante fiscal digital.<br/>Gracias por su preferencia. &#128663;';
 
         $email->addAttachment($filesPathBase . '.pdf', $filename . '.pdf');
         $email->addAttachment($filesPathBase . '.xml', $filename . '.xml');
 
         if (true === $email->send()) {
-            $this->toolBox()::i18nLog()->info('send-mail-ok');
+            CfdiStorage::updateCfdiMailDate($this->cfdi);
+            $this->toolBox()::i18nLog()->notice('send-mail-ok');
         }
 
         if (file_exists($filesPathBase . '.pdf')) {
@@ -273,6 +284,23 @@ class EditCfdiCliente extends Controller
         self::toolBox()::log()->notice($response->getMessage());
         $this->xml = $response->getXml();
         return true;
+    }
+
+    protected function cfdiStatusRequest()
+    {
+        $service = $this->stampServiceProvider();
+        $query = [
+            'emisor' => $this->empresa->cifnif,
+            'receptor' => $this->cfdi->rfcreceptor,
+            'uuid' => $this->cfdi->uuid,
+            'total' => $this->cfdi->total
+        ];
+
+        $status = $service->getSatStatus($query);
+
+        self::toolBox()::log()->warning('Estatus del comprobante: ' . $status->query());
+        self::toolBox()::log()->warning('Es cancelable: ' . $status->cancellable());
+        self::toolBox()::log()->warning('Estado de la cancelación: ' . $status->cancellation());
     }
 
     protected function downloadInvoiceXML(): Response
@@ -323,7 +351,7 @@ class EditCfdiCliente extends Controller
 
     protected function saveCfdiStampResponse(): void
     {
-        if (false === CfdiStorage::saveCfdi($this->xml, $this->factura, $this->cfdi)) {
+        if (false === CfdiStorage::saveCfdi($this->factura, $this->cfdi, $this->xml)) {
             self::toolBox()::log()->warning('Error al guardar el CFDI');
             return;
         }
@@ -334,7 +362,6 @@ class EditCfdiCliente extends Controller
         }
 
         self::toolBox()::log()->notice('CFDI guardado correctamente');
-
         $this->updateStampedInvoiceStatus();
     }
 
@@ -344,23 +371,7 @@ class EditCfdiCliente extends Controller
         $testmode = self::toolBox()::appSettings()::get('cfdi', 'testmode', true);
         $token = self::toolBox()::appSettings()::get('cfdi', 'stamptoken');
 
-        return new FinkokStampService($username, $token, true);
-    }
-
-    protected function cfdiStatusRequest()
-    {
-        $service = $this->stampServiceProvider();
-        $query = [
-            'emisor' => $this->empresa->cifnif,
-            'receptor' => $this->cfdi->rfcreceptor,
-            'uuid' => $this->cfdi->uuid,
-            'total' => $this->cfdi->total
-        ];
-
-        $status = $service->getSatStatus($query);
-        self::toolBox()::log()->warning('Estatus del comprobante: ' . $status->query());
-        self::toolBox()::log()->warning('Es cancelable: ' . $status->cancellable());
-        self::toolBox()::log()->warning('Estado de la cancelación: ' . $status->cancellation());
+        return new FinkokStampService($username, $token, $testmode);
     }
 
     private function hasEgresoInvoiceParents(array $parents): bool
@@ -394,12 +405,23 @@ class EditCfdiCliente extends Controller
         return true;
     }
 
-    protected function updateStampedInvoiceStatus()
+    protected function updateStampedInvoiceStatus(): void
     {
-        $estado = self::toolBox()::appSettings()::get('cfdi', 'facturatimbrada');
+        $this->factura->idestado = self::toolBox()::appSettings()::get('cfdi', 'estadotimbrada');
 
-        $this->factura->idestado = $estado;
-        $this->factura->save();
+        if (true === $this->factura->save()) {
+            self::toolBox()::log()->notice('Factura actualizada correctamente');
+        }
+    }
+
+    public function getPendingInvoices(): array
+    {
+        $invoice = new FacturaCliente();
+        $stampedState = self::toolBox()::appSettings()::get('cfdi', 'estadotimbrada');
+
+        $where = [new DataBaseWhere('idestado', $stampedState, '!=')];
+
+        return $invoice->all($where);
     }
 
     public function url(): string

@@ -29,7 +29,7 @@
                     description="Clave acuerdo al Catalogo del SAT">
                 <widget type="select" fieldname="regimenfiscal" icon="fas fa-hashtag"/>
             </column>
-            <column name="usocfdi" title="Uso del CFDI" numcolumns="6" order="110"
+            <column name="usocfdi" title="Uso del cfdi" numcolumns="6" order="110"
                     description="Clave acuerdo al Catalogo del SAT">
                 <widget type="select" fieldname="usocfdi" icon="fas fa-hashtag"/>
             </column>

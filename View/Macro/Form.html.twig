@@ -17,7 +17,7 @@
     <select id="{{ id }}" name="{{ name }}" class="form-control" required>
         {% for item in items %}
             <option value="{{ item.id }}" {% if default == item.id %} selected {% endif %}>
-                {{ item.descripcion }}</option>
+                {{ item.id }} - {{ item.descripcion }}</option>
         {% endfor %}
     </select>
 {% endmacro %}

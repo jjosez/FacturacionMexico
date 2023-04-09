@@ -72,7 +72,7 @@ abstract class CfdiBuilder
 
     protected function getIvaFromValue($base, $iva, $round = 2): float
     {
-        return $base * $iva / 100;
+        return round($base * $iva / 100, 6);
     }
 
     protected function getAbsoluteValue($val)
@@ -109,7 +109,7 @@ abstract class CfdiBuilder
                 'Nombre' => $customer->razonsocial,
                 'UsoCFDI' => $customer->usocfdi,
                 'RegimenFiscalReceptor' => $customer->regimenfiscal,
-                'DomicilioFiscalReceptor' => '97780',
+                'DomicilioFiscalReceptor' => $customer->getDefaultAddress()->codpostal,
             ];
         } else {
             $receptor = [

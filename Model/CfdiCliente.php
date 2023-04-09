@@ -83,6 +83,11 @@ class CfdiCliente extends Base\ModelClass
         return $this->loadFromCode('', $where);
     }
 
+    public function updateMailDate()
+    {
+        $this->fechaemail = date(self::DATE_STYLE);
+    }
+
     public static function primaryColumn(): string
     {
         return 'idcfdi';

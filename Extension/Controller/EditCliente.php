@@ -10,20 +10,6 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
  */
 class EditCliente
 {
-    /*  public function createViews(): Closure
-      {
-          return function() {
-              $cfdiButton = [
-                  'action' => 'cfdi-action',
-                  'color' => 'info',
-                  'icon' => 'fas fa-file-invoice',
-                  'label' => 'CFDI',
-                  'type' => 'action',
-              ];
-              $this->addButton($this->getMainViewName(), $cfdiButton);
-          };
-      } */
-
     public function createViews(): Closure
     {
         return function () {
@@ -32,7 +18,7 @@ class EditCliente
             if ($column && $column->widget->getType() === 'select') {
 
                 foreach (CfdiCatalogo::regimenFiscal()->all() as $item) {
-                    $regimenValues[] = ['value' => $item->id, 'title' => $item->descripcion];
+                    $regimenValues[] = ['value' => $item->id, 'title' => $item->id . ' - ' . $item->descripcion];
                 }
                 $column->widget->setValuesFromArray($regimenValues, false, true);
             }
@@ -41,7 +27,7 @@ class EditCliente
             if ($column && $column->widget->getType() === 'select') {
 
                 foreach (CfdiCatalogo::usoCfdi()->all() as $item) {
-                    $usoValues[] = ['value' => $item->id, 'title' => $item->descripcion];
+                    $usoValues[] = ['value' => $item->id, 'title' => $item->id . ' - ' . $item->descripcion];
                 }
                 $column->widget->setValuesFromArray($usoValues, false, true);
             }

@@ -1,0 +1,64 @@
+<!-- Modal xml -->
+<div class="modal fade" id="xmlModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Pre CFDI</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                    <pre>
+                        {{- fsc.cfdi.getXml() -}}
+                    </pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pendiente -->
+<div class="modal" id="pendientesTimbradoModal" tabindex="-1" role="dialog" aria-labelledby="pendientesModal"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Facturas Pendientes de Timbrado</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="thead-dark">
+                        <tr>
+                            <th>Codigo</th>
+                            <th>Serie</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Fecha</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for invoice in fsc.getPendingInvoices() %}
+                            <tr>
+                                <th scope="row">
+                                    <a href="EditCfdiCliente?invoice={{ invoice.idfactura }}">{{ invoice.codigo }}</a>
+                                </th>
+                                <td>{{ invoice.codserie }}</td>
+                                <td>{{ invoice.nombrecliente }}</td>
+                                <td>{{ invoice.total }}</td>
+                                <td>{{ invoice.fecha }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

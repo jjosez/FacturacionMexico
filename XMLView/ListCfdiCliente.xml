@@ -52,10 +52,9 @@
     </columns>
     <rows>
         <row type="status">
-            <option color="danger" fieldname="estado">Cancelado</option>
-            <option color="warning" fieldname="tipocfdi">E</option>
-            <option color="info" fieldname="cfdiglobal">true</option>
+            <option color="danger" title="Cancelado"  fieldname="estado">Cancelado</option>
+            <option color="warning" title="Factura Egreso" fieldname="tipocfdi">E</option>
+            <option color="info" title="Factura Global" fieldname="cfdiglobal">true</option>
         </row>
     </rows>
-
 </view>

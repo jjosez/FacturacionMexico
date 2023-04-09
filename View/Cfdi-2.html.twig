@@ -24,6 +24,7 @@
                     <th scope="col">Receptor</th>
                     <th scope="col">UUID</th>
                     <th scope="col">Total</th>
+                    <th scope="col">Fecha</th>
                     <th scope="col" style="width: 90px">Accion</th>
                 </tr>
                 </thead>
@@ -33,6 +34,7 @@
                         <td>{{ relacionado.razonreceptor }}</td>
                         <td><input type="hidden" name="relacionados[]" value="{{ relacionado.uuid }}">
                             {{ relacionado.uuid }}</td>
+                        <td>{{ relacionado.total }}</td>
                         <td>{{ relacionado.total }}</td>
                     </tr>
                 {% endfor %}

@@ -13,7 +13,15 @@ class Familia extends ParentModel
         parent::clear();
 
         $madre = $this->get($this->madre);
-        $this->clavesat = ($madre) ? $this->madre->clavesat : '01010101';
+        $this->clavesat = $madre ? $madre->clavesat : '01010101';
         $this->claveunidad = 'H87';
-    } 
+    }
+
+    public function loadFromData(array $data = [], array $exclude = [])
+    {
+        parent::loadFromData($data, $exclude);
+
+        $this->clavesat = empty($this->clavesat) ? '01010101' : $this->clavesat;
+        $this->claveunidad = empty($this->claveunidad) ? 'H87' : $this->claveunidad;
+    }
 }

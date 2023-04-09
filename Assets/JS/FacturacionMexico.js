@@ -43,7 +43,10 @@ function addRelatedCfdi(result) {
     var cellTotal = row.insertCell(2);
     cellTotal.innerHTML = result.total;
 
-    var cellAction = row.insertCell(3);
+    var cellFecha = row.insertCell(3);
+    cellFecha.innerHTML = result.fecha;
+
+    var cellAction = row.insertCell(4);
     var button = document.createElement('input');
     button.setAttribute('type', 'button');
     button.setAttribute('value', 'X');

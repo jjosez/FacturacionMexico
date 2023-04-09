@@ -8,7 +8,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiData;
 
 class CfdiStorage
 {
-    public static function saveCfdi(string $xmlContent, FacturaCliente $factura, CfdiCliente $cfdi): bool
+    public static function saveCfdi(FacturaCliente $factura, CfdiCliente $cfdi, string $xmlContent): bool
     {
         $reader = new CfdiQuickReader($xmlContent);
 
@@ -41,6 +41,12 @@ class CfdiStorage
         $cfdiData->xml = $xmlContent;
 
         return $cfdiData->save();
+    }
+
+    public static function updateCfdiMailDate(CfdiCliente $cfdi): bool
+    {
+        $cfdi->updateMailDate();
+        return $cfdi->save();
     }
 
     public static function updateCfdiStatus(CfdiCliente $cfdi, string $status)

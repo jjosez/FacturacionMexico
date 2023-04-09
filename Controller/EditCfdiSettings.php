@@ -44,7 +44,7 @@ class EditCfdiSettings extends Controller
         $estados = new EstadoDocumento();
 
         $where = [new DataBaseWhere('tipodoc', 'FacturaCliente')];
-        print_r($estados->all($where));
+
         return $estados->all($where);
     }
 
