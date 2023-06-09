@@ -33,6 +33,9 @@
                     description="Clave acuerdo al Catalogo del SAT">
                 <widget type="select" fieldname="usocfdi" icon="fas fa-hashtag"/>
             </column>
+            <column name="addenda" title="Usar campo observación como addenda." numcolumns="12" order="120">
+                <widget type="checkbox" fieldname="addenda"/>
+            </column>
         </group>
     </columns>
 </view>

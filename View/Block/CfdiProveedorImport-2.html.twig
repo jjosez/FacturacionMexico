@@ -1,0 +1,47 @@
+{#
+/**
+ *  This file is part of FacturacionMexico plugin for FacturaScripts
+ *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% import 'Macro/Form.html.twig' as form %}
+<div class="card mb-3">
+    <div class="card-header">Conceptos</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="thead-light">
+                <tr>
+                    <th scope="col">Cantidad</th>
+                    <th scope="col">No. identificacion</th>
+                    <th scope="col">Descripcion</th>
+                    <th scope="col">Clave SAT</th>
+                    <th scope="col">Clave UM</th>
+                    <th scope="col">Precio</th>
+                    <th scope="col">Total</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for concepto in fsc.reader.conceptos() %}
+                    <tr>
+                        <td>{{ concepto.cantidad }}</td>
+                        <td>{{ concepto.noidentificacion }}</td>
+                        <td>{{ concepto.descripcion }}</td>
+                        <td>{{ concepto.ClaveProdServ }}</td>
+                        <td>{{ concepto.claveunidad }}</td>
+                        <td>{{ concepto.valorunitario }}</td>
+                        <td>{{ concepto.importe }}</td>
+                    </tr>
+                    {% for traslado in fsc.reader.conceptosTraslados(concepto) %}
+                        <tr>
+                            <td colspan="3" class="text-right">Impuesto: {{ traslado.impuesto }}</td>
+                            <td colspan="2" class="text-right">Tasa: {{ traslado.tasa }}</td>
+                            <td colspan="2" class="text-right">Importe: {{ traslado.importe }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

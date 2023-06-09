@@ -1,0 +1,21 @@
+{#
+/**
+ *  This file is part of FacturacionMexico plugin for FacturaScripts
+ *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% import 'Macro/Form.html.twig' as form %}
+<div class="card">
+    <div class="card-header">Información del CFDI</div>
+    <div class="card-body">
+        <div class="form-group">
+            {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.reader.receptorUsoCfdi(), 'disabled') }}
+        </div>
+        <div class="form-group">
+            {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptorNombre(), 'disabled') }}
+        </div>
+        <div class="form-group">
+            {{ form.inputtext('rfc', 'RFC', fsc.reader.receptorRfc(), 'disabled') }}
+        </div>
+    </div>
+</div>

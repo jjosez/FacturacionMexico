@@ -51,4 +51,36 @@ class EgresoCfdiBuilder extends CfdiBuilder
 
         $this->creator->addSumasConceptos(null, 2);
     }
+
+    protected function setReceptor(): void
+    {
+        $fiscalID = $this->factura->cifnif;
+        $customer = $this->cliente;
+
+        if ($customer->cifnif !== $fiscalID) {
+            throw new Exception('El ID Fiscal del cliente ' . $fiscalID
+                . 'no coincide con el de la Factura ' . $this->factura->cifnif
+            );
+        }
+
+        if ($customer->tipoidfiscal === 'RFC') {
+            $receptor = [
+                'Rfc' => $customer->cifnif,
+                'Nombre' => $customer->razonsocial,
+                'UsoCFDI' => 'G02',
+                'RegimenFiscalReceptor' => $customer->regimenfiscal,
+                'DomicilioFiscalReceptor' => $customer->getDefaultAddress()->codpostal,
+            ];
+        } else {
+            $receptor = [
+                'Rfc' => self::RFC_EXTRANJERO,
+                'Nombre' => $customer->razonsocial,
+                'UsoCFDI' => 'P01',
+                'NumRegIdTrib' => $customer->cifnif,
+                'ResidenciaFiscal' => $this->factura->codpais
+            ];
+        }
+
+        $this->comprobante->addReceptor($receptor);
+    }
 }

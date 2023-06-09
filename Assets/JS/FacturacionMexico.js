@@ -1,4 +1,4 @@
-const relatedTable = document.getElementById('tablaRelacionados');
+const relatedTableBody = document.getElementById('tablaRelacionados');
 
 function addCfdiFromUUID() {
     var codcliente = document.getElementById('codcliente').value;
@@ -26,40 +26,40 @@ function addCfdiFromUUID() {
 }
 
 function addRelatedCfdi(result) {
-    var row = relatedTable.insertRow();
+    const row = relatedTableBody.insertRow();
 
-    var cellRazonSocial = row.insertCell(0);
+    const cellRazonSocial = row.insertCell(0);
+    cellRazonSocial.setAttribute('class', 'align-middle');
     cellRazonSocial.innerHTML = result.razonreceptor;
 
-    var cellFolioFiscal = row.insertCell(1);
+    const cellFolioFiscal = row.insertCell(1);
+    cellFolioFiscal.setAttribute('class', 'align-middle');
     cellFolioFiscal.innerHTML = result.uuid;
 
-    var element = document.createElement('input');
+    const element = document.createElement('input');
     element.type = 'hidden';
     element.name = 'relacionados[]';
     element.value = result.uuid;
     cellFolioFiscal.appendChild(element);
 
-    var cellTotal = row.insertCell(2);
+    const cellTotal = row.insertCell(2);
+    cellTotal.setAttribute('class', 'align-middle');
     cellTotal.innerHTML = result.total;
 
-    var cellFecha = row.insertCell(3);
+    const cellFecha = row.insertCell(3);
+    cellFecha.setAttribute('class', 'align-middle');
     cellFecha.innerHTML = result.fecha;
 
-    var cellAction = row.insertCell(4);
-    var button = document.createElement('input');
+    const cellAction = row.insertCell(4)
+    const button = document.createElement('button');
     button.setAttribute('type', 'button');
-    button.setAttribute('value', 'X');
-    button.setAttribute('onclick', 'removeRelatedCfdi(this)');
-    button.className = 'btn btn-danger';
+    button.className = 'btn btn-danger btn-remove';
+
+    var buttonDeleteIcon = document.createElement('i');
+    buttonDeleteIcon.setAttribute('class', 'fas fw fa-trash');
+    button.appendChild(buttonDeleteIcon);
 
     cellAction.appendChild(button);
-}
-
-function removeRelatedCfdi(button) {
-    var row = button.parentNode.parentNode;
-
-    relatedTable.deleteRow(row.rowIndex);
 }
 
 $(document).ready(function () {
@@ -91,5 +91,9 @@ $(document).ready(function () {
 
     $('#addCfdiRelacionBtn').click(function () {
         addCfdiFromUUID();
+    });
+
+    $("#tablaRelacionados").on("click", ".btn-remove", function () {
+        $(this).closest('tr').remove();
     });
 })

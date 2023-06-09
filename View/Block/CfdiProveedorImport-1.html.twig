@@ -1,0 +1,68 @@
+{#
+/**
+ *  This file is part of FacturacionMexico plugin for FacturaScripts
+ *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% import 'Macro/Form.html.twig' as form %}
+<div class="card-deck mb-3">
+    <div class="card">
+        <div class="card-header">Cliente</div>
+        <div class="card-body">
+            <div class="form-group">
+                {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptorNombre(), 'disabled') }}
+            </div>
+            <div class="form-group">
+                {{ form.inputtext('rfc', 'RFC', fsc.reader.receptorRfc(), 'disabled') }}
+            </div>
+            <div class="form-group">
+                {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.reader.receptorUsoCfdi(), 'disabled') }}
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">Proveedor</div>
+        <div class="card-body">
+            <div class="form-group">
+                {{ form.inputtext('emisorazonsocial', 'Razón social', fsc.reader.emisorNombre(), 'disabled') }}
+            </div>
+            <div class="form-group">
+                {{ form.inputtext('emisorrfc', 'RFC', fsc.reader.emisorRfc(), 'disabled') }}
+            </div>
+            <div class="form-group">
+                {{ form.inputtext('fechaemision', 'Fecha de emisión', fsc.reader.fechaExpedicion(), 'disabled') }}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header">Documento</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="form-group col-2">
+                {{ form.inputtext('codserie', 'Serie', fsc.reader.serie(), 'disabled') }}
+            </div>
+            <div class="form-group col-2">
+                {{ form.inputtext('folio', 'Folio', fsc.reader.folio(), 'disabled') }}
+            </div>
+            <div class="form-group col">
+                {{ form.inputtext('uuid', 'UUID', fsc.reader.uuid(), 'disabled') }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col">
+                {{ form.inputtext('subtotal', 'Subtotal', fsc.reader.subTotal(), 'disabled') }}
+            </div>
+            <div class="form-group col">
+                {{ form.inputtext('descuento', 'Descuento', fsc.reader.totalDescuentos(), 'disabled') }}
+            </div>
+            <div class="form-group col">
+                {{ form.inputtext('totalimpuestos', 'Impuestos', fsc.reader.totalImpuestosTrasladados(), 'disabled') }}
+            </div>
+            <div class="form-group col">
+                {{ form.inputtext('total', 'Total', fsc.reader.total(), 'disabled') }}
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : cfdis_proveedores.xml
+    Author     : Juan José Prieto Dzul 
+    Description:
+        Structure for the cfdis_proveedores table.
+-->
+<table>
+    <column>
+        <name>cfdiglobal</name>
+        <type>boolean</type>
+    </column>
+    <column>
+        <name>cfdirelacionado</name>
+        <type>integer</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>coddivisa</name>
+        <type>character varying(3)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>codproveedor</name>
+        <type>character varying(10)</type>
+    </column>
+    <column>
+        <name>estado</name>
+        <type>character varying(10)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>fecha</name>
+        <type>date</type>
+    </column>
+    <column>
+        <name>fechamod</name>
+        <type>timestamp</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>fechaemail</name>
+        <type>date</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>folio</name>
+        <type>character varying(40)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>formapago</name>
+        <type>character varying(100)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>hora</name>
+        <type>time</type>
+    </column>
+    <column>
+        <name>idcfdi</name>
+        <type>serial</type>
+        <null>NO</null>
+        <default>nextval('cfdiscli_idcfdi_seq'::regclass)</default>
+    </column>
+    <column>
+        <name>idempresa</name>
+        <type>integer</type>
+    </column>
+    <column>
+        <name>idfactura</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>        
+    <column>
+        <name>metodopago</name>
+        <type>character varying(30)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>razonreceptor</name>
+        <type>character varying(100)</type>
+    </column> 
+    <column>
+        <name>rfcreceptor</name>
+        <type>character varying(20)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>serie</name>
+        <type>character varying(25)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>tipocfdi</name>
+        <type>character varying(1)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>tiporelacion</name>
+        <type>character varying(2)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>total</name>
+        <type>double precision</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>uuid</name>
+        <type>character varying(36)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>uuidrelacionado</name>
+        <type>character varying(36)</type>
+        <null>YES</null>
+    </column>
+    <column>
+        <name>version</name>
+        <type>character varying(4)</type>
+        <null>NO</null>
+    </column>
+    <constraint>
+        <name>cfdis_clientes_pkey</name>
+        <type>PRIMARY KEY (idcfdi)</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdis_proveedores_empresas</name>
+        <type>FOREIGN KEY (idempresa) REFERENCES empresas (idempresa) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdis_proveedores_facturasprov</name>
+        <type>FOREIGN KEY (idfactura) REFERENCES facturasprov (idfactura) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdis_proveedores_relacion</name>
+        <type>FOREIGN KEY (cfdirelacionado) REFERENCES cfdis_proveedores (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>uniq_uuid_cfdis_proveedores</name>
+        <type>UNIQUE (uuid,idempresa)</type>
+    </constraint>
+</table>

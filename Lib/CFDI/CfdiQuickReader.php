@@ -16,7 +16,7 @@ class CfdiQuickReader
     private $cfdi;
     private $comprobante;
 
-    public function __construct($xml)
+    public function __construct(string $xml)
     {
         if (empty($xml)) {
             throw new InvalidArgumentException('XML invalido');
@@ -59,6 +59,11 @@ class CfdiQuickReader
     public function noCertificadoSAT()
     {
         return $this->comprobante->complemento->timbreFiscalDigital['NoCertificadoSAT'];
+    }
+
+    public function addendaObservaciones()
+    {
+        return $this->comprobante->addenda->observacion['Detalle'];
     }
 
     public function conceptos()

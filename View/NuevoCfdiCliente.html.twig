@@ -1,6 +1,6 @@
 {#
 /**
- *  This file is part of EasyPOS plugin for FacturaScripts
+ *  This file is part of FacturacionMexico plugin for FacturaScripts
  *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
 #}
@@ -44,16 +44,25 @@
         <input type="hidden" id="codcliente" name="codcliente" value='{{ fsc.factura.codcliente }}'>
         <input type="hidden" name="invoice" value='{{ fsc.factura.idfactura }}'>
         <div class="container-fluid">
-            <div id="newcfdiwizard" class="sw sw-justified">
-                <ul class="nav">
-                    <li>
-                        <a class="nav-link" href="#step-1">Datos generales y Conceptos</a>
+            <div id="newcfdiwizard">
+                <ul class="nav nav-progress">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#step-1">
+                            <div class="num">1</div>
+                            Datos generales y Conceptos
+                        </a>
                     </li>
-                    <li>
-                        <a class="nav-link" href="#step-2">CFDIs Relacionados</a>
+                    <li class="nav-item">
+                        <a class="nav-link default done" href="#step-2">
+                            <span class="num">2</span>
+                            CFDIs Relacionados
+                        </a>
                     </li>
-                    <li>
-                        <a class="nav-link" href="#step-3">Enviar al PAC</a>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#step-3">
+                            <span class="num">3</span>
+                            Enviar al PAC
+                        </a>
                     </li>
                 </ul>
                 <div class="tab-content">
@@ -64,57 +73,7 @@
                         {{ include('Cfdi-2.html.twig') }}
                     </div>
                     <div id="step-3" class="tab-pane" role="tabpanel">
-                        <div class="alert alert-warning" role="alert">
-                            {% if appSettings.get('cfdi','testmode') %}
-                                <strong><i class="fas fa-info-circle"></i> Modo prueba activado.</strong>
-                            {% endif %}
-                            <p>La informaacion del certificado y la llave privada solo se usara para el presente CFDI,
-                                no se almacenarán.</p>
-                        </div>
-                        <div class="card mb-3">
-                            <div class="card-header">Certificado y llave privada</div>
-                            <div class="card-body">
-                                <div class="form-group">
-                                    {% set text = appSettings.get('cfdi', 'cerfile', 'Certificado') %}
-                                    {{ form.inputfile('cerFile', 'cerfile', text, '.cer', text) }}
-                                </div>
-                                <div class="form-group">
-                                    {% set text = appSettings.get('cfdi', 'keyfile', 'Llave privada') %}
-                                    {{ form.inputfile('keyFile', 'keyfile', text, '.pem') }}
-                                </div>
-                                <div class="form-group">
-                                    {% set text = appSettings.get('cfdi', 'passphrase', '') %}
-                                    {{ form.inputpassword('certPassword', 'passphrase', 'Contraseña', text) }}
-                                    <small class="form-text text-muted">Contraseña de la llave privada</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">Confirmar información</div>
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <div class="form-check">
-                                        {% set disabled = (rfcGenerico | default is same as(true)) ? '' : 'disabled' %}
-                                        {% set checked = (rfcGenerico | default is same as(true)) ? 'checked' : '' %}
-                                        <input class="form-check-input" type="checkbox" id="globalInvoice"
-                                               name="globalinvoice" {{ disabled }} {{ checked }}>
-                                        <label class="form-check-label" for="globalInvoice">
-                                            Factura global
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            {% set pagado = (fsc.factura.pagada) ? 'true' : 'false' %}
-                            {% if not fsc.factura.pagada %}
-                                <div class="card-footer text-white bg-danger">
-                                    Factura no pagada
-                                </div>
-                            {% else %}
-                                <div class="card-footer text-white text-right">
-                                    <button type="submit" class="btn btn-primary">Generar CFDI</button>
-                                </div>
-                            {% endif %}
-                        </div>
+                        {{ include('Cfdi-3.html.twig') }}
                     </div>
                 </div>
             </div>
@@ -147,6 +106,11 @@
         $(document).ready(function () {
             $('#newcfdiwizard').smartWizard({
                 theme: 'arrows',
+                autoAdjustHeight: false, // Automatically adjust content height
+                justified: true, // Nav menu justification. true/false
+                /*toolbar: {
+                    extraHtml: `<button id="timbrarButton" class="btn btn-success">Timbrar CFDI</button>`
+                },*/
                 keyboardSettings: {
                     keyNavigation: false
                 },
@@ -155,6 +119,17 @@
                     previous: 'Anterior'
                 },
             });
+
+            /*$("#newcfdiwizard").on("showStep", function (e, anchorObject, stepIndex, stepDirection) {
+                setTimeout(function () {
+                    if ($('button.sw-btn-next').hasClass('disabled')) {
+                        $('#timbrarButton').show(); // show the button extra only in the last page
+                    } else {
+                        $('#timbrarButton').hide();
+                    }
+                }, 50);
+
+            });*/
         });
     </script>
 {% endblock %}

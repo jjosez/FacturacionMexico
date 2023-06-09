@@ -1,0 +1,197 @@
+{#
+/**
+ *  This file is part of FacturacionMexico plugin for FacturaScripts
+ *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% extends 'Master/MenuTemplate.html.twig' %}
+{% import 'Macro/Form.html.twig' as form %}
+{% block css %}
+    {{ parent() }}
+    <link rel="stylesheet"
+          href="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/css/smart_wizard_all.css') }}">
+{% endblock %}
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-2">
+        <div class="row">
+            <div class="col">
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-dark" href="" title="Recargar">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                    </a>
+                </div>
+                <a class="btn btn-sm btn-warning" data-toggle="modal" data-target="#cfdiInputModal">
+                    <i class="fas fa-code" aria-hidden="true"></i>&nbsp;Cargar XML
+                </a>
+            </div>
+            <div class="col text-right">
+                <h1 class="h3">
+                    Importar CFDI
+                    <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
+                </h1>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <form action="{{ fsc.url() }}" method="post">
+            <div id="newcfdiwizard" class="sw sw-theme-arrows">
+                <ul class="nav nav-progress">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#step-1">
+                            <div class="num">1</div>
+                            General
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link default done" href="#step-2">
+                            <span class="num">2</span>
+                            Productos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#step-3">
+                            <span class="num">3</span>
+                            Confirmación
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+
+                    <div id="step-1" class="tab-pane" role="tabpanel">
+                        {{ include('Block/CfdiProveedorImport-1.html.twig') }}
+                    </div>
+                    <div id="step-2" class="tab-pane" role="tabpanel">
+                        {{ include('Block/CfdiProveedorImport-2.html.twig') }}
+                    </div>
+                    <div id="step-3" class="tab-pane" role="tabpanel">
+                        {{ include('Block/CfdiProveedorImport-3.html.twig') }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal fade" id="cfdiInputModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" enctype="multipart/form-data" id="xmlFileUploadForm">
+                    <input type="hidden" name="action" value="read-cfdi"/>
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Seleccionar CFDI</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            {{ form.inputfile('xmlFile', 'xmlfile', '', '.xml', '') }}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Cargar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/js/jquery.smartWizard.min.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+            $('#newcfdiwizard').smartWizard({
+                theme: 'arrows',
+                autoAdjustHeight: false, // Automatically adjust content height
+                justified: true, // Nav menu justification. true/false
+                /*toolbar: {
+                    extraHtml: `<button id="timbrarButton" class="btn btn-success">Timbrar CFDI</button>`
+                },*/
+                keyboardSettings: {
+                    keyNavigation: false
+                },
+                lang: {
+                    next: 'Siguiente',
+                    previous: 'Anterior'
+                },
+            });
+
+            $('.custom-file-input').on('change', function () {
+                let fileName = $(this).val().split('\\').pop();
+                let label = $(this).siblings('.custom-file-label');
+
+                if (label.data('default-title') === undefined) {
+                    label.data('default-title', label.html());
+                }
+                if (fileName === '') {
+                    label.removeClass("selected").html(label.data('default-title'));
+                } else {
+                    label.addClass("selected").html(fileName);
+                }
+            });
+
+            $('#readCfdiBtn').click(function () {
+                bootbox.dialog({
+                    title: "Seleccionar CFDI",
+                    message: $('#cfdi-input-template').html(),
+                    buttons: {
+                        danger: {
+                            label: "Cancelar",
+                            className: "btn btn-primary"
+                        },
+                        success: {
+                            label: "Cargar",
+                            className: "btn btn-primary",
+                            callback: function () {
+                                console.log('leido');
+                            }
+                        }
+                    }
+                });
+                /*const form = $('#xmlFileUploadForm')[0];
+                const data = new FormData(form);
+
+                $.ajax({
+                    type: "POST",
+                    enctype: 'multipart/form-data',
+                    url: "{{ fsc.url() }}",
+                    data: data,
+                    processData: false,
+                    contentType: false,
+                    cache: false,
+                    timeout: 600000,
+                    success: function (data) {
+
+                        $("#cfdiContent").html(data);
+                        console.log("SUCCESS : ", data);
+                        $("#btnSubmit").prop("disabled", false);
+
+                    },
+                    error: function (e) {
+
+                        $("#cfdiContent").text(e.responseText);
+                        console.log("ERROR : ", e);
+                        $("#btnSubmit").prop("disabled", false);
+
+                    }
+                });*/
+            });
+        });
+    </script>
+    <script type="text/template" id="cfdi-input-template">
+        <div class="row">
+            <div class="col-md-12">
+                <form method="POST" enctype="multipart/form-data" id="xmlFileUploadForm">
+                    <input type="hidden" name="action" value="read-cfdi"/>
+                    <div class="form-group">
+                        {{ form.inputfile('xmlFile', 'xmlfile', '', '.xml', '') }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </script>
+{% endblock %}
+
+
+
+
+

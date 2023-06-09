@@ -27,12 +27,16 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiTrait;
  *
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
-class CfdiCliente extends Base\ModelClass
+class CfdiProveedor extends Base\ModelClass
 {
     use Base\ModelTrait;
     use CfdiTrait;
 
-    public $codcliente;
+    /**
+     * @var string
+     */
+    public $codproveedor;
+
 
     public function clear()
     {
@@ -42,19 +46,8 @@ class CfdiCliente extends Base\ModelClass
         $this->hora = date(self::HOUR_STYLE);
     }
 
-    public function getXml()
-    {
-        $data = new CfdiData();
-        $where = [new DataBaseWhere('idcfdi', $this->idcfdi)];
-
-        if ($data->loadFromCode('', $where)) {
-            return $data->xml;
-        }
-        return false;
-    }
-
     public static function tableName(): string
     {
-        return 'cfdis_clientes';
+        return 'cfdis_proveedores';
     }
 }

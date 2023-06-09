@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Lib\ExtendedController;
@@ -26,7 +27,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
  *
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
-class ListCfdiCliente extends ExtendedController\ListController
+class ListCfdiProveedor extends ExtendedController\ListController
 {
 
     /**
@@ -37,7 +38,7 @@ class ListCfdiCliente extends ExtendedController\ListController
     public function getPageData()
     {
         $pagedata = parent::getPageData();
-        $pagedata['title'] = 'CFDI Clientes';
+        $pagedata['title'] = 'CFDI Proveedores';
         $pagedata['icon'] = 'fas fa-file-invoice';
         $pagedata['menu'] = 'CFDI';
 
@@ -52,10 +53,10 @@ class ListCfdiCliente extends ExtendedController\ListController
         $this->createMainView();
     }
 
-    protected function createMainView($viewName = 'ListCfdiCliente'): void
+    protected function createMainView($viewName = 'ListCfdiProveedor'): void
     {
-        $this->addView($viewName, 'CfdiCliente', 'CFDI Clientes', 'fas fa-file-invoice');
-        $this->addSearchFields($viewName, ['razonreceptor','rfcreceptor', 'uuid']);
+        $this->addView($viewName, 'CfdiProveedor', 'CFDI Proveedores', 'fas fa-file-invoice');
+        $this->addSearchFields($viewName, ['razonreceptor', 'rfcreceptor', 'uuid']);
         $this->addOrderBy($viewName, ['fecha'], 'date', 2);
 
         $this->addFilterAutocomplete($viewName, 'codcliente', 'customer', 'codcliente', 'clientes', 'codcliente', 'razonsocial');
@@ -65,5 +66,13 @@ class ListCfdiCliente extends ExtendedController\ListController
 
         $this->setSettings($viewName, 'btnNew', false);
         $this->setSettings($viewName, 'btnDelete', false);
+
+        $this->addButton($viewName, [
+            'action' => 'CfdiProveedorImporter',
+            'color' => 'info',
+            'icon' => 'fas fa-file-import',
+            'label' => 'Importar',
+            'type' => 'link'
+        ]);
     }
 }

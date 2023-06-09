@@ -9,5 +9,9 @@
         <name>usocfdi</name>
         <type>character varying(3)</type>
     </column>
+    <column>
+        <name>addenda</name>
+        <type>boolean</type>
+    </column>
 </table>
 

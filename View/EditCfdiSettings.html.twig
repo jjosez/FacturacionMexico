@@ -204,7 +204,7 @@
             sipnner.removeClass('d-none');
             $.ajax({
                 type: 'post',
-                url: '{{ asset('CfdiSettings') }}',
+                url: '{{ fsc.url() }}',
                 dataType: 'text',
                 data: {action: 'download-resources'},
                 success: function (data, textStatus, jQxhr) {

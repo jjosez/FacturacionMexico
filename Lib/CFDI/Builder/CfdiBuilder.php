@@ -5,9 +5,11 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder;
 use CfdiUtils\Certificado\Certificado;
 use CfdiUtils\CfdiCreator40;
 use CfdiUtils\Elements\Cfdi40\Comprobante;
+use CfdiUtils\Nodes\Node;
 use CfdiUtils\XmlResolver\XmlResolver;
 use Exception;
 use FacturaScripts\Core\App\AppSettings;
+use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 
@@ -24,6 +26,11 @@ abstract class CfdiBuilder
      * @var CfdiCreator40
      */
     protected $creator;
+
+    /**
+     * @var Cliente
+     */
+    protected $cliente;
 
     /**
      * @var Empresa
@@ -58,6 +65,7 @@ abstract class CfdiBuilder
     public function __construct(FacturaCliente $factura, string $tipo)
     {
         $this->empresa = $factura->getCompany();
+        $this->cliente = $factura->getSubject();
         $this->factura = $factura;
         $this->tipoComprobante = $tipo;
         $this->inicializaComprobante();
@@ -87,6 +95,19 @@ abstract class CfdiBuilder
         return number_format($iva / 100, 6);
     }
 
+    protected function setAddendaObservaciones(): void
+    {
+        $observacion = $this->cliente->observaciones;
+
+        if (empty($observacion) && ! $this->cliente->addenda) {
+            return;
+        }
+
+        $this->comprobante->addAddenda(
+            new Node('Observacion',['Detalle' => $observacion])
+        );
+    }
+
     abstract protected function setConceptos();
 
     /**
@@ -95,7 +116,7 @@ abstract class CfdiBuilder
     protected function setReceptor(): void
     {
         $fiscalID = $this->factura->cifnif;
-        $customer = $this->factura->getSubject();
+        $customer = $this->cliente;
 
         if ($customer->cifnif !== $fiscalID) {
             throw new Exception('El ID Fiscal del cliente ' . $fiscalID
@@ -158,6 +179,7 @@ abstract class CfdiBuilder
         $this->setReceptor();
         $this->setEmisor();
         $this->setConceptos();
+        $this->setAddendaObservaciones();
         $this->setSello();
     }
 

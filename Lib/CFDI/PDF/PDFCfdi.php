@@ -100,6 +100,10 @@ class PDFCfdi extends PDFCfdiCore
 
         $text = 'Uso cfdi: ' . $this->reader->receptorUsoCfdi();
         $this->writeText($text, ['justification' => 'right'], 8);
+        $this->moveCursorPosition(4);
+
+        $text = 'Observacion: ' . $this->reader->addendaObservaciones();
+        $this->writeText($text, ['justification' => 'right'], 8);
         $this->setCursorPosition($cursorPosition);
     }
 

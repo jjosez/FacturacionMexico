@@ -14,7 +14,7 @@ class CfdiSettings
 
     public static function getSerieEgreso(): string
     {
-        return AppSettings::get('default', 'codserierec', 'R');
+        return AppSettings::get('default', 'codserierec', '');
     }
 
     public static function getSatCredentials(): array

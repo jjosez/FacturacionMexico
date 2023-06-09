@@ -7,6 +7,7 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\Email\NewMail;
 use FacturaScripts\Dinamic\Model\AlbaranCliente;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
+use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiFactory;
@@ -103,6 +104,14 @@ class EditCfdiCliente extends Controller
             }
         }
         return $result;
+    }
+
+    public function getCustomerUsoCfdi(string $codcliente): string
+    {
+        $cliente = new Cliente();
+        $cliente->loadFromCode($codcliente);
+
+        return $cliente->usocfdi ?? self::toolBox()::appSettings()::get('cfdi', 'uso', 'P01');
     }
 
     private function findCfdiRequest()
@@ -223,7 +232,7 @@ class EditCfdiCliente extends Controller
     {
         $cliente = $this->factura->getSubject();
 
-        if (! $cliente->email) {
+        if (!$cliente->email) {
             $this->toolBox()::log()->warning('El cliente no tiene asignado algun Email');
             return;
         }
