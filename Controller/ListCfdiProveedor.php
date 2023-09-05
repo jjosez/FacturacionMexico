@@ -35,7 +35,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
      *
      * @return array
      */
-    public function getPageData()
+    public function getPageData(): array
     {
         $pagedata = parent::getPageData();
         $pagedata['title'] = 'CFDI Proveedores';

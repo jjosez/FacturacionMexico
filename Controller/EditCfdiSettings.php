@@ -13,7 +13,7 @@ use XmlResourceRetriever\XsltRetriever;
 
 class EditCfdiSettings extends Controller
 {
-    public function getPageData()
+    public function getPageData(): array
     {
         $pagedata = parent::getPageData();
         $pagedata['title'] = 'Configuracion';

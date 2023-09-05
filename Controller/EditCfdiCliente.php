@@ -40,7 +40,7 @@ class EditCfdiCliente extends Controller
      */
     public $xml;
 
-    public function getPageData()
+    public function getPageData(): array
     {
         $pagedata = parent::getPageData();
         $pagedata['title'] = 'CFDI Cliente';

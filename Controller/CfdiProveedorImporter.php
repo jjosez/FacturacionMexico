@@ -7,7 +7,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReader;
 
 class CfdiProveedorImporter extends Controller
 {
-    public function getPageData()
+    public function getPageData(): array
     {
         $pagedata = parent::getPageData();
         $pagedata['title'] = 'Importador CFDI Proveedor';
