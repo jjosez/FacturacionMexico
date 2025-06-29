@@ -16,10 +16,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
+use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiSettings;
 
 /**
  * Controller to list the items in the TerminalPOS model
@@ -36,12 +39,12 @@ class ListCfdiCliente extends ExtendedController\ListController
      */
     public function getPageData(): array
     {
-        $pagedata = parent::getPageData();
-        $pagedata['title'] = 'CFDI Clientes';
-        $pagedata['icon'] = 'fas fa-file-invoice';
-        $pagedata['menu'] = 'CFDI';
+        $data = parent::getPageData();
+        $data['menu'] = 'sales';
+        $data['title'] = 'CFDIs';
+        $data['icon'] = 'fas fa-file-invoice';
 
-        return $pagedata;
+        return $data;
     }
 
     /**
@@ -50,12 +53,13 @@ class ListCfdiCliente extends ExtendedController\ListController
     protected function createViews()
     {
         $this->createMainView();
+        $this->createPendingInvoicesView();
     }
 
     protected function createMainView($viewName = 'ListCfdiCliente'): void
     {
-        $this->addView($viewName, 'CfdiCliente', 'CFDI Clientes', 'fas fa-file-invoice');
-        $this->addSearchFields($viewName, ['razonreceptor','rfcreceptor', 'uuid']);
+        $this->addView($viewName, 'CfdiCliente', 'CFDIs', 'fas fa-file-invoice');
+        $this->addSearchFields($viewName, ['razonreceptor', 'rfcreceptor', 'uuid']);
         $this->addOrderBy($viewName, ['fecha'], 'date', 2);
 
         $this->addFilterAutocomplete($viewName, 'codcliente', 'customer', 'codcliente', 'clientes', 'codcliente', 'razonsocial');
@@ -65,5 +69,29 @@ class ListCfdiCliente extends ExtendedController\ListController
 
         $this->setSettings($viewName, 'btnNew', false);
         $this->setSettings($viewName, 'btnDelete', false);
+    }
+
+    protected function createPendingInvoicesView($viewName = 'ListFacturaCliente'): void
+    {
+        $this->addView($viewName, 'FacturaCliente', 'Pendientes', 'fas fa-file-invoice');
+    }
+
+    protected function loadData($viewName, $view)
+    {
+        switch ($viewName) {
+            case 'ListFacturaCliente':
+                $stampedState = CfdiSettings::stampedInvoiceStatus();
+                $canceledState = CfdiSettings::canceledInvoiceStatus();
+
+                $where = [
+                    new DataBaseWhere('idestado', $stampedState, '!='),
+                    new DataBaseWhere('idestado', $canceledState, '!='),
+                ];
+
+                $view->loadData('', $where);
+                break;
+            default:
+                parent::loadData($viewName, $view);
+        }
     }
 }

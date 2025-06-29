@@ -5,11 +5,12 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 use CfdiUtils\CfdiCreator40;
 use CfdiUtils\CfdiValidator40;
 use CfdiUtils\XmlResolver\XmlResolver;
+use Eclipxe\XmlResourceRetriever\XsltRetriever;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Model\EstadoDocumento;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
-use XmlResourceRetriever\XsltRetriever;
 
 class EditCfdiSettings extends Controller
 {
@@ -23,7 +24,7 @@ class EditCfdiSettings extends Controller
         return $pagedata;
     }
 
-    public function privateCore(&$response, $user, $permissions)
+    public function privateCore(&$response, $user, $permissions): void
     {
         parent::privateCore($response, $user, $permissions);
         $this->setTemplate(false);
@@ -34,7 +35,7 @@ class EditCfdiSettings extends Controller
         $this->setTemplate('EditCfdiSettings');
     }
 
-    public function getCatalogoSat()
+    public function getCatalogoSat(): CfdiCatalogo
     {
         return new CfdiCatalogo();
     }
@@ -72,9 +73,9 @@ class EditCfdiSettings extends Controller
         }
     }
 
-    private function downloadResources()
+    private function downloadResourcesNew(): void
     {
-        $myLocalResourcePath = '/tmp/sat';
+        $myLocalResourcePath = '/Cache/SAT';
         $myResolver = new XmlResolver($myLocalResourcePath);
 
         $cfdiCreator = new CfdiCreator40();
@@ -83,13 +84,13 @@ class EditCfdiSettings extends Controller
         $cfdiValidator = new CfdiValidator40($myResolver);
     }
 
-    private function downloadResourcesOld()
+    private function downloadResources(): void
     {
         $xsltResources = new XsltRetriever(CFDI_XSLT_DIR);
         $local = $xsltResources->retrieve(CFDI_XSLT_URL);
 
-        $this->toolBox()::appSettings()->set('cfdi', 'cachefiles', '1');
-        $this->toolBox()::appSettings()->save();
+        Tools::settingsSet('cfdi', 'cachefiles', '1');
+        Tools::settingsSave();
 
         $this->response->setContent($local);
     }
@@ -97,26 +98,26 @@ class EditCfdiSettings extends Controller
     private function saveCfdiSettings()
     {
         $regimen = $this->request->request->get('regimenfiscal', '');
-        self::toolBox()::appSettings()->set('cfdi', 'regimen', $regimen);
+        Tools::settingsSet('cfdi', 'regimen', $regimen);
 
         $uso = $this->request->request->get('usocfdi', '');
-        self::toolBox()::appSettings()->set('cfdi', 'uso', $uso);
+        Tools::settingsSet('cfdi', 'cfdi-usage', $uso);
 
         $estado = $this->request->request->get('estadotimbrada', '');
-        self::toolBox()::appSettings()->set('cfdi', 'estadotimbrada', $estado);
+        Tools::settingsSet('cfdi', 'stamped-status', $estado);
 
         $estado = $this->request->request->get('estadocancelada', '');
-        self::toolBox()::appSettings()->set('cfdi', 'estadocancelada', $estado);
+        Tools::settingsSet('cfdi', 'canceled-status', $estado);
 
-        self::toolBox()::appSettings()->save();
+        Tools::settingsSave();
 
-        self::toolBox()::log()->notice('Configuracion actualizada');
+        Tools::log()->notice('Configuracion actualizada');
     }
 
     private function saveSatCredentials()
     {
         $passphrase = $this->request->request->get('passphrase', '');
-        self::toolBox()::appSettings()->set('cfdi', 'passphrase', $passphrase);
+        Tools::settingsSet('cfdi', 'passphrase', $passphrase);
 
         $cerfile = $this->request->files->get('cerfile', false);
         $keyfile = $this->request->files->get('keyfile', false);
@@ -125,7 +126,7 @@ class EditCfdiSettings extends Controller
             $name = $this->empresa->cifnif . '.cer.pem';
             $cerfile->move(CFDI_CERT_DIR, $name);
 
-            self::toolBox()::appSettings()->set('cfdi', 'cerfile', $name);
+            Tools::settingsSet('cfdi', 'cerfile', $name);
             self::toolBox()::log()->notice('El archivo .cer se guardo correctamente');
         }
 
@@ -133,26 +134,26 @@ class EditCfdiSettings extends Controller
             $name = $this->empresa->cifnif . '.key.pem';
             $keyfile->move(CFDI_CERT_DIR, $name);
 
-            self::toolBox()::appSettings()->set('cfdi', 'keyfile', $name);
-            self::toolBox()::log()->notice('El archivo .key se guardo correctamente');
+            Tools::settingsSet('cfdi', 'keyfile', $name);
+            Tools::log()->notice('El archivo .key se guardo correctamente');
         }
 
-        self::toolBox()::appSettings()->save();
+        Tools::settingsSave();
     }
 
     private function saveStampServiceCredentials()
     {
         $user = $this->request->request->get('stampuser', '');
-        self::toolBox()::appSettings()->set('cfdi', 'stampuser', $user);
+        Tools::settingsSet('cfdi', 'stamp-user', $user);
 
         $token = $this->request->request->get('stamptoken', '');
-        self::toolBox()::appSettings()->set('cfdi', 'stamptoken', $token);
+        Tools::settingsSet('cfdi', 'stamp-token', $token);
 
         $testmode = $this->request->request->get('testmode') === 'on';
-        self::toolBox()::appSettings()->set('cfdi', 'testmode', $testmode);
+        Tools::settingsSet('cfdi', 'test-mode', $testmode);
 
-        $this->toolBox()::appSettings()->save();
-        self::toolBox()::log()->notice('Configuracion actualizada');
+        Tools::settingsSave();
+        Tools::log()->notice('Configuracion actualizada');
     }
 
     private function isValidFileUpload($file): bool

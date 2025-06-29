@@ -6,17 +6,20 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use FacturaScripts\Dinamic\Model\AttachedFile;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
 
 class PDFCfdi extends PDFCfdiCore
 {
-    private $reader;
+    private CfdiQuickReader $reader;
 
-    public function __construct(CfdiQuickReader $reader)
+    private string $logoID;
+
+    public function __construct(CfdiQuickReader $reader, string $logoID = '')
     {
         parent::__construct();
 
         $this->reader = $reader;
+        $this->logoID = $logoID;
     }
 
     public function downloadPDF()
@@ -117,9 +120,11 @@ class PDFCfdi extends PDFCfdiCore
 
     private function insertLogo()
     {
+        if (empty($this->logoID)) return;
+
         $logoFile = new AttachedFile();
-        if ($logoFile->loadFromCode(1) && file_exists($logoFile->path)) {
-            $this->addImageFromAttachedFile($logoFile, 230, 630, 175);
+        if ($logoFile->loadFromCode($this->logoID) && file_exists($logoFile->path)) {
+            $this->addImageFromAttachedFile($logoFile, 260, 650, 80);
         }
     }
 

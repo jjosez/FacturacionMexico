@@ -3,6 +3,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI;
 
 use FacturaScripts\Dinamic\Model\FacturaCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiData;
 

@@ -26,7 +26,7 @@ use FacturaScripts\Core\Model\Base;
  *
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
-class CfdiRelacionado extends Base\ModelClass
+class CfdiRelation extends Base\ModelClass
 {
     use Base\ModelTrait;
 

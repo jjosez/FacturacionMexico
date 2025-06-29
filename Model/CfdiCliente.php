@@ -44,13 +44,11 @@ class CfdiCliente extends Base\ModelClass
 
     public function getXml()
     {
-        $data = new CfdiData();
-        $where = [new DataBaseWhere('idcfdi', $this->idcfdi)];
-
-        if ($data->loadFromCode('', $where)) {
-            return $data->xml;
+        if (!$this->idcfdi) {
+            return "";
         }
-        return false;
+
+        return CfdiData::getXmlFromCfdi($this->idcfdi);
     }
 
     public static function tableName(): string

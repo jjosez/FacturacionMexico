@@ -1,7 +1,7 @@
 <?php
 
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Services;
 
 use CfdiUtils\Cfdi;
 use CfdiUtils\ConsultaCfdiSat\RequestParameters;
@@ -9,7 +9,7 @@ use CfdiUtils\Nodes\XmlNodeUtils;
 use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
 use CfdiUtils\XmlResolver\XmlResolver;
 use InvalidArgumentException;
-use NumerosEnLetras;
+use Luecano\NumeroALetras\NumeroALetras;
 
 class CfdiQuickReader
 {
@@ -26,7 +26,7 @@ class CfdiQuickReader
         $this->comprobante = $this->cfdi->getQuickReader();
     }
 
-    public function cadenaOrigen()
+    public function cadenaOrigen(): string
     {
         $tfd = $this->cfdi->getNode()->searchNode('cfdi:Complemento', 'tfd:TimbreFiscalDigital');
         $tfdXmlString = XmlNodeUtils::nodeToXmlString($tfd);
@@ -38,30 +38,56 @@ class CfdiQuickReader
         return $builder->build($tfdXmlString);
     }
 
-    public function cfdiRelacionados()
+    /*public function cfdiRelacionados(): array
     {
         $result = [];
         $relacionados = $this->comprobante->cfdirelacionados;
         $result['tiporelacion'] = $relacionados['TipoRelacion'];
 
-        foreach ($relacionados() as $relacionado)
-        {
+        foreach ($relacionados() as $relacionado) {
             $result['relacionados'] = ['uuid' => $relacionado['UUID']];
+        }
+
+        return $result;
+    }*/
+    public function cfdiRelacionados(): array
+    {
+        $result = [];
+
+        $comprobante = $this->comprobante->comprobante();
+        foreach ($comprobante->searchNodes('cfdi:CfdiRelacionados') as $relacionadosNode) {
+            $tipoRelacion = $relacionadosNode->getAttribute('TipoRelacion');
+            $relacionados = [];
+
+            foreach ($relacionadosNode->searchNodes('cfdi:CfdiRelacionado') as $relacionadoNode) {
+                $uuid = $relacionadoNode->getAttribute('UUID');
+                if ($uuid) {
+                    $relacionados[] = $uuid;
+                }
+            }
+
+            if (!empty($relacionados)) {
+                $result[] = [
+                    'tiporelacion' => $tipoRelacion,
+                    'relacionados' => $relacionados
+                ];
+            }
         }
 
         return $result;
     }
 
-    public function noCertificado()
+    public function noCertificado(): string
     {
         return $this->comprobante['NoCertificado'];
     }
-    public function noCertificadoSAT()
+
+    public function noCertificadoSAT(): string
     {
         return $this->comprobante->complemento->timbreFiscalDigital['NoCertificadoSAT'];
     }
 
-    public function addendaObservaciones()
+    public function addendaObservaciones(): string
     {
         return $this->comprobante->addenda->observacion['Detalle'];
     }
@@ -73,12 +99,11 @@ class CfdiQuickReader
         return $conceptos();
     }
 
-    public function conceptosData()
+    public function conceptosData(): array
     {
         $result = [];
 
-        foreach ($this->conceptos() as $concepto)
-        {
+        foreach ($this->conceptos() as $concepto) {
             $result[] = [
                 'cantidad' => $concepto['cantidad'],
                 'id' => $concepto['noidentificacion'],
@@ -93,11 +118,11 @@ class CfdiQuickReader
         return $result;
     }
 
-    public function conceptosTraslados($concepto)
+    public function conceptosTraslados($concepto): array
     {
         $result = [];
 
-        foreach(($concepto->impuestos->traslados)() as $traslado) {
+        foreach (($concepto->impuestos->traslados)() as $traslado) {
             $result[] = [
                 'impuesto' => $traslado['impuesto'],
                 'tasa' => $traslado['tasaocuota'],
@@ -108,59 +133,59 @@ class CfdiQuickReader
         return $result;
     }
 
-    public function emisorNombre()
+    public function emisorNombre(): string
     {
         return $this->comprobante->emisor['Nombre'];
     }
 
-    public function emisorRfc()
+    public function emisorRfc(): string
     {
         return $this->comprobante->emisor['Rfc'];
     }
 
-    public function emisorRegimenFiscal()
+    public function emisorRegimenFiscal(): string
     {
         return (new CfdiCatalogo())->regimenFiscal()->getDescripcion(
             $this->comprobante->emisor['RegimenFiscal']
         );
     }
 
-    public function folio()
+    public function folio(): string
     {
         return $this->comprobante['Folio'];
     }
 
-    public function fechaExpedicion()
+    public function fechaExpedicion(): string
     {
         return $this->comprobante['Fecha'];
     }
 
-    public function fechaTimbrado()
+    public function fechaTimbrado(): string
     {
         return $this->comprobante->complemento->timbreFiscalDigital['FechaTimbrado'];
     }
 
-    public function formaPago()
+    public function formaPago(): string
     {
         return $this->comprobante['FormaPago'];
     }
 
-    public function lugarExpedicion()
+    public function lugarExpedicion(): string
     {
         return $this->comprobante['LugarExpedicion'];
     }
 
-    public function metodoPago()
+    public function metodoPago(): string
     {
         return $this->comprobante['MetodoPago'];
     }
 
-    public function moneda()
+    public function moneda(): string
     {
         return $this->comprobante['Moneda'];
     }
 
-    public function proveedorCertif()
+    public function proveedorCertif(): string
     {
         return $this->comprobante->complemento->timbreFiscalDigital['RfcProvCertif'];
     }
@@ -223,27 +248,27 @@ class CfdiQuickReader
         return $this->comprobante['Descuento'];
     }
 
-    public function totalImpuestosTrasladados()
+    public function totalImpuestosTrasladados(): string
     {
         return $this->comprobante->impuestos['TotalImpuestosTrasladados'];
     }
 
-    public function total()
+    public function total(): string
     {
         return $this->comprobante['Total'];
     }
 
-    public function totalLetra()
+    public function totalLetra(): string
     {
-        return NumerosEnLetras::convertir($this->total(), $this->comprobante['Moneda'], true);
+        return (new NumeroALetras())->toInvoice($this->total(), 2, $this->comprobante['Moneda']);
     }
 
-    public function uuid()
+    public function uuid(): string
     {
         return $this->comprobante->complemento->timbreFiscalDigital['UUID'];
     }
 
-    public function version()
+    public function version(): string
     {
         return $this->comprobante['Version'];
     }

@@ -78,7 +78,11 @@ class FinkokStampService
 
     public function cancelar(string $uuid, array $credentials, string $substitute = ''): bool
     {
-        $credential = Credential::openFiles($credentials['certificado'], $credentials['llave'], $credentials['secreto']);
+        $credential = Credential::openFiles(
+            $credentials['certificado'],
+            $credentials['llave'],
+            $credentials['secreto']
+        );
         $document = CancelDocument::newWithErrorsUnrelated($uuid);
 
         $finkok = new QuickFinkok($this->finkokSettings);

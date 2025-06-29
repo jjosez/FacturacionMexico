@@ -10,8 +10,8 @@
         <div class="card-header">Cliente</div>
         <div class="card-body">
             <div class="form-group mb-4">
-                {% set usoCfdi = fsc.getCustomerUsoCfdi(fsc.factura.codcliente) %}
-                {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI', fsc.getCatalogoSat().usoCfdi().all(), usoCfdi) }}
+                {% set usoCfdi = fsc.getCustomerCfdiUsage(fsc.factura.codcliente) %}
+                {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI', fsc.getCfdiUsageCatalog(), usoCfdi) }}
             </div>
             <div class="form-group">
                 {{ form.inputtext('razonsocial', 'Razón social', fsc.factura.nombrecliente, 'disabled') }}

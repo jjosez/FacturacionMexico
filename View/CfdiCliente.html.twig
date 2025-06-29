@@ -21,14 +21,12 @@
                         <i class="fas fa-file-invoice" aria-hidden="true"></i>
                         {{ fsc.factura.codigo }}
                     </a>
-
                     <a class="btn btn-sm btn-warning" href="{{ fsc.url() }}" title="Pendientes}" data-toggle="modal"
                        data-target="#pendientesTimbradoModal">
                         <i class="fas fa-hourglass-half" aria-hidden="true"></i>
                         Pendientes
                     </a>
                 </div>
-
                 <div class="dropdown d-inline-block">
                     <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
                             aria-expanded="false">Exportar
@@ -46,7 +44,6 @@
                         </a>
                     </div>
                 </div>
-
                 <div class="dropdown d-inline-block">
                     <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown"
                             aria-expanded="false">PAC
@@ -93,7 +90,7 @@
                 <div class="card-header">Cliente</div>
                 <div class="card-body">
                     <div class="form-group">
-                        {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.reader.receptorUsoCfdi(), 'disabled') }}
+                        {# {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.reader.receptorUsoCfdi(), 'disabled') }} #}
                     </div>
                     <div class="form-group">
                         {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptorNombre(), 'disabled') }}
@@ -112,6 +109,7 @@
                     </div>
                     <div class="form-group">
                         {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
+                        {{ form.inputtext('fechatimbrado', 'Fecha', fsc.factura.fecha, 'disabled') }}
                         <small>Factura enviada el: {{ fsc.factura.femail }}</small>
                     </div>
                     <div class="form-group">
@@ -120,7 +118,10 @@
                 </div>
             </div>
         </div>
-        {{ _self.blockCfdiRelacionados(fsc.reader.cfdiRelacionados(), fsc) }}
+        {% set relations = fsc.reader.cfdiRelacionados()%}
+        {% for relation in relations %}
+            {{ _self.blockCfdiRelacionados(relation, fsc) }}
+        {% endfor %}
         {{ _self.blockCfdiConceptos(fsc.reader.conceptos(), fsc) }}
         <div class="card mb-3">
             <div class="card-header">Totales</div>
@@ -175,35 +176,6 @@
         </div>
     </div>
     {% include 'Modal/CfdiModals.html.twig' %}
-    <script>
-        $(document).ready(function () {
-            $('#cancelarCfdiForm').submit(function (e) {
-                var currentForm = this;
-                var message = 'Esta a punto de cancelar este CFDI. ¿Está seguro de que desea continuar?';
-
-                e.preventDefault();
-                bootbox.confirm({
-                    title: 'Confirmar',
-                    message: message,
-                    closeButton: false,
-                    buttons: {
-                        cancel: {
-                            label: '<i class="fas fa-times"></i> Cancelar'
-                        },
-                        confirm: {
-                            label: '<i class="fas fa-check"></i> Continuar',
-                            className: "btn-warning"
-                        }
-                    },
-                    callback: function (result) {
-                        if (result) {
-                            currentForm.submit();
-                        }
-                    }
-                });
-            });
-        })
-    </script>
 {% endblock %}
 
 {%- macro blockCfdiConceptos(conceptos, fsc) %}
@@ -252,14 +224,10 @@
 {% macro blockCfdiRelacionados(relacion, fsc) %}
     {%- if relacion.relacionados %}
         <div class="card mb-3">
-            <div class="card-header">Facturas relacionadas</div>
+            <div class="card-header">
+                Facturas relacionadas - {{ fsc.getCatalogoSat().tipoRelacion().getDescripcion(relacion.tiporelacion) }}
+            </div>
             <div class="card-body">
-                <div class="form-row">
-                    <div class="form-group col-12">
-                        <strong>Tipo de
-                            relacion:</strong> {{ fsc.getCatalogoSat().tipoRelacion().getDescripcion(relacion.tiporelacion) }}
-                    </div>
-                </div>
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead class="thead-light">
@@ -272,11 +240,17 @@
                         <tbody>
                         {% for relacionado in relacion.relacionados %}
                             {% set cfdi = fsc.loadCfdiFromUUID(relacionado) %}
-                            <tr>
-                                <td>{{ cfdi.razonreceptor }}</td>
-                                <td><a href="{{ cfdi.url() }}">{{ cfdi.uuid }}</a></td>
-                                <td>{{ cfdi.total }}</td>
-                            </tr>
+                            {% if cfdi %}
+                                <tr>
+                                    <td>{{ cfdi.razonreceptor }}</td>
+                                    <td><a href="{{ cfdi.url() }}">{{ cfdi.uuid }}</a></td>
+                                    <td>{{ cfdi.total }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="3">CFDI no encontrado: {{ relacionado }}</td>
+                                </tr>
+                            {% endif %}
                         {% endfor %}
                         </tbody>
                     </table>

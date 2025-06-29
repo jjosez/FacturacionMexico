@@ -5,40 +5,31 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\Email\NewMail;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\AlbaranCliente;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Contract\CfdiStorageInterface;
+use FacturaScripts\Plugins\FacturacionMexico\Contract\StampProviderInterface;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters\CfdiBuildResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiFactory;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiSettings;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF\PDFCfdi;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\StampService\FinkokStampService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Providers\FinkokStampService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiDatabaseStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiStorage;
 use Symfony\Component\HttpFoundation\Response;
 
 class EditCfdiCliente extends Controller
 {
-    /**
-     * @var CfdiCliente
-     */
-    public $cfdi;
+    public CfdiCliente $cfdi;
+    public FacturaCliente $factura;
+    public CfdiQuickReader $reader;
 
-    /**
-     * @var FacturaCliente
-     */
-    public $factura;
-
-    /**
-     * @var CfdiQuickReader
-     */
-    public $reader;
-
-    /**
-     * @var string
-     */
-    public $xml;
+    public string $xml;
 
     public function getPageData(): array
     {
@@ -51,7 +42,7 @@ class EditCfdiCliente extends Controller
         return $pagedata;
     }
 
-    public function privateCore(&$response, $user, $permissions)
+    public function privateCore(&$response, $user, $permissions): void
     {
         parent::privateCore($response, $user, $permissions);
         $this->setTemplate(false);
@@ -89,6 +80,13 @@ class EditCfdiCliente extends Controller
         return new CfdiCatalogo();
     }
 
+    public function getCfdiUsageCatalog(): array
+    {
+        $catalog = CfdiCatalogo::usoCfdi();
+
+        return $catalog->all();
+    }
+
     public function getCfdisRelacionados(): array
     {
         $result = [];
@@ -106,15 +104,23 @@ class EditCfdiCliente extends Controller
         return $result;
     }
 
-    public function getCustomerUsoCfdi(string $codcliente): string
+    public function getCustomerCfdiUsage(string $codcliente): string
     {
+        if ($this->isEgresoInvoice())
+            return 'G02';
+
         $cliente = new Cliente();
         $cliente->loadFromCode($codcliente);
 
-        return $cliente->usocfdi ?? self::toolBox()::appSettings()::get('cfdi', 'uso', 'P01');
+        return $cliente->getCfdiUsage();
     }
 
-    private function findCfdiRequest()
+    public function getCfdiRelation(): string
+    {
+        return $this->isEgresoInvoice() ? '01' : '';
+    }
+
+    private function findCfdiRequest(): void
     {
         $uuid = $this->request->request->get('uuid', false);
         $codcliente = $this->request->request->get('codcliente', false);
@@ -128,7 +134,7 @@ class EditCfdiCliente extends Controller
         echo 'CFDI no encontrado o pertenece a otro cliente';
     }
 
-    public function loadCfdiFromUUID($uuid)
+    public function loadCfdiFromUUID($uuid): bool|CfdiCliente
     {
         $cfdi = new CfdiCliente();
 
@@ -166,15 +172,11 @@ class EditCfdiCliente extends Controller
                 return;
 
             case 'enviar-email':
-                $this->cfdiSendEmailRequest();
+                $this->sendInvoiceEmail();
                 return;
 
             case 'timbrar':
-                $this->xml = $this->cfdiBuildRequest();
-                if ($this->xml && $this->cfdiStampRequest()) {
-                    $this->saveCfdiStampResponse();
-
-                    $this->reader = new CfdiQuickReader($this->xml);
+                if ($this->stampInvoice()) {
                     $this->setTemplate('CfdiCliente');
                 }
                 return;
@@ -191,71 +193,55 @@ class EditCfdiCliente extends Controller
         }
     }
 
-    protected function cfdiBuildRequest(): string
-    {
-        if (false === $this->factura->exists()) return '';
-
-        if (true === $this->isGlobalInvoice()) {
-            return CfdiFactory::buildCfdiGlobal($this->factura);
-        }
-
-        $relation = [
-            'tiporelacion' => $this->request->request->get('tiporelacion', false),
-            'relacionados' => $this->request->request->get('relacionados', [])
-        ];
-
-        if (true === $this->isEgresolInvoice()) {
-            if (false === $this->hasEgresoInvoiceParents($relation['relacionados'])) {
-                return '';
-            }
-
-            return CfdiFactory::buildCfdiEgreso($this->factura, $relation);
-        }
-
-        return CfdiFactory::buildCfdiIngreso($this->factura, $relation);
-    }
-
     protected function cfdiCancelRequest(): void
     {
         $service = $this->stampServiceProvider();
 
-        if ($service->cancelar($this->cfdi->uuid, CfdiSettings::getSatCredentials())) {
-            self::toolBox()::log()->notice('Cfdi cancelado correctamente');
-            CfdiStorage::updateCfdiStatus($this->cfdi, 'Cancelado');
+        if ($service->cancel($this->cfdi->uuid)) {
+            Tools::log()->notice('Cfdi cancelado correctamente');
+
+            $storage = $this->storageServiceProvider();
+            $storage->updateStatus($this->cfdi, 'Cancelado');
             return;
         }
 
-        $this->toolBox()::log()->error('No se pudo cancelar el cfdi');
+        Tools::log()->error('No se pudo cancelar el cfdi');
     }
 
-    protected function cfdiSendEmailRequest()
+    protected function sendInvoiceEmail(): void
     {
         $cliente = $this->factura->getSubject();
 
         if (!$cliente->email) {
-            $this->toolBox()::log()->warning('El cliente no tiene asignado algun Email');
+            Tools::log()->warning('El cliente no tiene asignado algun Email');
             return;
         }
 
         $filename = $this->cfdi->uuid;
-        $filesPathBase = FS_FOLDER . '/MyFiles/' . $filename;
+        $filesPathBase = CFDI_DIR . '/tmp/' . $filename;
 
-        $pdf = (new PDFCfdi($this->reader))->getPdfBuffer();
-        file_put_contents($filesPathBase . '.pdf', $pdf);
-        file_put_contents($filesPathBase . '.xml', $this->xml);
+        $logoID = $this->factura->getCompany()->idlogo;
+        $pdfBuilder = new PDFCfdi($this->reader, $logoID);
+
+        $pdf = $pdfBuilder->getPdfBuffer();
+
+        if (Tools::folderCheckOrCreate(CFDI_DIR . '/tmp')) {
+            file_put_contents($filesPathBase . '.pdf', $pdf);
+            file_put_contents($filesPathBase . '.xml', $this->xml);
+        }
 
         $email = new NewMail();
 
-        $email->addAddress($cliente->email, $cliente->nombre);
-        $email->title = 'Facturacion - ' . $this->empresa->nombrecorto;
-        $email->text = 'Envio de su comprobante fiscal digital.<br/>Gracias por su preferencia. &#128663;';
+        $email->to($cliente->email, $cliente->nombre);
+        $email->title = 'Facturación - ' . $this->empresa->nombrecorto;
+        $email->text = 'Envío de su comprobante fiscal digital.<br/>Gracias por su preferencia. &#128663;';
 
         $email->addAttachment($filesPathBase . '.pdf', $filename . '.pdf');
         $email->addAttachment($filesPathBase . '.xml', $filename . '.xml');
 
         if (true === $email->send()) {
             CfdiStorage::updateCfdiMailDate($this->cfdi);
-            $this->toolBox()::i18nLog()->notice('send-mail-ok');
+            Tools::log()->notice('send-mail-ok');
         }
 
         if (file_exists($filesPathBase . '.pdf')) {
@@ -267,35 +253,94 @@ class EditCfdiCliente extends Controller
         }
     }
 
-    protected function cfdiStampRequest(): bool
+    protected function stampInvoice(): bool
     {
-        $service = $this->stampServiceProvider();
-        $response = $service->timbrar($this->xml);
-
-        if (true === $response->hasError()) {
-            self::toolBox()::log()->warning($response->getMessage());
-            self::toolBox()::log()->warning($response->getMessageErrorCode() . $response->getMessageDetail());
-
-            if ($response->hasPreviousSign()) {
-                self::toolBox()::log()->notice('Obtenido timbre previo');
-                $response = $service->getTimbradoPrevio($this->xml);
-
-                if (false === $response->hasError()) {
-                    self::toolBox()::log()->notice($response->getMessage());
-                    $this->xml = $response->getXml();
-                    return true;
-                }
-            }
-
+        if (false === $this->factura->exists()) {
+            Tools::log()->warning('La factura no existe');
             return false;
         }
 
-        self::toolBox()::log()->notice($response->getMessage());
-        $this->xml = $response->getXml();
+        $buildResult = $this->buildCfdi();
+        if ($buildResult->hasError()) {
+            Tools::log()->error('Error al construir el cfdi.');
+            Tools::log()->error($buildResult->getBuildMessage());
+            return false;
+        }
+
+        $xmlFinal = $this->stampCfdi($buildResult->getXml());
+        if (null === $xmlFinal) {
+            return false;
+        }
+
+        $cfdi = $this->storeCfdi($xmlFinal);
+        if (null === $cfdi) {
+            Tools::log()->error('Error al guardar el cfdi');
+            return false;
+        }
+
+        $this->updateStampedInvoiceStatus();
         return true;
     }
 
-    protected function cfdiStatusRequest()
+    protected function buildCfdi(): CfdiBuildResult
+    {
+        $relations = $this->processCfdiRelacionadosRequest();
+
+        if (!$this->testParentsInvoice($relations)) {
+            return new CfdiBuildResult('', 'Error al validar los CFDI relacionados.', true);
+        }
+
+        if ($this->isEgresoInvoice()) {
+            return CfdiFactory::buildCfdiEgreso($this->factura, $relations);
+        }
+
+        if ($this->isGlobalInvoice()) {
+            return CfdiFactory::buildCfdiGlobal($this->factura, $relations);
+        }
+
+        return CfdiFactory::buildCfdiIngreso($this->factura, $relations);
+    }
+
+    protected function stampCfdi(string $xml): ?string
+    {
+        $provider = $this->stampServiceProvider();
+        $stampResult = $provider->stamp($xml);
+
+        if (!$stampResult->hasError()) {
+            return $stampResult->getXml();
+        }
+
+        Tools::log()->error($stampResult->getMessage());
+
+        if (!$stampResult->hasPreviousStamp()) {
+            return null;
+        }
+
+        Tools::log()->notice('Obtenido timbre previo');
+        $previousResult = $provider->getStamped($xml);
+
+        if ($previousResult->hasError()) {
+            Tools::log()->error($previousResult->getMessage());
+            return null;
+        }
+
+        return $previousResult->getXml();
+    }
+
+    protected function storeCfdi(string $xml): ?CfdiCliente
+    {
+        $storage = $this->storageServiceProvider();
+        $cfdi = $storage->save($this->factura, $xml);
+
+        if ($cfdi && $storage->saveXml($cfdi, $xml)) {
+            return $cfdi;
+        }
+
+        Tools::log()->error('Error al guardar el cfdi');
+        return null;
+    }
+
+    protected function cfdiStatusRequest(): void
     {
         $service = $this->stampServiceProvider();
         $query = [
@@ -305,11 +350,11 @@ class EditCfdiCliente extends Controller
             'total' => $this->cfdi->total
         ];
 
-        $status = $service->getSatStatus($query);
+        $status = $service->getStatus($query);
 
-        self::toolBox()::log()->warning('Estatus del comprobante: ' . $status->query());
-        self::toolBox()::log()->warning('Es cancelable: ' . $status->cancellable());
-        self::toolBox()::log()->warning('Estado de la cancelación: ' . $status->cancellation());
+        Tools::log()->warning('Estatus del comprobante: ' . $status->cfdiStatus);
+        Tools::log()->warning('Es cancelable: ' . $status->cancelableStatus);
+        Tools::log()->warning('Estado de la cancelación: ' . $status->cancellationStatus);
     }
 
     protected function downloadInvoiceXML(): Response
@@ -324,25 +369,25 @@ class EditCfdiCliente extends Controller
 
     protected function downloadInvoicePDF(): void
     {
-        $reader = new CfdiQuickReader($this->xml);
-        $pdf = new PDFCfdi($reader);
+        $logoID = $this->factura->getCompany()->idlogo;
+        $pdf = new PDFCfdi($this->reader, $logoID);
 
         $pdf->downloadPDF();
     }
 
-    protected function isEgresolInvoice(): bool
+    public function isEgresoInvoice(): bool
     {
-        return CfdiSettings::getSerieEgreso() === $this->factura->codserie;
+        return CfdiSettings::serieEgreso() === $this->factura->codserie;
     }
 
     protected function isGlobalInvoice(): bool
     {
-        $checkbox = $this->request->request->get('globalinvoice', false);
+        $globalInvoiceRequest = $this->request->request->get('globalinvoice', false);
 
-        return $checkbox && CfdiSettings::getRfcGenerico() === $this->factura->cifnif;
+        return $globalInvoiceRequest && CfdiSettings::rfcGenerico() === $this->factura->cifnif;
     }
 
-    protected function loadCfdiReader()
+    protected function loadCfdiReader(): void
     {
         $this->xml = $this->cfdi->getXml();
         $this->reader = new CfdiQuickReader($this->xml);
@@ -354,81 +399,120 @@ class EditCfdiCliente extends Controller
             return true;
         }
 
-        self::toolBox()::log()->warning('Factura no encontrada');
+        Tools::log()->warning('Factura no encontrada');
         return false;
     }
 
-    protected function saveCfdiStampResponse(): void
+    protected function stampServiceProvider(): StampProviderInterface
     {
-        if (false === CfdiStorage::saveCfdi($this->factura, $this->cfdi, $this->xml)) {
-            self::toolBox()::log()->warning('Error al guardar el CFDI');
-            return;
-        }
+        $username = Tools::settings('cfdi', 'stamp-user');
+        $token = Tools::settings('cfdi', 'stamp-token');
+        $testMode = Tools::settings('cfdi', 'test-mode', true);
 
-        if (false === CfdiStorage::saveCfdiXml($this->cfdi, $this->xml)) {
-            self::toolBox()::log()->warning('Error al guardar el XML');
-            return;
-        }
-
-        self::toolBox()::log()->notice('CFDI guardado correctamente');
-        $this->updateStampedInvoiceStatus();
+        return new FinkokStampService($username, $token, $testMode);
     }
 
-    protected function stampServiceProvider(): FinkokStampService
+    protected function storageServiceProvider(): CfdiStorageInterface
     {
-        $username = self::toolBox()::appSettings()::get('cfdi', 'stampuser');
-        $testmode = self::toolBox()::appSettings()::get('cfdi', 'testmode', true);
-        $token = self::toolBox()::appSettings()::get('cfdi', 'stamptoken');
-
-        return new FinkokStampService($username, $token, $testmode);
+        return new CfdiDatabaseStorage();
     }
 
-    private function hasEgresoInvoiceParents(array $parents): bool
+    private function testParentsInvoice(array $relations): bool
     {
-        if (true === empty($parents)) {
-            $this->toolBox()::log()->warning('Se debe relacionar con un cfdi de ingreso');
-            return false;
-        }
+        $isNotaCreditoRelation = false;
 
-        $parentCfdi = new CfdiCliente();
-        foreach ($parents as $parent) {
-            if (false === $parentCfdi->loadFromUuid($parent)) {
-                $this->toolBox()::log()->warning('Cfdi relacionado no encontrado');
-                return false;
-            } elseif ($this->factura->codcliente !== $parentCfdi->codcliente) {
-                $this->toolBox()::log()->warning('Cfdi relacionado no coincide receptor');
-                return false;
+        foreach ($relations as $group) {
+            $tipoRelacion = $group['tiporelacion'] ?? '';
+            $relacionados = $group['relacionados'] ?? [];
+
+            if (empty($relacionados)) {
+                Tools::log()->warning("No hay UUIDs en la relación tipo $tipoRelacion.");
+                continue;
             }
 
-            if (empty($this->factura->codigorect) || empty($this->factura->idfacturarect)) {
-                $parentInvoice = new FacturaCliente();
+            if ('01' === $tipoRelacion) {
+                $isNotaCreditoRelation = true;
+            }
 
-                if ($parentInvoice->loadFromCode($parentCfdi->idfactura)) {
-                    $this->factura->codigorect = $parentInvoice->codigo;
-                    $this->factura->idfacturarect = $parentInvoice->idfactura;
+            foreach ($relacionados as $uuid) {
+                $parentCfdi = new CfdiCliente();
 
-                    return $this->factura->save();
+                if (!$parentCfdi->loadFromUuid($uuid)) {
+                    Tools::log()->warning("CFDI relacionado no encontrado: $uuid");
+                    continue;
+                }
+
+                if ($this->factura->codcliente !== $parentCfdi->codcliente) {
+                    Tools::log()->warning("CFDI relacionado no coincide receptor: $uuid");
+                    continue;
+                }
+
+                if ($this->isEgresoInvoice() && '01' === $tipoRelacion) {
+                    if (empty($this->factura->codigorect) || empty($this->factura->idfacturarect)) {
+                        $parentInvoice = new FacturaCliente();
+
+                        if ($parentInvoice->loadFromCode($parentCfdi->idfactura)) {
+                            $this->factura->codigorect = $parentInvoice->codigo;
+                            $this->factura->idfacturarect = $parentInvoice->idfactura;
+                            $this->factura->save();
+                        }
+                    }
                 }
             }
         }
+
+        // Si es egreso debe tener tipo 01
+        if ($this->isEgresoInvoice()) {
+            if (empty($relations)) {
+                Tools::log()->warning('Un CFDI de egreso debe relacionarse al menos con un CFDI.');
+                return false;
+            }
+
+            if (!$isNotaCreditoRelation) {
+                Tools::log()->warning('Un CFDI de egreso debe tener al menos un tipo de relación 01 (nota de crédito).');
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    private function processCfdiRelacionadosRequest(): array
+    {
+        $relationsRequest = $this->request->request->get('relacionados', []);
+        $relations = [];
+
+        foreach ($relationsRequest as $tipo => $uuids) {
+            if (!empty($tipo) && !empty($uuids)) {
+                $relations[] = [
+                    'tiporelacion' => $tipo,
+                    'relacionados' => $uuids
+                ];
+            }
+        }
+
+        return $relations;
     }
 
     protected function updateStampedInvoiceStatus(): void
     {
-        $this->factura->idestado = self::toolBox()::appSettings()::get('cfdi', 'estadotimbrada');
+        $this->factura->idestado = CfdiSettings::stampedInvoiceStatus();
 
         if (true === $this->factura->save()) {
-            self::toolBox()::log()->notice('Factura actualizada correctamente');
+            Tools::log()->notice('Factura actualizada correctamente');
         }
     }
 
     public function getPendingInvoices(): array
     {
         $invoice = new FacturaCliente();
-        $stampedState = self::toolBox()::appSettings()::get('cfdi', 'estadotimbrada');
+        $stampedState = CfdiSettings::stampedInvoiceStatus();
+        $canceledState = CfdiSettings::canceledInvoiceStatus();
 
-        $where = [new DataBaseWhere('idestado', $stampedState, '!=')];
+        $where = [
+            new DataBaseWhere('idestado', $stampedState, '!='),
+            new DataBaseWhere('idestado', $canceledState, '!='),
+        ];
 
         return $invoice->all($where);
     }

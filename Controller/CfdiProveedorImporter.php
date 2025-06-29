@@ -3,7 +3,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Base\Controller;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiQuickReaderService;
 
 class CfdiProveedorImporter extends Controller
 {
@@ -65,7 +65,7 @@ class CfdiProveedorImporter extends Controller
         }
 
         $fileContent = file_get_contents($file->getPathname());
-        $this->reader = new CfdiQuickReader($fileContent);
+        $this->reader = new CfdiQuickReaderService($fileContent);
         //$this->setTemplate('Block/Ajax/CfdiImportGeneral');
     }
 }

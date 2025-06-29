@@ -16,8 +16,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
+use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Model\Base;
 
 /**
@@ -32,6 +34,17 @@ class CfdiData extends Base\ModelClass
     public $idcfdi;
     public $xml;
     public $uuid;
+
+    /**
+     * @param string $code id from cfdi
+     * @return string
+     */
+    public static function getXmlFromCfdi(string $code): string
+    {
+        $result = self::table()->whereEq('idcfdi', $code)->first();
+
+        return $result['xml'] ?? "";
+    }
 
     public static function primaryColumn(): string
     {

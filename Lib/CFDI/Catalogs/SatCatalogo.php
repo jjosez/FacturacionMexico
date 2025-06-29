@@ -1,6 +1,6 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogs;
 
 
 class SatCatalogo

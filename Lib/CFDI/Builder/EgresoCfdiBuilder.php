@@ -2,6 +2,7 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder;
 
+use Exception;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 
 class EgresoCfdiBuilder extends CfdiBuilder

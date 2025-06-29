@@ -9,6 +9,7 @@ use CfdiUtils\Nodes\Node;
 use CfdiUtils\XmlResolver\XmlResolver;
 use Exception;
 use FacturaScripts\Core\App\AppSettings;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
@@ -99,12 +100,12 @@ abstract class CfdiBuilder
     {
         $observacion = $this->cliente->observaciones;
 
-        if (empty($observacion) && ! $this->cliente->addenda) {
+        if (empty($observacion) && !$this->cliente->addenda) {
             return;
         }
 
         $this->comprobante->addAddenda(
-            new Node('Observacion',['Detalle' => $observacion])
+            new Node('Observacion', ['Detalle' => $observacion])
         );
     }
 
@@ -147,7 +148,7 @@ abstract class CfdiBuilder
 
     protected function setEmisor(): void
     {
-        $regimen = AppSettings::get('cfdi', 'regimen');
+        $regimen = Tools::settings('cfdi', 'regimen');
         $emisor = [
             'RegimenFiscal' => $regimen,
         ];
@@ -183,6 +184,11 @@ abstract class CfdiBuilder
         $this->setSello();
     }
 
+    public function getSello(): string
+    {
+        return $this->creator->comprobante()['Sello'];
+    }
+
     /**
      * @throws Exception
      */
@@ -206,23 +212,26 @@ abstract class CfdiBuilder
         }
     }
 
-    public function setDocumentosRelacionados(array $foliosfiascales, string $tiporelacion): void
+    public function setCfdiRelacionados(array $relations): void
     {
-        if (empty($foliosfiascales)) {
-            return;
-        }
+        foreach ($relations as $group) {
+            $tipoRelacion = $group['tiporelacion'] ?? '';
+            $uuids = $group['relacionados'] ?? [];
 
-        foreach ($foliosfiascales as $folio) {
-            $this->comprobante->addCfdiRelacionados([
-                'TipoRelacion' => $tiporelacion
-            ])->addCfdiRelacionado([
-                'UUID' => $folio
+            if (empty($tipoRelacion) || empty($uuids)) {
+                continue;
+            }
+
+            $relacionadosNode = $this->comprobante->addCfdiRelacionados([
+                'TipoRelacion' => $tipoRelacion
             ]);
-        }
 
-        /*$this->comprobante->getCfdiRelacionados()->addAttributes([
-            'TipoRelacion' => $tiporelacion
-        ]);*/
+            foreach ($uuids as $uuid) {
+                $relacionadosNode->addCfdiRelacionado([
+                    'UUID' => $uuid
+                ]);
+            }
+        }
     }
 
     protected function buildConceptoTraslado($linea): array
@@ -257,13 +266,10 @@ abstract class CfdiBuilder
     {
         $certificado = new Certificado($filename);
         $this->creator->putCertificado($certificado);
-        //$this->certificado = new Certificado($filename);
     }
 
     public function setLlavePrivada(string $llaveprivada, string $secreto): void
     {
-
-        //$this->llaveprivada = file_get_contents($filename) ?: '';
         $this->llaveprivada = $llaveprivada;
         $this->secreto = $secreto;
     }

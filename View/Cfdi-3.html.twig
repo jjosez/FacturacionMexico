@@ -21,15 +21,15 @@
     <div id="cfdiCertificados" class="collapse">
         <div class="card-body">
             <div class="form-group">
-                {% set text = appSettings.get('cfdi', 'cerfile', 'Certificado') %}
+                {% set text = settings('cfdi', 'cerfile', 'Certificado') %}
                 {{ form.inputfile('cerFile', 'cerfile', text, '.cer', text) }}
             </div>
             <div class="form-group">
-                {% set text = appSettings.get('cfdi', 'keyfile', 'Llave privada') %}
+                {% set text = settings('cfdi', 'keyfile', 'Llave privada') %}
                 {{ form.inputfile('keyFile', 'keyfile', text, '.pem') }}
             </div>
             <div class="form-group">
-                {% set text = appSettings.get('cfdi', 'passphrase', '') %}
+                {% set text = settings('cfdi', 'passphrase', '') %}
                 {{ form.inputpassword('certPassword', 'passphrase', 'Contraseña', text) }}
                 <small class="form-text text-muted">Contraseña de la llave privada</small>
             </div>

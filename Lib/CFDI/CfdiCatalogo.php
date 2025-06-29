@@ -2,7 +2,7 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI;
 
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogos\SatCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Catalogs\SatCatalogo;
 
 class CfdiCatalogo
 {

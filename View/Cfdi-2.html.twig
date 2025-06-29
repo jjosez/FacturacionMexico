@@ -15,8 +15,9 @@
         <div class="card-body">
             <div class="form-row">
                 <div class="form-group col-12 col-md-6">
+                    {% set tipoRelacion = fsc.getCfdiRelation() %}
                     {{ form.inputselect('tiporelacion', 'tiporelacion', 'Tipo de relación',
-                        fsc.getCatalogoSat().tipoRelacion().all(), '01') }}
+                        fsc.getCatalogoSat().tipoRelacion().all(), tipoRelacion) }}
                 </div>
                 <div class="form-group col-12 col-md-6">
                     <label for="uuidrelacionado">Folio fiscal</label>
@@ -31,30 +32,22 @@
         </div>
     </div>
 </div>
+
 <div class="card mb-3">
-    <div class="card-header">CFDI's Relacionados </div>
+    <div class="card-header">CFDI's Relacionados</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm">
                 <thead>
                 <tr>
-                    <th scope="col">Receptor</th>
+                    <th scope="col">Tipo Relación</th>
                     <th scope="col">UUID</th>
                     <th scope="col">Total</th>
                     <th scope="col">Fecha</th>
-                    <th scope="col">Accion</th>
+                    <th scope="col">Acción</th>
                 </tr>
                 </thead>
                 <tbody id="tablaRelacionados">
-                {% for relacionado in fsc.getCfdisRelacionados() %}
-                    <tr>
-                        <td>{{ relacionado.razonreceptor }}</td>
-                        <td><input type="hidden" name="relacionados[]" value="{{ relacionado.uuid }}">
-                            {{ relacionado.uuid }}</td>
-                        <td>{{ relacionado.total }}</td>
-                        <td>{{ relacionado.total }}</td>
-                    </tr>
-                {% endfor %}
                 </tbody>
             </table>
         </div>

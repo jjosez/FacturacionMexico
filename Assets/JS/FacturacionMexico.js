@@ -25,7 +25,7 @@ function addCfdiFromUUID() {
     });
 }
 
-function addRelatedCfdi(result) {
+/*function addRelatedCfdi(result) {
     const row = relatedTableBody.insertRow();
 
     const cellRazonSocial = row.insertCell(0);
@@ -59,6 +59,42 @@ function addRelatedCfdi(result) {
     buttonDeleteIcon.setAttribute('class', 'fas fw fa-trash');
     button.appendChild(buttonDeleteIcon);
 
+    cellAction.appendChild(button);
+}*/
+
+function addRelatedCfdi(result) {
+    const tipoRelacion = document.getElementById('tiporelacion').value;
+    const tipoRelacionText = document.getElementById('tiporelacion').selectedOptions[0].text;
+
+    const row = relatedTableBody.insertRow();
+
+    // Tipo relación
+    const cellTipoRelacion = row.insertCell(0);
+    cellTipoRelacion.setAttribute('class', 'align-middle');
+    cellTipoRelacion.innerHTML = tipoRelacionText +
+        `<input type="hidden" name="relacionados[${tipoRelacion}][]" value="${result.uuid}">`;
+
+    // UUID
+    const cellFolioFiscal = row.insertCell(1);
+    cellFolioFiscal.setAttribute('class', 'align-middle');
+    cellFolioFiscal.innerHTML = result.uuid;
+
+    // Total
+    const cellTotal = row.insertCell(2);
+    cellTotal.setAttribute('class', 'align-middle');
+    cellTotal.innerHTML = result.total;
+
+    // Fecha
+    const cellFecha = row.insertCell(3);
+    cellFecha.setAttribute('class', 'align-middle');
+    cellFecha.innerHTML = result.fecha;
+
+    // Accion
+    const cellAction = row.insertCell(4);
+    const button = document.createElement('button');
+    button.setAttribute('type', 'button');
+    button.className = 'btn btn-danger btn-remove';
+    button.innerHTML = '<i class="fas fw fa-trash"></i>';
     cellAction.appendChild(button);
 }
 
@@ -95,5 +131,31 @@ $(document).ready(function () {
 
     $("#tablaRelacionados").on("click", ".btn-remove", function () {
         $(this).closest('tr').remove();
+    });
+
+    $('#cancelarCfdiForm').submit(function (e) {
+        var currentForm = this;
+        var message = 'Esta a punto de cancelar este CFDI. ¿Está seguro de que desea continuar?';
+
+        e.preventDefault();
+        bootbox.confirm({
+            title: 'Confirmar',
+            message: message,
+            closeButton: false,
+            buttons: {
+                cancel: {
+                    label: '<i class="fas fa-times"></i> Cancelar'
+                },
+                confirm: {
+                    label: '<i class="fas fa-check"></i> Continuar',
+                    className: "btn-warning"
+                }
+            },
+            callback: function (result) {
+                if (result) {
+                    currentForm.submit();
+                }
+            }
+        });
     });
 })

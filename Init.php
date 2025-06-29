@@ -3,7 +3,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico;
 
 define('CFDI_DIR', 'MyFiles' . DIRECTORY_SEPARATOR . 'CFDI');
-define('CFDI_CATALOGS_DIR', FS_FOLDER . '/Plugins/FacturacionMexico/Lib/CFDI/Catalogos/Data');
+define('CFDI_CATALOGS_DIR', FS_FOLDER . '/Plugins/FacturacionMexico/Lib/CFDI/Catalogs/Data');
 define('CFDI_CERT_DIR', CFDI_DIR . DIRECTORY_SEPARATOR . 'certs');
 define('CFDI_XSLT_DIR', CFDI_DIR . DIRECTORY_SEPARATOR . 'resources');
 define('CFDI_XSLT_URL', 'http://www.sat.gob.mx/sitio_internet/cfd/3/cadenaoriginal_3_3/cadenaoriginal_3_3.xslt');
@@ -11,7 +11,7 @@ define('CFDI_XSLT_URL', 'http://www.sat.gob.mx/sitio_internet/cfd/3/cadenaorigin
 require_once __DIR__ . '/vendor/autoload.php';
 
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
-use FacturaScripts\Core\Base\InitClass;
+use FacturaScripts\Core\Template\InitClass;
 use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\EstadoDocumento;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
@@ -19,19 +19,19 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 class Init extends InitClass
 {
 
-    public function init()
+    public function init(): void
     {
         $this->loadExtension(new Extension\Controller\EditCliente());
         $this->loadExtension(new Extension\Controller\EditFacturaCliente());
     }
 
-    public function update()
+    public function update(): void
     {
         $this->setMetodosDePago();
         $this->setEstadosDocumento();
     }
 
-    protected function setMetodosDePago()
+    protected function setMetodosDePago(): void
     {
         $formaPagoFiltro = ['01','02','03','04', '28', '99'];
         $formaPago = new FormaPago();
@@ -52,20 +52,27 @@ class Init extends InitClass
         }
     }
 
-    protected function setEstadosDocumento()
+    protected function setEstadosDocumento(): void
     {
-        $where = [new DataBaseWhere('nombre', 'Timbrada')];
+        $where = [
+            new DataBaseWhere('nombre', 'Cancelada'),
+            new DataBaseWhere('tipodoc', 'FacturaCliente')
+        ];
 
-        $estadoDocumento = new EstadoDocumento();
+        $canceledStatus = new EstadoDocumento();
 
-        if (! $estadoDocumento->loadFromCode('',$where)) {
-            $estadoDocumento->actualizastock = -1;
-            $estadoDocumento->bloquear = true;
-            $estadoDocumento->editable = false;
-            $estadoDocumento->nombre = 'Timbrada';
-            $estadoDocumento->tipodoc = 'FacturaCliente';
+        if (! $canceledStatus->loadFromCode('',$where)) {
+            $canceledStatus->actualizastock = 1;
+            $canceledStatus->bloquear = true;
+            $canceledStatus->editable = false;
+            $canceledStatus->nombre = 'Cancelada';
+            $canceledStatus->tipodoc = 'FacturaCliente';
 
-            $estadoDocumento->save();
+            $canceledStatus->save();
         }
+    }
+
+    public function uninstall(): void
+    {
     }
 }

@@ -49,20 +49,21 @@
                             <div class="tab-pane container-fluid active" id="general">
                                 <form action="{{ fsc.url() }}" autocomplete="off" method="post">
                                     <input type="hidden" name="action" value='save-cfdi-settings'>
-                                    {% set defaultRegimen = appSettings.get('cfdi','regimen') %}
+                                    {% set defaultRegimen = settings('cfdi','regimen') %}
                                     <div class="form-group row">
                                         {{ form.inputselect('regimenFiscal', 'regimenfiscal', 'Régimen Fiscal',
                                             fsc.getCatalogoSat().regimenFiscal().all(), defaultRegimen) }}
                                     </div>
-                                    {% set defaultUso = appSettings.get('cfdi','uso') %}
+                                    {% set defaultUso = settings('cfdi','uso') %}
                                     <div class="form-group row mb-4">
                                         {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI',
                                             fsc.getCatalogoSat().usoCfdi.all(), defaultUso) }}
                                     </div>
-                                    {% set estadoFactura = appSettings.get('cfdi','estadotimbrada') %}
+                                    {% set estadoFactura = settings('cfdi','stamped-status') %}
                                     <div class="form-group row mb-4">
                                         <label for="estadoFacturaTimbrado">Estado Factura Cfdi Timbrado</label>
-                                        <select id="estadoFacturaTimbrado" name="estadotimbrada" class="form-control" required>
+                                        <select id="estadoFacturaTimbrado" name="estadotimbrada" class="form-control"
+                                                required>
                                             <option value="">----</option>
                                             {% for item in fsc.getInvoiceStatus() %}
                                                 <option value="{{ item.idestado }}" {% if estadoFactura == item.idestado %} selected {% endif %}>
@@ -70,7 +71,7 @@
                                             {% endfor %}
                                         </select>
                                     </div>
-                                    {% set estadoFactura = appSettings.get('cfdi','estadocancelada') %}
+                                    {% set estadoFactura = settings('cfdi','canceled-status') %}
                                     <div class="form-group row mb-4">
                                         <label for="estadoFacturaCancelada">Estado Factura Cfdi Cancelado</label>
                                         <select id="estadoFacturaCancelada" name="estadocancelada" class="form-control">
@@ -100,15 +101,15 @@
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        {% set text = appSettings.get('cfdi', 'cerfile', 'Certificado') %}
+                                        {% set text = settings('cfdi', 'cerfile', 'Certificado') %}
                                         {{ form.inputfile('cerFile', 'cerfile', text, '.cer', text) }}
                                     </div>
                                     <div class="form-group row">
-                                        {% set text = appSettings.get('cfdi', 'keyfile', 'Llave privada') %}
+                                        {% set text = settings('cfdi', 'keyfile', 'Llave privada') %}
                                         {{ form.inputfile('keyFile', 'keyfile', text, '.key') }}
                                     </div>
                                     <div class="form-group row">
-                                        {% set text = appSettings.get('cfdi', 'passphrase', '') %}
+                                        {% set text = settings('cfdi', 'passphrase', '') %}
                                         {{ form.inputpassword('certPassword', 'passphrase', 'Contraseña', text) }}
                                         <small class="form-text text-muted">Contraseña de la llave privada</small>
                                     </div>
@@ -123,18 +124,18 @@
                                 <form action="{{ fsc.url() }}" autocomplete="off" method="post">
                                     <input type="hidden" name="action" value='save-stamp-settings'>
                                     <div class="form-group row">
-                                        {% set text = appSettings.get('cfdi', 'stampuser', '') %}
+                                        {% set text = settings('cfdi', 'stamp-user', '') %}
                                         {{ form.inputtext('stampuser', 'Usuario', text) }}
                                         <small class="form-text text-muted">Usuario servicio de timbrado</small>
                                     </div>
                                     <div class="form-group row">
-                                        {% set text = appSettings.get('cfdi', 'stamptoken', '') %}
+                                        {% set text = settings('cfdi', 'stamp-token', '') %}
                                         {{ form.inputpassword('stamptoken', 'stamptoken', 'Token',text) }}
                                         <small class="form-text text-muted">Token de acceso al servicio</small>
                                     </div>
                                     <div class="form-group row">
                                         <div class="form-check">
-                                            {% set checked = (appSettings.get('cfdi', 'testmode') is same as(true)) ? ' checked' : '' %}
+                                            {% set checked = (settings('cfdi', 'test-mode') is same as(true)) ? ' checked' : '' %}
                                             <input class="form-check-input" type="checkbox" id="testMode"
                                                    name="testmode"{{ checked }}>
                                             <label class="form-check-label" for="testMode">Modo prueba</label>
@@ -149,7 +150,7 @@
                                 <div class="row">
                                     <p>Almacen de recursos locales para agilizar el proceso de generacion de la cadena
                                         original.</p>
-                                    {% set cacheExists = appSettings.get('cfdi', 'cachefiles', '0') %}
+                                    {% set cacheExists = settings('cfdi', 'cachefiles', '0') %}
                                     {% if cacheExists == '1' %}
                                         <div class="col-12 alert alert-info" role="alert">
                                             Almacen local de archivos XSLT <i class="fas fa-check-circle"></i>
