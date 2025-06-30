@@ -1,6 +1,21 @@
 <?php
-
-
+/**
+ * This file is part of FacturacionMexico plugin for FacturaScripts
+ * Copyright (C) 2019 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Services;
 
 use CfdiUtils\Cfdi;
@@ -8,6 +23,7 @@ use CfdiUtils\ConsultaCfdiSat\RequestParameters;
 use CfdiUtils\Nodes\XmlNodeUtils;
 use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
 use CfdiUtils\XmlResolver\XmlResolver;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use InvalidArgumentException;
 use Luecano\NumeroALetras\NumeroALetras;
 
@@ -38,38 +54,27 @@ class CfdiQuickReader
         return $builder->build($tfdXmlString);
     }
 
-    /*public function cfdiRelacionados(): array
-    {
-        $result = [];
-        $relacionados = $this->comprobante->cfdirelacionados;
-        $result['tiporelacion'] = $relacionados['TipoRelacion'];
-
-        foreach ($relacionados() as $relacionado) {
-            $result['relacionados'] = ['uuid' => $relacionado['UUID']];
-        }
-
-        return $result;
-    }*/
-    public function cfdiRelacionados(): array
+    public function relacionados(): array
     {
         $result = [];
 
-        $comprobante = $this->comprobante->comprobante();
-        foreach ($comprobante->searchNodes('cfdi:CfdiRelacionados') as $relacionadosNode) {
-            $tipoRelacion = $relacionadosNode->getAttribute('TipoRelacion');
-            $relacionados = [];
+        $relacionadosNodes = ($this->comprobante)('CfdiRelacionados');
 
-            foreach ($relacionadosNode->searchNodes('cfdi:CfdiRelacionado') as $relacionadoNode) {
-                $uuid = $relacionadoNode->getAttribute('UUID');
+        foreach ($relacionadosNodes as $relacionadoNode) {
+            $uuids = [];
+
+            $children = ($relacionadoNode)('CfdiRelacionado');
+            foreach ($children as $child) {
+                $uuid = $child['UUID'];
                 if ($uuid) {
-                    $relacionados[] = $uuid;
+                    $uuids[] = $uuid;
                 }
             }
 
-            if (!empty($relacionados)) {
+            if (!empty($uuids)) {
                 $result[] = [
-                    'tiporelacion' => $tipoRelacion,
-                    'relacionados' => $relacionados
+                    'tiporelacion' => $relacionadoNode['TipoRelacion'],
+                    'relacionados' => $uuids
                 ];
             }
         }

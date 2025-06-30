@@ -12,9 +12,9 @@ class PDFCfdi extends PDFCfdiCore
 {
     private CfdiQuickReader $reader;
 
-    private string $logoID;
+    private ?string $logoID;
 
-    public function __construct(CfdiQuickReader $reader, string $logoID = '')
+    public function __construct(CfdiQuickReader $reader, ?string $logoID = '')
     {
         parent::__construct();
 

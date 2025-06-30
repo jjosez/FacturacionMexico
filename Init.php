@@ -14,7 +14,7 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Template\InitClass;
 use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\EstadoDocumento;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiCatalogo;
 
 class Init extends InitClass
 {

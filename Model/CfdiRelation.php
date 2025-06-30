@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of POS plugin for FacturaScripts
+ * This file is part of FacturacionMexico plugin for FacturaScripts
  * Copyright (C) 2019 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,11 +21,6 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Model\Base;
 
-/**
- * Operaciones realizadas terminales POS.
- *
- * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
- */
 class CfdiRelation extends Base\ModelClass
 {
     use Base\ModelTrait;

@@ -4,7 +4,6 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
-use FacturaScripts\Core\Lib\Email\NewMail;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\AlbaranCliente;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
@@ -15,12 +14,13 @@ use FacturaScripts\Plugins\FacturacionMexico\Contract\StampProviderInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters\CfdiBuildResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiFactory;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware\RelationValidator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiEmailService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF\PDFCfdi;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Providers\FinkokStampService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiDatabaseStorage;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiStorage;
 use Symfony\Component\HttpFoundation\Response;
 
 class EditCfdiCliente extends Controller
@@ -210,47 +210,9 @@ class EditCfdiCliente extends Controller
 
     protected function sendInvoiceEmail(): void
     {
-        $cliente = $this->factura->getSubject();
+        $emailService = new CfdiEmailService();
 
-        if (!$cliente->email) {
-            Tools::log()->warning('El cliente no tiene asignado algun Email');
-            return;
-        }
-
-        $filename = $this->cfdi->uuid;
-        $filesPathBase = CFDI_DIR . '/tmp/' . $filename;
-
-        $logoID = $this->factura->getCompany()->idlogo;
-        $pdfBuilder = new PDFCfdi($this->reader, $logoID);
-
-        $pdf = $pdfBuilder->getPdfBuffer();
-
-        if (Tools::folderCheckOrCreate(CFDI_DIR . '/tmp')) {
-            file_put_contents($filesPathBase . '.pdf', $pdf);
-            file_put_contents($filesPathBase . '.xml', $this->xml);
-        }
-
-        $email = new NewMail();
-
-        $email->to($cliente->email, $cliente->nombre);
-        $email->title = 'Facturación - ' . $this->empresa->nombrecorto;
-        $email->text = 'Envío de su comprobante fiscal digital.<br/>Gracias por su preferencia. &#128663;';
-
-        $email->addAttachment($filesPathBase . '.pdf', $filename . '.pdf');
-        $email->addAttachment($filesPathBase . '.xml', $filename . '.xml');
-
-        if (true === $email->send()) {
-            CfdiStorage::updateCfdiMailDate($this->cfdi);
-            Tools::log()->notice('send-mail-ok');
-        }
-
-        if (file_exists($filesPathBase . '.pdf')) {
-            unlink($filesPathBase . '.pdf');
-        }
-
-        if (file_exists($filesPathBase . '.xml')) {
-            unlink($filesPathBase . '.xml');
-        }
+        $emailService->send($this->cfdi, $this->factura, $this->xml);
     }
 
     protected function stampInvoice(): bool
@@ -286,7 +248,7 @@ class EditCfdiCliente extends Controller
     {
         $relations = $this->processCfdiRelacionadosRequest();
 
-        if (!$this->testParentsInvoice($relations)) {
+        if (!RelationValidator::validate($this->factura,$relations)) {
             return new CfdiBuildResult('', 'Error al validar los CFDI relacionados.', true);
         }
 

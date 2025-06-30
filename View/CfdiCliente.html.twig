@@ -108,8 +108,10 @@
                         {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', lugarexpedicion, 'disabled') }}
                     </div>
                     <div class="form-group">
-                        {{ form.inputtext('fechaemision', 'Fecha', fsc.factura.fecha, 'disabled') }}
-                        {{ form.inputtext('fechatimbrado', 'Fecha', fsc.factura.fecha, 'disabled') }}
+                        {{ form.inputtext('fechaemision', 'Fecha de expedición', fsc.reader.fechaExpedicion, 'disabled') }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.inputtext('fechatimbrado', 'Fecha de timbrado', fsc.reader.fechaTimbrado, 'disabled') }}
                         <small>Factura enviada el: {{ fsc.factura.femail }}</small>
                     </div>
                     <div class="form-group">
@@ -118,10 +120,7 @@
                 </div>
             </div>
         </div>
-        {% set relations = fsc.reader.cfdiRelacionados()%}
-        {% for relation in relations %}
-            {{ _self.blockCfdiRelacionados(relation, fsc) }}
-        {% endfor %}
+        {{ _self.blockCfdiRelacionados(fsc.reader.relacionados(), fsc) }}
         {{ _self.blockCfdiConceptos(fsc.reader.conceptos(), fsc) }}
         <div class="card mb-3">
             <div class="card-header">Totales</div>
@@ -221,43 +220,58 @@
     </div>
 {% endmacro -%}
 
-{% macro blockCfdiRelacionados(relacion, fsc) %}
-    {%- if relacion.relacionados %}
+{% macro blockCfdiRelacionados(relaciones, fsc) %}
+    {% if relaciones %}
         <div class="card mb-3">
             <div class="card-header">
-                Facturas relacionadas - {{ fsc.getCatalogoSat().tipoRelacion().getDescripcion(relacion.tiporelacion) }}
+                <i class="fas fa-link"></i> CFDI Relacionados
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead class="thead-light">
-                        <tr>
-                            <th scope="col">Cliente</th>
-                            <th scope="col">UUID</th>
-                            <th scope="col">Total</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for relacionado in relacion.relacionados %}
-                            {% set cfdi = fsc.loadCfdiFromUUID(relacionado) %}
-                            {% if cfdi %}
-                                <tr>
-                                    <td>{{ cfdi.razonreceptor }}</td>
-                                    <td><a href="{{ cfdi.url() }}">{{ cfdi.uuid }}</a></td>
-                                    <td>{{ cfdi.total }}</td>
-                                </tr>
-                            {% else %}
-                                <tr>
-                                    <td colspan="3">CFDI no encontrado: {{ relacionado }}</td>
-                                </tr>
-                            {% endif %}
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                {% for relacion in relaciones %}
+                    <div class="mb-3">
+                        <strong>Tipo de relación:</strong>
+                        {{ fsc.getCatalogoSat().tipoRelacion().getDescripcion(relacion.tiporelacion) }}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead class="">
+                                    <tr>
+                                        <th scope="col">Cliente</th>
+                                        <th scope="col">UUID</th>
+                                        <th scope="col">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for relacionado in relacion.relacionados %}
+                                        {% set cfdi = fsc.loadCfdiFromUUID(relacionado) %}
+                                        {% if cfdi %}
+                                            <tr>
+                                                <td>{{ cfdi.razonreceptor }}</td>
+                                                <td><a href="{{ cfdi.url() }}">{{ cfdi.uuid }}</a></td>
+                                                <td>{{ number(cfdi.total) }}</td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="3">CFDI no encontrado: {{ relacionado }}</td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </div>
-    {% endif -%}
+    {% else %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="fas fa-link"></i> CFDI Relacionados
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-0">No hay CFDI relacionados para este comprobante.</p>
+            </div>
+        </div>
+    {% endif %}
 {% endmacro %}
 
 
