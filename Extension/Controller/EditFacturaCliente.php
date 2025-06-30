@@ -6,23 +6,12 @@ use Closure;
 
 /**
  * @method addButton(string $string, string[] $array)
+ * @method getModel()
+ * @method redirect(string $string)
+ * @property $request
  */
 class EditFacturaCliente
 {
-    /*  public function createViews(): Closure
-      {
-          return function() {
-              $cfdiButton = [
-                  'action' => 'cfdi-action',
-                  'color' => 'info',
-                  'icon' => 'fas fa-file-invoice',
-                  'label' => 'CFDI',
-                  'type' => 'action',
-              ];
-              $this->addButton($this->getMainViewName(), $cfdiButton);
-          };
-      } */
-
     public function createViews(): Closure
     {
         return function () {
@@ -42,14 +31,12 @@ class EditFacturaCliente
     }
 
 
-    public function execPreviousAction($action = ''): Closure
+    public function execPreviousAction(): Closure
     {
         return function ($action = '') {
-            switch ($action) {
-                case 'cfdi-action':
-                    $code = $this->request->query->get('code');
-                    $this->redirect('EditCfdiCliente?invoice=' . $code);
-                    break;
+            if ('cfdi-action' === $action) {
+                $code = $this->request->query->get('code');
+                $this->redirect('EditCfdiCliente?invoice=' . $code);
             }
         };
     }
