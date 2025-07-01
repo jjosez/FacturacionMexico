@@ -28,11 +28,6 @@ trait CfdiTrait
     /**
      * @var string
      */
-    public $cfdirelacionado;
-
-    /**
-     * @var string
-     */
     public $coddivisa;
 
     /**
@@ -49,11 +44,6 @@ trait CfdiTrait
      * @var string
      */
     public $hora;
-
-    /**
-     * @var string
-     */
-    public $fechamod;
 
     /**
      * @var string
@@ -96,11 +86,6 @@ trait CfdiTrait
     public $tipocfdi;
 
     /**
-     * @var string
-     */
-    public $tiporelacion;
-
-    /**
      * @var
      */
     public $total;
@@ -109,12 +94,6 @@ trait CfdiTrait
      * @var string
      */
     public $uuid;
-
-    /**
-     * @var string
-     */
-    public $uuidrelacionado;
-
 
     /**
      * @var string

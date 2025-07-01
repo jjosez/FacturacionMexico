@@ -10,6 +10,8 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\CfdiBuilder;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\EgresoCfdiBuilder;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\GlobalCfdiBuilder;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Builder\IngresoCfdiBuilder;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware\GlobalValidator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware\IngresoValidator;
 use PhpCfdi\Credentials\PrivateKey;
 
 class CfdiFactory
@@ -33,11 +35,23 @@ class CfdiFactory
 
     public static function buildCfdiIngreso(FacturaCliente $invoice, array $relations = []): CfdiBuildResult
     {
+        $validator = IngresoValidator::validate($invoice);
+
+        if (!$validator->isValid()) {
+            return new CfdiBuildResult('', $validator->getMessagesAsString(), true);
+        }
+
         return self::buildCfdiDocument(new IngresoCfdiBuilder($invoice), $relations);
     }
 
     public static function buildCfdiGlobal(FacturaCliente $invoice, array $relations = []): CfdiBuildResult
     {
+        $validator = GlobalValidator::validate($invoice);
+
+        if (!$validator->isValid()) {
+            return new CfdiBuildResult('', $validator->getMessagesAsString(), true);
+        }
+
         return self::buildCfdiDocument(new GlobalCfdiBuilder($invoice), $relations);
     }
 

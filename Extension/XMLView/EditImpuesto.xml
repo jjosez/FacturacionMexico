@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
  * This file is part of FacturacionMexico plugin for FacturaScripts
  * Copyright (C) 2025 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
@@ -19,18 +18,9 @@
 <view>
     <columns>
         <group name="sat" title="CFDI" numcolumns="12">
-            <column name="regimenfiscal" title="Régimen fiscal" numcolumns="6" order="100"
-                    description="Clave acuerdo al Catalogo del SAT">
-                <widget type="select" fieldname="regimenfiscal" icon="fas fa-hashtag"/>
-            </column>
-            <column name="usocfdi" title="Uso del cfdi" numcolumns="6" order="110"
-                    description="Clave acuerdo al Catalogo del SAT">
-                <widget type="select" fieldname="usocfdi" icon="fas fa-hashtag"/>
-            </column>
-            <column name="addenda" title="Usar campo observación como addenda." numcolumns="12" order="120">
-                <widget type="checkbox" fieldname="addenda"/>
+            <column name="clavesat" title="Clave SAT" numcolumns="4" order="100">
+                <widget type="text" fieldname="clavesat" icon="fas fa-hashtag" maxlength="8" required="true" />
             </column>
         </group>
     </columns>
 </view>
-

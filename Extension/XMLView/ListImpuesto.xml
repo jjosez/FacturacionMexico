@@ -17,20 +17,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
 -->
 <view>
-    <columns>
-        <group name="sat" title="CFDI" numcolumns="12">
-            <column name="regimenfiscal" title="Régimen fiscal" numcolumns="6" order="100"
-                    description="Clave acuerdo al Catalogo del SAT">
-                <widget type="select" fieldname="regimenfiscal" icon="fas fa-hashtag"/>
-            </column>
-            <column name="usocfdi" title="Uso del cfdi" numcolumns="6" order="110"
-                    description="Clave acuerdo al Catalogo del SAT">
-                <widget type="select" fieldname="usocfdi" icon="fas fa-hashtag"/>
-            </column>
-            <column name="addenda" title="Usar campo observación como addenda." numcolumns="12" order="120">
-                <widget type="checkbox" fieldname="addenda"/>
-            </column>
-        </group>
+    <columns>        
+        <column name="Clave SAT" order="110">
+            <widget type="text" fieldname="clavesat"/>
+        </column>
     </columns>
 </view>
-

@@ -4,10 +4,11 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware;
 
 use FacturaScripts\Core\Model\Base\BusinessDocument;
 use FacturaScripts\Plugins\FacturacionMexico\Contract\InvoiceValidator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters\ValidationResult;
 
 class EgresoValidator implements InvoiceValidator
 {
-    public static function validate(BusinessDocument $document): void
+    public static function validate(BusinessDocument $document): ValidationResult
     {
         $errors = [];
 

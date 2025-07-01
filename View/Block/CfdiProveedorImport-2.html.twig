@@ -12,32 +12,72 @@
             <table class="table table-striped">
                 <thead class="thead-light">
                 <tr>
-                    <th scope="col">Cantidad</th>
-                    <th scope="col">No. identificacion</th>
-                    <th scope="col">Descripcion</th>
-                    <th scope="col">Clave SAT</th>
-                    <th scope="col">Clave UM</th>
-                    <th scope="col">Precio</th>
-                    <th scope="col">Total</th>
+                    <th>Cantidad</th>
+                    <th>Referencia</th>
+                    <th>No. identificación</th>
+                    <th>Descripción</th>
+                    <th>Clave SAT</th>
+                    <th>Clave UM</th>
+                    <th>Precio</th>
+                    <th>Total</th>
+                    <th>Acciones</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for concepto in fsc.reader.conceptos() %}
-                    <tr>
+                    <tr data-index="{{ loop.index0 }}">
                         <td>{{ concepto.cantidad }}</td>
+                        <td id="referencia-{{ loop.index0 }}">—</td>
                         <td>{{ concepto.noidentificacion }}</td>
                         <td>{{ concepto.descripcion }}</td>
                         <td>{{ concepto.ClaveProdServ }}</td>
                         <td>{{ concepto.claveunidad }}</td>
                         <td>{{ concepto.valorunitario }}</td>
                         <td>{{ concepto.importe }}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-info vincular-btn"
+                                    data-index="{{ loop.index0 }}">
+                                Vincular
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary desvincular-btn"
+                                    data-index="{{ loop.index0 }}">
+                                Desvincular
+                            </button>
+                            <input type="hidden" name="conceptos[{{ loop.index0 }}][referencia]"
+                                   id="concepto-referencia-{{ loop.index0 }}" value="">
+                        </td>
                     </tr>
+
+                    {# Inputs hidden para enviar los datos #}
+                    <input type="hidden" name="conceptos[{{ loop.index0 }}][cantidad]" value="{{ concepto.cantidad }}">
+                    <input type="hidden" name="conceptos[{{ loop.index0 }}][referencia_proveedor]"
+                           value="{{ concepto.noidentificacion }}">
+                    <input type="hidden" name="conceptos[{{ loop.index0 }}][descripcion]"
+                           value="{{ concepto.descripcion }}">
+                    <input type="hidden" name="conceptos[{{ loop.index0 }}][clavesat]"
+                           value="{{ concepto.ClaveProdServ }}">
+                    <input type="hidden" name="conceptos[{{ loop.index0 }}][claveunidad]"
+                           value="{{ concepto.claveunidad }}">
+                    <input type="hidden" name="conceptos[{{ loop.index0 }}][valorunitario]"
+                           value="{{ concepto.valorunitario }}">
+                    <input type="hidden" name="conceptos[{{ loop.index0 }}][importe]" value="{{ concepto.importe }}">
+
                     {% for traslado in fsc.reader.conceptosTraslados(concepto) %}
                         <tr>
                             <td colspan="3" class="text-right">Impuesto: {{ traslado.impuesto }}</td>
                             <td colspan="2" class="text-right">Tasa: {{ traslado.tasa }}</td>
                             <td colspan="2" class="text-right">Importe: {{ traslado.importe }}</td>
                         </tr>
+
+                        <input type="hidden"
+                               name="conceptos[{{ loop.parent.loop.index0 }}][traslados][{{ loop.index0 }}][impuesto]"
+                               value="{{ traslado.impuesto }}">
+                        <input type="hidden"
+                               name="conceptos[{{ loop.parent.loop.index0 }}][traslados][{{ loop.index0 }}][tasa]"
+                               value="{{ traslado.tasa }}">
+                        <input type="hidden"
+                               name="conceptos[{{ loop.parent.loop.index0 }}][traslados][{{ loop.index0 }}][importe]"
+                               value="{{ traslado.importe }}">
                     {% endfor %}
                 {% endfor %}
                 </tbody>

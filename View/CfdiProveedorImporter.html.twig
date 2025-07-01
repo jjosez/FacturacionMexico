@@ -20,9 +20,12 @@
                         <i class="fas fa-redo" aria-hidden="true"></i>
                     </a>
                 </div>
-                <a class="btn btn-sm btn-warning" data-toggle="modal" data-target="#cfdiInputModal">
+                {# <a class="btn btn-sm btn-warning" data-toggle="modal" data-target="#cfdiInputModal">
                     <i class="fas fa-code" aria-hidden="true"></i>&nbsp;Cargar XML
-                </a>
+                </a> #}
+                <button type="button" class="btn btn-sm btn-warning" id="readCfdiBtn">
+                    <i class="fas fa-code"></i> Cargar XML
+                </button>
             </div>
             <div class="col text-right">
                 <h1 class="h3">
@@ -35,160 +38,140 @@
 {% endblock %}
 
 {% block body %}
-    <div class="container-fluid">
-        <form action="{{ fsc.url() }}" method="post">
-            <div id="newcfdiwizard" class="sw sw-theme-arrows">
-                <ul class="nav nav-progress">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#step-1">
-                            <div class="num">1</div>
-                            General
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link default done" href="#step-2">
-                            <span class="num">2</span>
-                            Productos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#step-3">
-                            <span class="num">3</span>
-                            Confirmación
-                        </a>
-                    </li>
-                </ul>
-                <div class="tab-content">
+    <style>
+        .wizard-pills .nav-link {
+            background-color: #e9ecef; /* light gray */
+            color: #495057;
+            margin-right: 4px; /* Pequeño gap */
+        }
 
-                    <div id="step-1" class="tab-pane" role="tabpanel">
-                        {{ include('Block/CfdiProveedorImport-1.html.twig') }}
-                    </div>
-                    <div id="step-2" class="tab-pane" role="tabpanel">
-                        {{ include('Block/CfdiProveedorImport-2.html.twig') }}
-                    </div>
-                    <div id="step-3" class="tab-pane" role="tabpanel">
-                        {{ include('Block/CfdiProveedorImport-3.html.twig') }}
-                    </div>
+        .wizard-pills .nav-item:last-child .nav-link {
+            margin-right: 0;
+        }
+
+        .wizard-pills .nav-link.active {
+            background-color: #007bff;
+            color: #fff;
+            font-weight: bold;
+            position: relative;
+        }
+    </style>
+    <div class="container-fluid">
+        <form id="formCfdiWizard" name="formCfdiWizard" action="{{ fsc.url() }}" method="post">
+            <input type="hidden" value="import-supplier-cfdi" name="action">
+            <input type="hidden" value="{{ fsc.reader.serie }}{{ fsc.reader.folio }}" name="numproveedor">
+
+            <ul class="nav nav-pills nav-justified mb-3 wizard-pills" id="wizardTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="step1-tab" data-toggle="tab" href="#step1" role="tab">1.
+                        Generales</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="step2-tab" data-toggle="tab" href="#step2" role="tab">2. Productos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="step3-tab" data-toggle="tab" href="#step3" role="tab">3. Confirmación</a>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="wizardContent">
+                <div class="tab-pane fade show active" id="step1" role="tabpanel">
+                    {{ include('Block/CfdiProveedorImport-1.html.twig') }}
                 </div>
+                <div class="tab-pane fade" id="step2" role="tabpanel">
+                    {{ include('Block/CfdiProveedorImport-2.html.twig') }}
+                </div>
+                <div class="tab-pane fade" id="step3" role="tabpanel">
+                    {{ include('Block/CfdiProveedorImport-3.html.twig') }}
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="button" class="btn btn-secondary" id="prevBtn">Anterior</button>
+                <button type="button" class="btn btn-primary" id="nextBtn">Siguiente</button>
+                <button type="button" class="btn btn-success d-none" id="wizardSubmitBtn" data-label="Importar">
+                    Importar
+                </button>
             </div>
         </form>
     </div>
-    <div class="modal fade" id="cfdiInputModal" tabindex="-1" role="dialog">
+    <div class="modal fade" id="cfdiInputModal" tabindex="-1" role="dialog" aria-labelledby="cfdiInputModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <form method="POST" enctype="multipart/form-data" id="xmlFileUploadForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cfdiInputModalLabel">Seleccionar CFDI</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="POST" enctype="multipart/form-data" id="xmlFileUploadForm" action="{{ fsc.url() }}">
                     <input type="hidden" name="action" value="read-cfdi"/>
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Seleccionar CFDI</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
                     <div class="modal-body">
                         <div class="form-group">
                             {{ form.inputfile('xmlFile', 'xmlfile', '', '.xml', '') }}
                         </div>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Cargar</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <script src="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/js/jquery.smartWizard.min.js') }}"></script>
-    <script>
-        $(document).ready(function () {
-            $('#newcfdiwizard').smartWizard({
-                theme: 'arrows',
-                autoAdjustHeight: false, // Automatically adjust content height
-                justified: true, // Nav menu justification. true/false
-                /*toolbar: {
-                    extraHtml: `<button id="timbrarButton" class="btn btn-success">Timbrar CFDI</button>`
-                },*/
-                keyboardSettings: {
-                    keyNavigation: false
-                },
-                lang: {
-                    next: 'Siguiente',
-                    previous: 'Anterior'
-                },
-            });
-
-            $('.custom-file-input').on('change', function () {
-                let fileName = $(this).val().split('\\').pop();
-                let label = $(this).siblings('.custom-file-label');
-
-                if (label.data('default-title') === undefined) {
-                    label.data('default-title', label.html());
-                }
-                if (fileName === '') {
-                    label.removeClass("selected").html(label.data('default-title'));
-                } else {
-                    label.addClass("selected").html(fileName);
-                }
-            });
-
-            $('#readCfdiBtn').click(function () {
-                bootbox.dialog({
-                    title: "Seleccionar CFDI",
-                    message: $('#cfdi-input-template').html(),
-                    buttons: {
-                        danger: {
-                            label: "Cancelar",
-                            className: "btn btn-primary"
-                        },
-                        success: {
-                            label: "Cargar",
-                            className: "btn btn-primary",
-                            callback: function () {
-                                console.log('leido');
-                            }
-                        }
-                    }
-                });
-                /*const form = $('#xmlFileUploadForm')[0];
-                const data = new FormData(form);
-
-                $.ajax({
-                    type: "POST",
-                    enctype: 'multipart/form-data',
-                    url: "{{ fsc.url() }}",
-                    data: data,
-                    processData: false,
-                    contentType: false,
-                    cache: false,
-                    timeout: 600000,
-                    success: function (data) {
-
-                        $("#cfdiContent").html(data);
-                        console.log("SUCCESS : ", data);
-                        $("#btnSubmit").prop("disabled", false);
-
-                    },
-                    error: function (e) {
-
-                        $("#cfdiContent").text(e.responseText);
-                        console.log("ERROR : ", e);
-                        $("#btnSubmit").prop("disabled", false);
-
-                    }
-                });*/
-            });
-        });
-    </script>
-    <script type="text/template" id="cfdi-input-template">
-        <div class="row">
-            <div class="col-md-12">
-                <form method="POST" enctype="multipart/form-data" id="xmlFileUploadForm">
-                    <input type="hidden" name="action" value="read-cfdi"/>
-                    <div class="form-group">
-                        {{ form.inputfile('xmlFile', 'xmlfile', '', '.xml', '') }}
-                    </div>
-                </form>
+    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirmar acción</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="confirmModalMessage">
+                    <!-- Mensaje dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" id="confirmModalOk">Continuar</button>
+                </div>
             </div>
         </div>
-    </script>
+    </div>
+    <div class="modal fade" id="vincularModal" tabindex="-1" role="dialog" aria-labelledby="vincularModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Vincular producto <span class="text-muted" id="tablaProductosCode"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="buscarProductoInput" class="form-control mb-2"
+                           placeholder="Buscar producto por SKU o descripción">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="tablaProductos">
+                            <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Descripción</th>
+                                <th>Acción</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- JS rellenará las filas -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="{{ asset('Plugins/FacturacionMexico/Assets/JS/SupplierCfdiWizard.js') }}"></script>
 {% endblock %}
 
 

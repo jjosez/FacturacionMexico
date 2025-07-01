@@ -34,12 +34,13 @@ class IngresoCfdiBuilder extends CfdiBuilder
     {
         foreach ($this->factura->getLines() as $linea) {
             $producto = $linea->getProducto();
+            $productoFamilia = $producto->getFamilia();
 
             $this->comprobante->addConcepto([
-                'ClaveProdServ' => $producto->getFamilia()->clavesat,
+                'ClaveProdServ' => $productoFamilia->clavesat,
                 'NoIdentificacion' => $linea->referencia,
                 'Cantidad' => $linea->cantidad,
-                'ClaveUnidad' => $producto->getFamilia()->claveunidad,
+                'ClaveUnidad' => $productoFamilia->claveunidad,
                 'ObjetoImp' => '02',
                 'Unidad' => 'PIEZA',
                 'Descripcion' => $linea->descripcion,

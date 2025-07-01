@@ -245,7 +245,7 @@ abstract class CfdiBuilder
         if ($tipoFactor === 'Exento') {
             $traslado['Impuesto'] = '002';
         } else {
-            $traslado['Impuesto'] = $linea->codimpuesto;
+            $traslado['Impuesto'] = $linea->getTax()->clavesat;
             $traslado['TasaOCuota'] = $this->getTasaValue($linea->iva);
             $traslado['Importe'] = $this->getIvaFromValue($linea->pvptotal, $linea->iva);
         }

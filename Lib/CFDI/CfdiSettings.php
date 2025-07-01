@@ -11,6 +11,11 @@ class CfdiSettings
         return $nacional ? 'XAXX010101000' : 'XEXX010101000';
     }
 
+    public static function razonSocialGenerico($nacional = true): string
+    {
+        return $nacional ? 'PUBLICO EN GENERAL' : 'CLIENTE EXTRANJERO';
+    }
+
     public static function serieEgreso(): string
     {
         return Tools::settings('default', 'codserierec', '');

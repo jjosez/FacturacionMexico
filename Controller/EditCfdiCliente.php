@@ -14,6 +14,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters\CfdiBuildResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiFactory;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware\RelationValidator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware\Validator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiEmailService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiSettings;
@@ -53,7 +54,7 @@ class EditCfdiCliente extends Controller
         $code = $this->request->query->get('code', '');
         $invoice = $this->request->query->get('invoice', '');
 
-        if (true === $this->execAjaxAction($action)) {
+        if (true === $this->execPreviousAction($action)) {
             return;
         }
 
@@ -68,7 +69,7 @@ class EditCfdiCliente extends Controller
             }
         }
 
-        $template = $this->cfdi->idcfdi ? 'CfdiCliente' : 'NuevoCfdiCliente';
+        $template = $this->cfdi->idcfdi ? 'CfdiCliente' : 'CfdiClienteWizard';
         $this->setTemplate($template);
 
         $this->execAction($action);
@@ -133,6 +134,19 @@ class EditCfdiCliente extends Controller
         echo 'CFDI no encontrado o pertenece a otro cliente';
     }
 
+    private function searchRelatedCfdis(): array
+    {
+        $codcliente = $this->request->request->get('codcliente', '');
+        $tipo = $this->request->request->get('tipo', '');
+        $desde = $this->request->request->get('desde', '');
+        $hasta = $this->request->request->get('hasta', '');
+
+        $result = CfdiCliente::searchRelated($codcliente, $tipo, $desde, $hasta);
+        $this->response->setContent(json_encode($result));
+
+        return $result;
+    }
+
     public function loadCfdiFromUUID($uuid): bool|CfdiCliente
     {
         $cfdi = new CfdiCliente();
@@ -140,11 +154,14 @@ class EditCfdiCliente extends Controller
         return $cfdi->loadFromUuid($uuid) ? $cfdi : false;
     }
 
-    private function execAjaxAction(string $action): bool
+    private function execPreviousAction(string $action): bool
     {
         switch ($action) {
             case 'cfdi-relacionado':
                 $this->findCfdiRequest();
+                return true;
+            case 'search-related-cfdis':
+                $this->searchRelatedCfdis();
                 return true;
             default:
                 return false;
@@ -220,16 +237,21 @@ class EditCfdiCliente extends Controller
             return false;
         }
 
-        $xmlFinal = $this->stampCfdi($buildResult->getXml());
+        $this->xml = $buildResult->getXml();
+        $xmlFinal = $this->stampCfdi($this->xml);
         if (null === $xmlFinal) {
             return false;
         }
 
         $cfdi = $this->storeCfdi($xmlFinal);
+
         if (null === $cfdi) {
             Tools::log()->error('Error al guardar el cfdi');
             return false;
         }
+
+        $this->cfdi = $cfdi;
+        $this->loadCfdiReader();
 
         $this->updateStampedInvoiceStatus();
         return true;
@@ -239,7 +261,7 @@ class EditCfdiCliente extends Controller
     {
         $relations = $this->processCfdiRelacionadosRequest();
 
-        if (!RelationValidator::validate($this->factura,$relations)) {
+        if (!RelationValidator::validate($this->factura, $relations)) {
             return new CfdiBuildResult('', 'Error al validar los CFDI relacionados.', true);
         }
 
@@ -286,6 +308,11 @@ class EditCfdiCliente extends Controller
         $cfdi = $storage->save($this->factura, $xml);
 
         if ($cfdi && $storage->saveXml($cfdi, $xml)) {
+            if ($this->isGlobalInvoice()) {
+                $cfdi->cfdiglobal = true;
+                $cfdi->save();
+            }
+
             return $cfdi;
         }
 
@@ -328,16 +355,11 @@ class EditCfdiCliente extends Controller
         $pdf->downloadPDF();
     }
 
-    public function isEgresoInvoice(): bool
-    {
-        return CfdiSettings::serieEgreso() === $this->factura->codserie;
-    }
-
     protected function isGlobalInvoice(): bool
     {
         $globalInvoiceRequest = $this->request->request->get('globalinvoice', false);
 
-        return $globalInvoiceRequest && CfdiSettings::rfcGenerico() === $this->factura->cifnif;
+        return $globalInvoiceRequest && $this->isGlobalInvoiceCustomer();
     }
 
     protected function loadCfdiReader(): void
@@ -408,6 +430,16 @@ class EditCfdiCliente extends Controller
         ];
 
         return $invoice->all($where);
+    }
+
+    public function isEgresoInvoice(): bool
+    {
+        return CfdiSettings::serieEgreso() === $this->factura->codserie;
+    }
+
+    public function isGlobalInvoiceCustomer()
+    {
+        return Validator::validateGlobalInvoiceCustomer($this->factura);
     }
 
     public function url(): string

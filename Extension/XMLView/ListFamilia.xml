@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- * This file is part of FacturaScripts
- * Copyright (C) 2017-2018 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * This file is part of FacturacionMexico plugin for FacturaScripts
+ * Copyright (C) 2025 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -15,13 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- *
- * Initial description for the controller ListFamilia
- *
- * @author Artex Trading sa <jcuello@artextrading.com>  
 -->
-
 <view>
     <columns>        
         <column name="Clave prod. SAT" order="110">

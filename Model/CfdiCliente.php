@@ -16,10 +16,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Model\Base;
+use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
 class CfdiCliente extends Base\ModelClass
@@ -29,12 +32,18 @@ class CfdiCliente extends Base\ModelClass
 
     public $codcliente;
 
+    /**
+     * @var string
+     */
+    public $cfdiglobal;
+
     public function clear()
     {
         parent::clear();
 
         $this->fecha = date(self::DATE_STYLE);
         $this->hora = date(self::HOUR_STYLE);
+        $this->cfdiglobal = false;
     }
 
     public function getXml()
@@ -49,5 +58,22 @@ class CfdiCliente extends Base\ModelClass
     public static function tableName(): string
     {
         return 'cfdis_clientes';
+    }
+
+    public static function searchRelated(string $codcliente, string $tipoComprobante, string $fromDate = null, string $toDate = null): array
+    {
+        $where = [
+            Where::eq('codcliente', $codcliente)
+        ];
+
+        if (!empty($tipoComprobante)) {
+            $where[] = Where::eq('tipocfdi', $tipoComprobante);
+        }
+
+        return self::table()
+            ->where($where)
+            ->limit(15)
+            ->orderBy('fecha', 'DESC')
+            ->get();
     }
 }
