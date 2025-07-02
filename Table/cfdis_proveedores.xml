@@ -7,15 +7,6 @@
 -->
 <table>
     <column>
-        <name>cfdiglobal</name>
-        <type>boolean</type>
-    </column>
-    <column>
-        <name>cfdirelacionado</name>
-        <type>integer</type>
-        <null>YES</null>
-    </column>
-    <column>
         <name>coddivisa</name>
         <type>character varying(3)</type>
         <null>NO</null>
@@ -25,23 +16,32 @@
         <type>character varying(10)</type>
     </column>
     <column>
+        <name>emisor_nombre</name>
+        <type>character varying(100)</type>
+    </column>
+    <column>
+        <name>emisor_rfc</name>
+        <type>character varying(13)</type>
+    </column>
+    <column>
         <name>estado</name>
         <type>character varying(10)</type>
         <null>NO</null>
     </column>
     <column>
-        <name>fecha</name>
-        <type>date</type>
-    </column>
-    <column>
-        <name>fechamod</name>
+        <name>fecha_emision</name>
         <type>timestamp</type>
-        <null>YES</null>
+        <null>NO</null>
     </column>
     <column>
-        <name>fechaemail</name>
-        <type>date</type>
-        <null>YES</null>
+        <name>fecha_timbrado</name>
+        <type>timestamp</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>filename</name>
+        <type>character varying(100)</type>
+        <null>NO</null>
     </column>
     <column>
         <name>folio</name>
@@ -49,8 +49,8 @@
         <null>NO</null>
     </column>
     <column>
-        <name>formapago</name>
-        <type>character varying(100)</type>
+        <name>forma_pago</name>
+        <type>character varying(10)</type>
         <null>NO</null>
     </column>
     <column>
@@ -58,32 +58,27 @@
         <type>time</type>
     </column>
     <column>
-        <name>idcfdi</name>
+        <name>id</name>
         <type>serial</type>
         <null>NO</null>
-        <default>nextval('cfdiscli_idcfdi_seq'::regclass)</default>
     </column>
     <column>
         <name>idempresa</name>
         <type>integer</type>
     </column>
     <column>
-        <name>idfactura</name>
-        <type>integer</type>
-        <null>NO</null>
-    </column>        
-    <column>
-        <name>metodopago</name>
-        <type>character varying(30)</type>
+        <name>metodo_pago</name>
+        <type>character varying(10)</type>
         <null>NO</null>
     </column>
     <column>
-        <name>razonreceptor</name>
+        <name>receptor_nombre</name>
         <type>character varying(100)</type>
+        <null>NO</null>
     </column> 
     <column>
-        <name>rfcreceptor</name>
-        <type>character varying(20)</type>
+        <name>receptor_rfc</name>
+        <type>character varying(13)</type>
         <null>NO</null>
     </column>
     <column>
@@ -92,19 +87,14 @@
         <null>NO</null>
     </column>
     <column>
-        <name>tipocfdi</name>
+        <name>tipo</name>
         <type>character varying(1)</type>
         <null>NO</null>
     </column>
     <column>
-        <name>tiporelacion</name>
-        <type>character varying(2)</type>
-        <null>YES</null>
-    </column>
-    <column>
         <name>total</name>
         <type>double precision</type>
-        <null>NO</null>
+        <null>YES</null>
     </column>
     <column>
         <name>uuid</name>
@@ -112,33 +102,24 @@
         <null>NO</null>
     </column>
     <column>
-        <name>uuidrelacionado</name>
-        <type>character varying(36)</type>
-        <null>YES</null>
-    </column>
-    <column>
         <name>version</name>
         <type>character varying(4)</type>
         <null>NO</null>
     </column>
     <constraint>
-        <name>cfdis_clientes_pkey</name>
-        <type>PRIMARY KEY (idcfdi)</type>
-    </constraint>
-    <constraint>
-        <name>ca_cfdis_proveedores_empresas</name>
-        <type>FOREIGN KEY (idempresa) REFERENCES empresas (idempresa) ON DELETE RESTRICT ON UPDATE CASCADE</type>
-    </constraint>
-    <constraint>
-        <name>ca_cfdis_proveedores_facturasprov</name>
-        <type>FOREIGN KEY (idfactura) REFERENCES facturasprov (idfactura) ON DELETE RESTRICT ON UPDATE CASCADE</type>
-    </constraint>
-    <constraint>
-        <name>ca_cfdis_proveedores_relacion</name>
-        <type>FOREIGN KEY (cfdirelacionado) REFERENCES cfdis_proveedores (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+        <name>cfdis_proveedores_pkey</name>
+        <type>PRIMARY KEY (id)</type>
     </constraint>
     <constraint>
         <name>uniq_uuid_cfdis_proveedores</name>
         <type>UNIQUE (uuid,idempresa)</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdis_proveedores_idempresa</name>
+        <type>FOREIGN KEY (idempresa) REFERENCES empresas (idempresa) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdis_proveedores_codproveedor</name>
+        <type>FOREIGN KEY (codproveedor) REFERENCES proveedores (codproveedor) ON DELETE RESTRICT ON UPDATE CASCADE</type>
     </constraint>
 </table>

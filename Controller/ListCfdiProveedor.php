@@ -56,15 +56,16 @@ class ListCfdiProveedor extends ExtendedController\ListController
     protected function createMainView($viewName = 'ListCfdiProveedor'): void
     {
         $this->addView($viewName, 'CfdiProveedor', 'CFDI Proveedores', 'fas fa-file-invoice');
-        $this->addSearchFields($viewName, ['razonreceptor', 'rfcreceptor', 'uuid']);
-        $this->addOrderBy($viewName, ['fecha'], 'date', 2);
+        $this->addSearchFields($viewName, ['receptor_razon', 'emisor_razon', 'uuid']);
+        $this->addOrderBy($viewName, ['fecha_emision'], 'Fecha emision', 2);
+        $this->addOrderBy($viewName, ['fecha_timbrado'], 'Fecha timbrado', 2);
 
         $this->addFilterAutocomplete($viewName, 'codcliente', 'customer', 'codcliente', 'clientes', 'codcliente', 'razonsocial');
         $this->addFilterPeriod($viewName, 'date', 'period', 'fecha');
         $this->addFilterSelect($viewName, 'tipo', 'type', 'tipocfdi', CfdiCatalogo::tipoCfdi());
         $this->addFilterSelect($viewName, 'estado', 'state', 'estado', CfdiCatalogo::estadoCfdi());
 
-        $this->setSettings($viewName, 'btnNew', false);
+        //$this->setSettings($viewName, 'btnNew', false);
         $this->setSettings($viewName, 'btnDelete', false);
 
         $this->addButton($viewName, [

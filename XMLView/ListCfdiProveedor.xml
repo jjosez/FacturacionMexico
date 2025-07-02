@@ -6,30 +6,25 @@
 
 <view>
     <columns>
-        <column name="invoice" order="100">
-            <widget type="select" fieldname="idfactura" onclick="EditFacturaProveedor">
-                <values source="facturascli" fieldcode="idfactura" fieldtitle="codigo"/>
+        <column name="supplier" order="110">
+            <widget type="select" fieldname="codproveedor" onclick="EditProveedor">
+                <values source="proveedores" fieldcode="codproveedor" fieldtitle="nombre"/>
             </widget>
         </column>
-        <column name="customer" order="110">
-            <widget type="select" fieldname="codcliente" onclick="EditProveedor">
-                <values source="clientes" fieldcode="codcliente" fieldtitle="nombre"/>
-            </widget>
-        </column>
-        <column name="cifnif" order="120">
-            <widget type="text" fieldname="rfcreceptor"/>
+        <column name="emisor_rfc" title="RFC Emisor" order="120">
+            <widget type="text" fieldname="emisor_rfc"/>
         </column>
         <column name="uuid" order="130" title="UUID">
             <widget type="text" fieldname="uuid"/>
         </column>
         <column name="type" display="center" order="140">
-            <widget type="text" fieldname="tipocfdi"/>
+            <widget type="text" fieldname="tipo"/>
         </column>
         <column name="amount" display="right" order="150">
             <widget type="money" fieldname="total"/>
         </column>
         <column name="date" display="right" order="160">
-            <widget type="date" fieldname="fecha"/>
+            <widget type="date" fieldname="fecha_timbrado"/>
         </column>
     </columns>
     <rows>

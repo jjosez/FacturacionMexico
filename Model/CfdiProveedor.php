@@ -18,7 +18,6 @@
  */
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Model\Base;
 use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
@@ -26,6 +25,20 @@ class CfdiProveedor extends Base\ModelClass
 {
     use Base\ModelTrait;
     use CfdiTrait;
+
+    public $emisor_rfc;
+
+    public $emisor_nombre;
+
+    public $receptor_rfc;
+
+    public $receptor_nombre;
+
+    public $serie;
+
+    public $folio;
+
+    public $filename;
 
     /**
      * @var string
@@ -44,5 +57,10 @@ class CfdiProveedor extends Base\ModelClass
     public static function tableName(): string
     {
         return 'cfdis_proveedores';
+    }
+
+    public static function primaryColumn(): string
+    {
+        return 'id';
     }
 }
