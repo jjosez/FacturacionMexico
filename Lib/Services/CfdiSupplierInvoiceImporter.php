@@ -9,6 +9,7 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
+use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\LineaFacturaProveedor;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
@@ -40,8 +41,22 @@ class CfdiSupplierInvoiceImporter
 
     protected function loadOrCreateInvoice(CfdiProveedor $cfdi, Proveedor $supplier): FacturaProveedor
     {
-        // Aquí llamas a tu lógica existente, p.ej:
-        return CfdiSupplierInvoice::load($supplier, $cfdi->invoiceNumber());
+        $invoice = new FacturaProveedor();
+        $where = [
+            new DataBaseWhere('numproveedor', $cfdi->invoiceNumber()),
+            new DataBaseWhere('codproveedor', $supplier->codproveedor)
+        ];
+
+        if ($invoice->loadFromCode('', $where)) {
+            return $invoice;
+        }
+
+        $invoice->setSubject($supplier);
+        $invoice->numproveedor = $cfdi->invoiceNumber();
+        $invoice->codpago = $this->getFormaPagoForInvoice($cfdi->forma_pago);
+        $invoice->save();
+
+        return $invoice;
     }
 
     protected function clearInvoiceLines(FacturaProveedor $invoice): void
@@ -122,5 +137,12 @@ class CfdiSupplierInvoiceImporter
         if (!$product->save()) {
             throw new Exception('Error guardando vínculo producto-proveedor');
         }
+    }
+
+    protected function getFormaPagoForInvoice(string $clavesat): string
+    {
+        $result = FormaPago::table()->whereEq('clavesat', $clavesat)->get();
+
+        return $result[0]['clavesat'] ?? '99';
     }
 }

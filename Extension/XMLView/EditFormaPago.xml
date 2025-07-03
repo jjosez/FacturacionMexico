@@ -19,7 +19,6 @@
     <columns>
         <group name="sat" title="CFDI" numcolumns="12">
             <column name="clavesat" title="Clave SAT" numcolumns="4" order="100">
-                <!--<widget type="text" fieldname="clavesat" icon="fas fa-hashtag" maxlength="8" required="true"/>-->
                 <widget type="select" fieldname="clavesat" icon="fas fa-hashtag" required="true">
                 </widget>
             </column>

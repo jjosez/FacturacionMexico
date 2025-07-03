@@ -34,6 +34,10 @@ class CfdiProveedor extends Base\ModelClass
 
     public $emisor_nombre;
 
+    public $forma_pago;
+
+    public $metodo_pago;
+
     public $receptor_rfc;
 
     public $receptor_nombre;

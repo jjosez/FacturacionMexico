@@ -18,8 +18,8 @@
 -->
 <view>
     <columns>
-        <column name="Clave SAT" order="110">
-            <widget type="select" fieldname="clavesat" icon="fas fa-hashtag" required="true">
+        <column name="clavesat" title="Clave SAT" numcolumns="4" order="110">
+            <widget type="select" fieldname="clavesat">
             </widget>
         </column>
     </columns>
