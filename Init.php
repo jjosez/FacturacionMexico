@@ -12,9 +12,9 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Template\InitClass;
+use FacturaScripts\Dinamic\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\EstadoDocumento;
-use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiCatalogo;
 
 class Init extends InitClass
 {
@@ -23,6 +23,8 @@ class Init extends InitClass
     {
         $this->loadExtension(new Extension\Controller\EditCliente());
         $this->loadExtension(new Extension\Controller\EditFacturaCliente());
+        $this->loadExtension(new Extension\Controller\EditFormaPago());
+        $this->loadExtension(new Extension\Controller\ListFormaPago());
     }
 
     public function update(): void
