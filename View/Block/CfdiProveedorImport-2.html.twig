@@ -60,6 +60,7 @@
                            value="{{ concepto.claveunidad }}">
                     <input type="hidden" name="conceptos[{{ loop.index0 }}][valorunitario]"
                            value="{{ concepto.valorunitario }}">
+                    <input type="hidden" name="conceptos[{{ loop.index0 }}][descuento]" value="{{ concepto.descuento }}">
                     <input type="hidden" name="conceptos[{{ loop.index0 }}][importe]" value="{{ concepto.importe }}">
 
                     {% for traslado in fsc.reader.conceptosTraslados(concepto) %}

@@ -2,21 +2,28 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
+use Exception;
+use FacturaScripts\Core\Base\Calculator;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use FacturaScripts\Core\Model\LineaFacturaProveedor;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
+use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiSupplierInvoice;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiSupplierInvoiceImporter;
 
 class CfdiProveedorImporter extends Controller
 {
-    protected Proveedor $supplier;
+    public CfdiProveedor $cfdi;
+    public CfdiQuickReader $reader;
+    public Proveedor $supplier;
 
     public function getPageData(): array
     {
@@ -29,28 +36,26 @@ class CfdiProveedorImporter extends Controller
         return $pagedata;
     }
 
-    public function privateCore(&$response, $user, $permissions)
+    public function privateCore(&$response, $user, $permissions): void
     {
         parent::privateCore($response, $user, $permissions);
         $this->setTemplate(false);
 
-        $action = $this->request->request->get('action', '');
+        $action = $this->request->get('action', '');
 
         if ($this->execPreviousAction($action)) {
             return;
         }
 
+        $this->initWizard();
+
         $this->execAction($action);
         $this->setTemplate('CfdiProveedorImporter');
     }
 
-    protected function execAction(string $action)
+    protected function execAction(string $action): void
     {
         switch ($action) {
-            case 'read-cfdi':
-                $this->readUploadedCfdiAction();
-                break;
-
             case 'import-supplier-cfdi':
                 $this->importCfdiAction();
                 break;
@@ -60,7 +65,7 @@ class CfdiProveedorImporter extends Controller
         }
     }
 
-    protected function execPreviousAction(string $action)
+    protected function execPreviousAction(string $action): bool
     {
         switch ($action) {
             case 'search-own-product':
@@ -69,6 +74,17 @@ class CfdiProveedorImporter extends Controller
             default:
                 return false;
         }
+    }
+
+    protected function initWizard(): void
+    {
+        $code = $this->request->get('code');
+
+        $this->cfdi = new CfdiProveedor();
+        $this->cfdi->loadFromCode($code);
+
+        $this->loadSupplier();
+        $this->loadCfdiReader();
     }
 
     protected function searchProduct()
@@ -83,32 +99,79 @@ class CfdiProveedorImporter extends Controller
         $this->response->setContent($result);
     }
 
-    protected function importCfdiAction()
+    protected function importCfdiAction(): void
     {
-        if (false === $this->importSupplier()) {
-            return;
+        try {
+            $importer = new CfdiSupplierInvoiceImporter();
+            $invoice = $importer->import(
+                $this->cfdi,
+                $this->supplier,
+                $this->request->request->get('conceptos', [])
+            );
+        } catch (Exception $e) {
         }
-
-        $invoice = $this->loadSupplierInvoice();
-
-        $conceptos = $this->request->request->get('conceptos', []);
-
-        $dataBase = new DataBase();
-        $dataBase->beginTransaction();
-
-        $invoice->save();
-        foreach ($conceptos as $concepto) {
-            $line = $invoice->getNewLine($concepto);
-
-            if (!$this->linkSupplierProduct($concepto) || !$line->save()) {
-                $dataBase->rollBack();
-            }
-        }
-
-        $dataBase->commit();
     }
 
-    protected function linkSupplierProduct($concepto)
+    protected function processInvoiceLines(FacturaProveedor $invoice, array $conceptos): array
+    {
+        foreach ($invoice->getLines() as $line) {
+            $line->delete();
+        }
+
+        $lines = [];
+
+        foreach ($conceptos as $concepto) {
+            $line = !empty($concepto['referencia'])
+                ? $invoice->getNewProductLine($concepto['referencia'])
+                : $invoice->getNewLine($concepto);
+
+            $line->cantidad = $concepto['cantidad'];
+            $line->descripcion = $concepto['descripcion'];
+            $line->pvpunitario = $concepto['valorunitario'];
+            $line->pvpsindto = $concepto['importe'];
+
+            $this->setLineDiscount($line, $concepto);
+            $this->setLineTax($line, $concepto);
+
+            if (!$line->save()) {
+                throw new Exception('Error guardando línea');
+            }
+
+            $lines[] = $line;
+        }
+
+        return $lines;
+    }
+
+    protected function setLineDiscount(LineaFacturaProveedor $linea, array $concepto): void
+    {
+        $importeBruto = (float)$concepto['importe'];
+        $descuentoNeto = isset($concepto['descuento']) ? (float)$concepto['descuento'] : 0.0;
+
+        if ($importeBruto > 0) {
+            $discountPercent = ($descuentoNeto / $importeBruto) * 100;
+        } else {
+            $discountPercent = 0.0;
+        }
+
+        $linea->dtopor = round($discountPercent, 2);
+    }
+
+    protected function setLineTax(LineaFacturaProveedor $linea, array $concepto): void
+    {
+        $iva = 0.0;
+
+        foreach ($concepto['traslados'] as $traslado) {
+            if ('002' === $traslado['impuesto']) {
+                $iva = (float)$traslado['tasa'] * 100;
+            }
+            // Aquí podrías capturar IEPS o recargo si aplicara
+        }
+
+        $linea->iva = $iva;
+    }
+
+    protected function linkSupplierProduct($concepto): bool
     {
         $supplierCode = $concepto['referencia_proveedor'];
         $code = $concepto['referencia'];
@@ -130,80 +193,24 @@ class CfdiProveedorImporter extends Controller
         return $product->save();
     }
 
+    protected function loadSupplier(): void
+    {
+        $this->supplier = $this->cfdi->getSupplier();
+    }
+
     protected function loadSupplierInvoice(): FacturaProveedor
     {
-        $supplierInvoiceNumber = $this->request->request->get('numproveedor', '');
-
-        return CfdiSupplierInvoice::load($this->supplier, $supplierInvoiceNumber);
+        return CfdiSupplierInvoice::load($this->supplier, $this->cfdi->invoiceNumber());
     }
 
-    protected function setDocumentLines()
+    protected function loadCfdiReader(): void
     {
-        foreach ($this->document->getLines() as $line) {
-            $line->delete();
+        try {
+            $fileContent = $this->cfdi->localFileContent();
+            $this->reader = new CfdiQuickReader($fileContent);
+        } catch (Exception $e) {
+            Tools::log()->error($e->getMessage());
         }
-
-        foreach ($this->products as $product) {
-            if (true === empty($product)) {
-                continue;
-            }
-
-            if (true === isset($product['cantidad'])) {
-                $this->documentLines[] = $this->document->getNewLine($product);
-                continue;
-            }
-
-            $newLine = $this->document->getNewProductLine($product['referencia']);
-
-            if (isset($product['thumbnail'])) {
-                $newLine->thumbnail = $product['thumbnail'];
-            }
-
-            $this->documentLines[] = $newLine;
-        }
-    }
-
-    protected function importSupplier()
-    {
-        $rfc = $this->request->request->get('emisorrfc', '');
-        $razonSocial = $this->request->request->get('emisorazonsocial', '');
-
-        if (empty($rfc) || empty($razonSocial)) {
-            return false;
-        }
-
-        $where = [new DataBaseWhere('cifnif', $rfc)];
-        $this->supplier = new Proveedor();
-
-        if ($this->supplier->loadFromCode('', $where)) {
-            Tools::log()->notice('Proveedor cargado con exito');
-            return true;
-        }
-
-        $this->supplier->cifnif = $rfc;
-        $this->supplier->nombre = $razonSocial;
-
-        if ($this->supplier->save()) {
-            Tools::log()->notice('Proveedor registrado con exito');
-        }
-
-        return false;
-    }
-
-    /**
-     * @return void
-     */
-    public function readUploadedCfdiAction(): void
-    {
-        $file = $this->request->files->get('xmlfile');
-
-        if (false === $file->isValid()) {
-            Tools::log()->error($file->getErrorMessage());
-        }
-
-        $fileContent = file_get_contents($file->getPathname());
-        $this->reader = new CfdiQuickReader($fileContent);
-        //$this->setTemplate('Block/Ajax/CfdiImportGeneral');
     }
 }
 

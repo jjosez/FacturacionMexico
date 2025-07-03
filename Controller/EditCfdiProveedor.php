@@ -2,6 +2,7 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
+use Exception;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController\EditController;
 use FacturaScripts\Core\Tools;
@@ -23,6 +24,10 @@ class EditCfdiProveedor extends EditController
 {
     const DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
 
+    protected string $fileName;
+    protected CfdiQuickReader $reader;
+    protected Proveedor $supplier;
+
     public function getModelClassName(): string
     {
         return 'CfdiProveedor';
@@ -37,22 +42,43 @@ class EditCfdiProveedor extends EditController
         return $data;
     }
 
+    protected function createViews()
+    {
+        parent::createViews();
+    }
+
+    protected function addProcessButton(string $url)
+    {
+        $this->addButton('EditCfdiProveedor', [
+            'action' => $url,
+            'icon' => 'fas fa-plus',
+            'label' => 'Procesar',
+            'type' => 'link'
+        ]);
+    }
+
     public function execPreviousAction($action)
     {
         if ($action === 'insert') {
 
-            $fileName = $this->processFile();
-
-            if (empty($fileName)) {
+            if (!$this->processFile() || !$this->loadReader()) {
                 return;
             }
 
-            $fileContent = file_get_contents(self::DESTINATION_FOLDER . $fileName);
-            $reader = new CfdiQuickReader($fileContent);
-            $supplier = $this->loadSupplier($reader);
+            if (!$this->loadSupplier()) {
+                Tools::log()->warning('Error al seleccionar el proveedor');
+                return;
+            }
+
+            if ($this->testCfdiExists()) {
+                Tools::log()->warning('El cfdi ya fue registrado');
+                return;
+            }
+
+            $reader = $this->reader;
 
             $cfdi = $this->getModel();
-            $cfdi->codproveedor = $supplier->codproveedor;
+            $cfdi->codproveedor = $this->supplier->codproveedor;
             $cfdi->coddivisa = "MXN";
             $cfdi->estado = "vigente";
             $cfdi->receptor_rfc = $reader->receptorRfc();
@@ -72,7 +98,7 @@ class EditCfdiProveedor extends EditController
             $cfdi->uuid = $reader->uuid();
             $cfdi->version = $reader->version();
 
-            $cfdi->filename = $fileName;
+            $cfdi->filename = $this->fileName;
             $cfdi->save();
 
             return;
@@ -81,33 +107,45 @@ class EditCfdiProveedor extends EditController
         parent::execPreviousAction($action);
     }
 
-    protected function loadSupplier(CfdiQuickReader $reader): Proveedor
+    protected function loadReader(): bool
     {
-        $supplier = new Proveedor();
+        try {
+            $fileContent = file_get_contents(self::DESTINATION_FOLDER . $this->fileName);
+            $this->reader = new CfdiQuickReader($fileContent);
 
-        $where = [
-            new DataBaseWhere('cifnif', $reader->emisorRfc())
-        ];
-
-        if ($supplier->loadFromCode('', $where)) {
-            return $supplier;
+            return true;
+        } catch (Exception $e) {
+            Tools::log()->warning('Error al cargar el archivo ' . $this->fileName);
+            Tools::log()->warning($e->getMessage());
+            return false;
         }
-
-        $supplier->cifnif = $reader->emisorRfc();
-        $supplier->nombre = $reader->emisorNombre();
-
-        $supplier->save();
-
-        return $supplier;
     }
 
-    public function processFile(): string
+    protected function loadSupplier(): bool
+    {
+        $this->supplier = new Proveedor();
+
+        $where = [
+            new DataBaseWhere('cifnif', $this->reader->emisorRfc())
+        ];
+
+        if ($this->supplier->loadFromCode('', $where)) {
+            return true;
+        }
+
+        $this->supplier->cifnif = $this->reader->emisorRfc();
+        $this->supplier->nombre = $this->reader->emisorNombre();
+
+        return $this->supplier->save();
+    }
+
+    protected function processFile(): bool
     {
         Tools::folderCheckOrCreate(self::DESTINATION_FOLDER);
         $uploadFile = $this->request->files->get('cfdifile');
 
         if (!$uploadFile || false === $uploadFile->isValid()) {
-            return '';
+            return false;
         }
 
         $destinationName = $uploadFile->getClientOriginalName();
@@ -115,13 +153,37 @@ class EditCfdiProveedor extends EditController
             $destinationName = mt_rand(1, 999999) . '_' . $destinationName;
         }
 
-        Tools::log()->warning('Move file: ' . $destinationName);
         $moveFile = $uploadFile->move(self::DESTINATION_FOLDER, $destinationName);
-
         if ($moveFile) {
-            return $destinationName;
+            $this->fileName = $destinationName;
+
+            return true;
         }
 
-        return '';
+        return false;
+    }
+
+    protected function testCfdiExists(): bool
+    {
+        $cfdi = new CfdiProveedor();
+
+        if ($cfdi->loadFromUuid($this->reader->uuid())) {
+            return true;
+        }
+        return false;
+    }
+
+    protected function loadData($viewName, $view)
+    {
+        parent::loadData($viewName, $view);
+
+        if ($viewName === 'EditCfdiProveedor') {
+            if ($this->getModel()->primaryColumnValue()) {
+                $url = $this->getModel()->url('wizard');
+
+                $this->addProcessButton($url);
+            }
+        }
+
     }
 }

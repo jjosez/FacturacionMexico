@@ -59,7 +59,8 @@
     <div class="container-fluid">
         <form id="formCfdiWizard" name="formCfdiWizard" action="{{ fsc.url() }}" method="post">
             <input type="hidden" value="import-supplier-cfdi" name="action">
-            <input type="hidden" value="{{ fsc.reader.serie }}{{ fsc.reader.folio }}" name="numproveedor">
+            <input type="hidden" value="{{ fsc.cfdi.primaryColumnValue() }}" name="code">
+            <input type="hidden" value="{{ fsc.cfdi.tipo }}" name="type">
 
             <ul class="nav nav-pills nav-justified mb-3 wizard-pills" id="wizardTabs" role="tablist">
                 <li class="nav-item">
