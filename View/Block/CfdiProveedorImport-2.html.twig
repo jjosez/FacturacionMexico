@@ -43,6 +43,10 @@
                                     data-index="{{ loop.index0 }}">
                                 Desvincular
                             </button>
+                            {% set newProductUrl = fsc.buildNewProductUrl(concepto.noidentificacion, concepto.descripcion) %}
+                            <a href="{{ newProductUrl }}" class="btn btn-sm btn-warning" target="_blank">
+                                <i class="fas fa-plus"></i> Registrar
+                            </a>
                             <input type="hidden" name="conceptos[{{ loop.index0 }}][referencia]"
                                    id="concepto-referencia-{{ loop.index0 }}" value="">
                         </td>

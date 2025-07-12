@@ -94,6 +94,7 @@ class FinkokStampService implements StampProviderInterface
     {
         $response = $this->quickFinkok->stamped($xml);
         $hasError = false;
+        $messages = [];
 
         if ($response->hasAlerts()) {
             $messages[] = 'Error al timbrar el documento';;

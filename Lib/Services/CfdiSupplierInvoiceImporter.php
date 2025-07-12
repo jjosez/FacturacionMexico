@@ -53,7 +53,7 @@ class CfdiSupplierInvoiceImporter
 
         $invoice->setSubject($supplier);
         $invoice->numproveedor = $cfdi->invoiceNumber();
-        $invoice->codpago = $this->getFormaPagoForInvoice($cfdi->forma_pago);
+        $invoice->codpago = $this->formaPagoFromCfdi($cfdi);
         $invoice->save();
 
         return $invoice;
@@ -139,10 +139,10 @@ class CfdiSupplierInvoiceImporter
         }
     }
 
-    protected function getFormaPagoForInvoice(string $clavesat): string
+    protected function formaPagoFromCfdi(CfdiProveedor $cfdi): string
     {
-        $result = FormaPago::table()->whereEq('clavesat', $clavesat)->get();
+        $result = FormaPago::table()->whereEq('clavesat', $cfdi->forma_pago)->first();
 
-        return $result[0]['clavesat'] ?? '99';
+        return $result['clavesat'] ?? '99';
     }
 }

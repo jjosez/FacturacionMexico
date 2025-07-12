@@ -27,11 +27,22 @@
             <widget type="date" fieldname="fecha_timbrado"/>
         </column>
     </columns>
+     <modals>
+        <group name="import-cfdi-file" title="Importar CFDI" icon="fas fa-file-import fa-fw">
+            <column name="file" numcolumns="12" order="100">
+                <widget type="file" fieldname="cfdifile" accept=".xml"/>
+            </column>
+        </group>
+    </modals>
     <rows>
         <row type="status">
             <option color="danger" title="Cancelado"  fieldname="estado">Cancelado</option>
             <option color="warning" title="Factura Egreso" fieldname="tipocfdi">E</option>
             <option color="info" title="Factura Global" fieldname="cfdiglobal">true</option>
+        </row>
+         <row type="actions">
+            <button type="modal" icon="fas fa-file-import fa-fw" label="import" color="info"
+                    action="import-cfdi-file"/>
         </row>
     </rows>
 </view>

@@ -16,20 +16,23 @@
                 <values source="clientes" fieldcode="codcliente" fieldtitle="nombre"/>
             </widget>
         </column>
-        <column name="cifnif" order="120">
-            <widget type="text" fieldname="rfcreceptor"/>
+        <column name="RFC Receptor" order="120">
+            <widget type="text" fieldname="receptor_rfc"/>
         </column>
         <column name="uuid" order="130" title="UUID">
             <widget type="text" fieldname="uuid"/>
         </column>
         <column name="type" display="center" order="140">
-            <widget type="text" fieldname="tipocfdi"/>
+            <widget type="text" fieldname="tipo"/>
         </column>
         <column name="amount" display="right" order="150">
             <widget type="money" fieldname="total"/>
         </column>
-        <column name="date" display="right" order="160">
-            <widget type="date" fieldname="fecha"/>
+        <column name="invoice-date" title="Fecha emision" display="right" order="160">
+            <widget type="date" fieldname="fecha_emision"/>
+        </column>
+        <column name="stamp-date" title="Fecha timbrado" display="right" order="170">
+            <widget type="date" fieldname="fecha_timbrado"/>
         </column>
     </columns>
     <rows>

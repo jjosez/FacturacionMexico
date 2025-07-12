@@ -10,6 +10,7 @@ define('CFDI_XSLT_URL', 'http://www.sat.gob.mx/sitio_internet/cfd/3/cadenaorigin
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Template\InitClass;
 use FacturaScripts\Dinamic\Lib\CFDI\CfdiCatalogo;
@@ -72,6 +73,14 @@ class Init extends InitClass
 
             $canceledStatus->save();
         }
+    }
+
+    public function updateTableColumnsV1(): void
+    {
+        $database = new DataBase();
+        $database->beginTransaction();
+
+
     }
 
     public function uninstall(): void

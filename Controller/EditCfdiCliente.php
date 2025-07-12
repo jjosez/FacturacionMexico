@@ -1,4 +1,21 @@
 <?php
+/**
+ * This file is part of FacturacionMexico plugin for FacturaScripts
+ * Copyright (C) 2019 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
@@ -16,6 +33,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiFactory;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware\RelationValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware\Validator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiEmailService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiFileStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF\PDFCfdi;
@@ -59,7 +77,7 @@ class EditCfdiCliente extends Controller
         }
 
         if ($code && $this->cfdi->loadFromCode($code)) {
-            $this->loadInvoiceFromCode($this->cfdi->idfactura);
+            $this->loadInvoiceFromCode($this->cfdi->primaryColumnValue());
             $this->loadCfdiReader();
         }
 
@@ -69,7 +87,7 @@ class EditCfdiCliente extends Controller
             }
         }
 
-        $template = $this->cfdi->idcfdi ? 'CfdiCliente' : 'CfdiClienteWizard';
+        $template = $this->cfdi->id ? 'CfdiCliente' : 'CfdiClienteWizard';
         $this->setTemplate($template);
 
         $this->execAction($action);
@@ -325,7 +343,7 @@ class EditCfdiCliente extends Controller
         $service = $this->stampServiceProvider();
         $query = [
             'emisor' => $this->empresa->cifnif,
-            'receptor' => $this->cfdi->rfcreceptor,
+            'receptor' => $this->cfdi->receptor_rfc,
             'uuid' => $this->cfdi->uuid,
             'total' => $this->cfdi->total
         ];
@@ -364,7 +382,9 @@ class EditCfdiCliente extends Controller
 
     protected function loadCfdiReader(): void
     {
-        $this->xml = $this->cfdi->getXml();
+        $storage = $this->storageServiceProvider();
+        $this->xml = $storage->getXml($this->cfdi);
+
         $this->reader = new CfdiQuickReader($this->xml);
     }
 
@@ -389,7 +409,8 @@ class EditCfdiCliente extends Controller
 
     protected function storageServiceProvider(): CfdiStorageInterface
     {
-        return new CfdiDatabaseStorage();
+        return new CfdiFileStorage();
+        //return new CfdiDatabaseStorage();
     }
 
     private function processCfdiRelacionadosRequest(): array
@@ -437,13 +458,13 @@ class EditCfdiCliente extends Controller
         return CfdiSettings::serieEgreso() === $this->factura->codserie;
     }
 
-    public function isGlobalInvoiceCustomer()
+    public function isGlobalInvoiceCustomer(): bool
     {
         return Validator::validateGlobalInvoiceCustomer($this->factura);
     }
 
     public function url(): string
     {
-        return parent::url() . '?code=' . $this->cfdi->idcfdi;
+        return parent::url() . '?code=' . $this->cfdi->id;
     }
 }

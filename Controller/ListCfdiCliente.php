@@ -25,8 +25,6 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiSettings;
 
 /**
- * Controller to list the items in the TerminalPOS model
- *
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
 class ListCfdiCliente extends ExtendedController\ListController
@@ -40,8 +38,8 @@ class ListCfdiCliente extends ExtendedController\ListController
     public function getPageData(): array
     {
         $data = parent::getPageData();
-        $data['menu'] = 'sales';
-        $data['title'] = 'CFDIs';
+        $data['menu'] = 'CFDI';
+        $data['title'] = 'CFDI Clientes';
         $data['icon'] = 'fas fa-file-invoice';
 
         return $data;
@@ -59,12 +57,13 @@ class ListCfdiCliente extends ExtendedController\ListController
     protected function createMainView($viewName = 'ListCfdiCliente'): void
     {
         $this->addView($viewName, 'CfdiCliente', 'CFDIs', 'fas fa-file-invoice');
-        $this->addSearchFields($viewName, ['razonreceptor', 'rfcreceptor', 'uuid']);
-        $this->addOrderBy($viewName, ['fecha'], 'date', 2);
+        $this->addSearchFields($viewName, ['receptor_nombre', 'receptor_rfc', 'uuid']);
+        $this->addOrderBy($viewName, ['fecha_timbrado'], 'date', 2);
+        $this->addOrderBy($viewName, ['fecha_emision'], 'date', 2);
 
         $this->addFilterAutocomplete($viewName, 'codcliente', 'customer', 'codcliente', 'clientes', 'codcliente', 'razonsocial');
-        $this->addFilterPeriod($viewName, 'date', 'period', 'fecha');
-        $this->addFilterSelect($viewName, 'tipo', 'type', 'tipocfdi', CfdiCatalogo::tipoCfdi());
+        $this->addFilterPeriod($viewName, 'date', 'period', 'fecha_timbrado');
+        $this->addFilterSelect($viewName, 'tipo', 'type', 'tipo', CfdiCatalogo::tipoCfdi());
         $this->addFilterSelect($viewName, 'estado', 'state', 'estado', CfdiCatalogo::estadoCfdi());
 
         $this->setSettings($viewName, 'btnNew', false);

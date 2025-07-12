@@ -4,40 +4,10 @@
  *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
 #}
-{% extends 'Master/MenuTemplate.html.twig' %}
+{% extends 'Master/MenuBgTemplate.html.twig' %}
 {% import 'Macro/Form.html.twig' as form %}
 {% block css %}
     {{ parent() }}
-    <link rel="stylesheet"
-          href="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/css/smart_wizard_all.css') }}">
-{% endblock %}
-{% block bodyHeaderOptions %}
-    <div class="container-fluid mb-2">
-        <div class="row">
-            <div class="col">
-                <div class="btn-group">
-                    <a class="btn btn-sm btn-dark" href="" title="Recargar">
-                        <i class="fas fa-redo" aria-hidden="true"></i>
-                    </a>
-                </div>
-                {# <a class="btn btn-sm btn-warning" data-toggle="modal" data-target="#cfdiInputModal">
-                    <i class="fas fa-code" aria-hidden="true"></i>&nbsp;Cargar XML
-                </a> #}
-                <button type="button" class="btn btn-sm btn-warning" id="readCfdiBtn">
-                    <i class="fas fa-code"></i> Cargar XML
-                </button>
-            </div>
-            <div class="col text-right">
-                <h1 class="h3">
-                    Importar CFDI
-                    <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
-                </h1>
-            </div>
-        </div>
-    </div>
-{% endblock %}
-
-{% block body %}
     <style>
         .wizard-pills .nav-link {
             background-color: #e9ecef; /* light gray */
@@ -56,6 +26,34 @@
             position: relative;
         }
     </style>
+{% endblock %}
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-2">
+        <div class="row">
+            <div class="col">
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-dark" href="" title="Recargar">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                    </a>
+                </div>
+                {# <a class="btn btn-sm btn-warning" data-toggle="modal" data-target="#cfdiInputModal">
+                    <i class="fas fa-code" aria-hidden="true"></i>&nbsp;Cargar XML
+                </a> #}
+               {# <button type="button" class="btn btn-sm btn-warning" id="readCfdiBtn">
+                    <i class="fas fa-code"></i> Cargar XML
+                </button>#}
+            </div>
+            <div class="col text-right">
+                <h1 class="h3">
+                    Importar CFDI
+                    <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
+                </h1>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
     <div class="container-fluid">
         <form id="formCfdiWizard" name="formCfdiWizard" action="{{ fsc.url() }}" method="post">
             <input type="hidden" value="import-supplier-cfdi" name="action">
@@ -96,7 +94,7 @@
             </div>
         </form>
     </div>
-    <div class="modal fade" id="cfdiInputModal" tabindex="-1" role="dialog" aria-labelledby="cfdiInputModalLabel"
+{#    <div class="modal fade" id="cfdiInputModal" tabindex="-1" role="dialog" aria-labelledby="cfdiInputModalLabel"
          aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -120,7 +118,7 @@
                 </form>
             </div>
         </div>
-    </div>
+    </div>#}
     <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel"
          aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -146,7 +144,8 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Vincular producto <span class="text-muted" id="tablaProductosCode"></span></h5>
+                    <h5 class="modal-title">Vincular producto <span class="text-muted" id="tablaProductosCode"></span>
+                    </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>

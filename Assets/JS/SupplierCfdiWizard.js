@@ -5,7 +5,7 @@ async function buscarProductos(query) {
     formData.append('query', query);
 
     try {
-        const response = await fetch('CfdiProveedorImporter', {
+        const response = await fetch('CfdiSupplierWizard', {
             method: 'POST',
             body: formData
         });
@@ -46,9 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tablaProductos = document.getElementById('tablaProductos');
 
-    document.getElementById('readCfdiBtn').addEventListener('click', function () {
+/*    document.getElementById('readCfdiBtn').addEventListener('click', function () {
         $('#cfdiInputModal').modal('show');
-    });
+    });*/
 
     document.querySelectorAll('.custom-file-input').forEach(input => {
         input.addEventListener('change', function () {

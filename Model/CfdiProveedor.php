@@ -20,6 +20,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
 use FacturaScripts\Core\Model\Base;
+use FacturaScripts\Core\Session;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
@@ -30,24 +31,9 @@ class CfdiProveedor extends Base\ModelClass
     use Base\ModelTrait;
     use CfdiTrait;
 
-    public $emisor_rfc;
-
-    public $emisor_nombre;
-
-    public $forma_pago;
-
-    public $metodo_pago;
-
-    public $receptor_rfc;
-
-    public $receptor_nombre;
-
-    public $serie;
-
-    public $tipo;
-
-    public $folio;
-
+    /**
+     * @var string
+     */
     public $filename;
 
     /**
@@ -55,13 +41,12 @@ class CfdiProveedor extends Base\ModelClass
      */
     public $codproveedor;
 
-
     public function clear()
     {
         parent::clear();
 
-        $this->fecha = date(self::DATE_STYLE);
-        $this->hora = date(self::HOUR_STYLE);
+        $this->created_at = date(self::DATETIME_STYLE);
+        $this->nick = Session::user()->nick;
     }
 
     public function getSupplier(): Proveedor
@@ -106,9 +91,17 @@ class CfdiProveedor extends Base\ModelClass
         if ($type === 'wizard') {
             $value = $this->primaryColumnValue();
 
-            return 'CfdiProveedorImporter' . '?type=' . rawurlencode($this->tipo) . '&code=' . rawurlencode($value);
+            return 'CfdiSupplierWizard?type=' . rawurlencode($this->tipo) . '&code=' . rawurlencode($value);
         }
 
         return parent::url($type, $list);
+    }
+
+    public function test(): bool
+    {
+        $this->last_nick = Session::user()->nick;
+        $this->updated_at = date(self::DATETIME_STYLE);
+
+        return parent::test();
     }
 }

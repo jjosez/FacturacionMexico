@@ -21,6 +21,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Model\Base;
+use FacturaScripts\Core\Session;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
@@ -32,6 +33,8 @@ class CfdiCliente extends Base\ModelClass
 
     public $codcliente;
 
+    public $idfactura;
+
     /**
      * @var string
      */
@@ -41,18 +44,18 @@ class CfdiCliente extends Base\ModelClass
     {
         parent::clear();
 
-        $this->fecha = date(self::DATE_STYLE);
-        $this->hora = date(self::HOUR_STYLE);
+        $this->created_at = date(self::DATETIME_STYLE);
+        $this->nick = Session::user()->nick;
         $this->cfdiglobal = false;
     }
 
     public function getXml()
     {
-        if (!$this->idcfdi) {
+        if (!$this->id) {
             return "";
         }
 
-        return CfdiData::getXmlFromCfdi($this->idcfdi);
+        return CfdiData::getXmlFromCfdi($this->id);
     }
 
     public static function tableName(): string
@@ -75,5 +78,13 @@ class CfdiCliente extends Base\ModelClass
             ->limit(15)
             ->orderBy('fecha', 'DESC')
             ->get();
+    }
+
+    public function test(): bool
+    {
+        $this->last_nick = Session::user()->nick;
+        $this->updated_at = date(self::DATETIME_STYLE);
+
+        return parent::test();
     }
 }

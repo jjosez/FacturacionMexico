@@ -6,93 +6,108 @@
                 <widget type="text" fieldname="id"/>
             </column>
             <column name="idempresa" display="none" order="110">
-                <widget type="number" fieldname="idempresa" max="5" />
+                <widget type="number" fieldname="idempresa" max="5"/>
             </column>
         </group>
         <group name="data" title="general" numcolumns="12">
             <column name="codproveedor" title="supplier" display="left" numcolumns="4" order="100">
-                <widget type="autocomplete" fieldname="codproveedor" >
+                <widget type="autocomplete" fieldname="codproveedor">
                     <values source="proveedores" fieldcode="codproveedor" fieldtitle="nombre"/>
                 </widget>
             </column>
             <column name="emisor-nombre" title="supplier" display="none" order="110">
-                <widget type="text" fieldname="emisor_nombre" maxlength="100" />
+                <widget type="text" fieldname="emisor_nombre" maxlength="100"/>
             </column>
             <column name="emisor-rfc" title="RFC Emisor" display="left" numcolumns="2" order="120">
-                <widget type="text" fieldname="emisor_rfc" maxlength="13" />
+                <widget type="text" fieldname="emisor_rfc" maxlength="13"/>
             </column>
             <column name="receptor-nombre" title="customer" display="left" numcolumns="4" order="130">
-                <widget type="text" fieldname="receptor_nombre" maxlength="100" />
+                <widget type="text" fieldname="receptor_nombre" maxlength="100"/>
             </column>
             <column name="receptor-rfc" title="RFC Receptor" display="left" numcolumns="2" order="140">
-                <widget type="text" fieldname="receptor_rfc" maxlength="25" />
+                <widget type="text" fieldname="receptor_rfc" maxlength="25"/>
             </column>
         </group>
         <group name="document" title="document" numcolumns="12">
             <column name="serie" title="Serie" display="left" order="100">
-                <widget type="text" fieldname="serie" maxlength="10" />
+                <widget type="text" fieldname="serie" maxlength="10"/>
             </column>
             <column name="folio" title="Folio" display="left" order="120">
-                <widget type="text" fieldname="folio" maxlength="40" />
+                <widget type="text" fieldname="folio" maxlength="40"/>
             </column>
-            <column name="forma-pago" title="Forma de pago" display="left" order="130">
-                <widget type="text" fieldname="forma_pago" maxlength="15"/>
+            <column name="forma-pago" title="Forma de pago" order="130">
+                <widget type="select" fieldname="forma_pago" required="true">
+                </widget>
             </column>
             <column name="metodo-pago" title="Método de pago" display="left" order="140">
-                <widget type="text" fieldname="metodo_pago" maxlength="10" />
+                <widget type="select" fieldname="metodo_pago">
+                    <values title="Pago en una sola exhibición">PPD</values>
+                    <values title="Pago en parcialidades o diferido">PUE</values>
+                </widget>
             </column>
             <column name="tipo" title="Tipo" display="left" order="150">
-                <widget type="select" fieldname="tipo" translate="true" >
+                <widget type="select" fieldname="tipo" translate="true">
                     <values title="Ingreso">I</values>
                     <values title="Egreso">E</values>
                     <values title="Traslado">T</values>
                     <values title="Pago">P</values>
                 </widget>
             </column>
-            <column name="estado" title="status" display="left" numcolumns="2" order="160">
-                <widget type="select" fieldname="estado" >
+            <column name="amount" display="right" order="160">
+                <widget type="money" fieldname="total"/>
+            </column>
+        </group>
+        <group name="stamp" title="Sello" numcolumns="12">
+            <column name="uuid" title="UUID" display="left" numcolumns="4" order="210">
+                <widget type="text" fieldname="uuid" maxlength="36" readonly="true"/>
+            </column>
+            <column name="version" title="Versión" display="left" numcolumns="2" order="220">
+                <widget type="text" fieldname="version" maxlength="4"/>
+            </column>
+            <column name="estado" title="status" display="left" numcolumns="2" order="225">
+                <widget type="select" fieldname="estado">
                     <values title="Cancelado">cancelado</values>
                     <values title="Vigente">vigente</values>
                 </widget>
             </column>
-        </group>
-        <group name="stamp" title="Sello" numcolumns="12">
-            <column name="uuid" title="UUID" display="left" numcolumns="6" order="210">
-                <widget type="text" fieldname="uuid" maxlength="36" />
-            </column>
-            <column name="version" title="Versión" display="left" order="220">
-                <widget type="text" fieldname="version" maxlength="4" />
-            </column>
             <column name="fecha-emision" title="Fecha de emisión" display="left" numcolumns="2" order="230">
-                <widget type="datetime" fieldname="fecha_emision" />
+                <widget type="datetime" fieldname="fecha_emision"/>
             </column>
             <column name="fecha-timbrado" title="Fecha de timbrado" display="left" numcolumns="2" order="240">
-                <widget type="datetime" fieldname="fecha_timbrado" />
+                <widget type="datetime" fieldname="fecha_timbrado"/>
             </column>
             <column name="file-name" numcolumns="8" order="245">
-                <widget type="text" fieldname="filename" readonly="true" />
+                <widget type="text" fieldname="filename" readonly="true"/>
             </column>
-            <column name="file" numcolumns="4" order="245">
-                <widget type="file" fieldname="cfdifile" accept=".xml"/>
+            <column name="fecha-importacion" title="Fecha de importación" display="left" numcolumns="2" order="250">
+                <widget type="datetime" fieldname="created_at" readonly="true"/>
+            </column>
+            <column name="user" numcolumns="2" order="260">
+                <widget type="text" fieldname="nick" readonly="true"/>
             </column>
         </group>
         <group name="logs" numcolumns="12">
-            <column name="creation-date" display="none" order="250">
-                <widget type="datetime" fieldname="creation_date" />
-            </column>
-            <column name="last-nick" display="none" order="260">
-                <widget type="select" fieldname="last_nick">
-                    <values source="users" fieldcode="nick" fieldtitle="nick"/>
-                </widget>
-            </column>
             <column name="last-update" display="none" order="270">
-                <widget type="datetime" fieldname="last_update"/>
+                <widget type="datetime" fieldname="updated_at"/>
             </column>
-            <column name="nick" display="none" order="280">
-                <widget type="select" fieldname="nick">
+            <column name="last-nick" display="none" order="280">
+                <widget type="select" fieldname="last_nick">
                     <values source="users" fieldcode="nick" fieldtitle="nick"/>
                 </widget>
             </column>
         </group>
     </columns>
+   <!-- <modals>
+        <group name="import-cfdi-file" title="Cargar CFDI" icon="fas fa-file-import fa-fw">
+            <column name="file" numcolumns="12" order="100">
+                <widget type="file" fieldname="cfdifile" accept=".xml"/>
+            </column>
+        </group>
+    </modals>
+    <rows>
+        <row type="actions">
+            <button type="modal" icon="fas fa-file-import fa-fw" label="import" color="warning"
+                    action="import-cfdi-file"/>
+        </row>
+    </rows>-->
 </view>

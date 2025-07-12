@@ -1,4 +1,21 @@
 <?php
+/**
+ * This file is part of FacturacionMexico plugin for FacturaScripts
+ * Copyright (C) 2019 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
@@ -6,22 +23,16 @@ use Exception;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController\EditController;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Dinamic\Model\AttachedFile;
 use FacturaScripts\Dinamic\Model\Proveedor;
+use FacturaScripts\Plugins\FacturacionMexico\Extension\Controller\FormaPagoControllerTrait;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiSupplierImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
 
-/**
- * Este es un controlador específico para ediciones. Permite una o varias pestañas.
- * Cada una con un xml y modelo diferente, puede ser de tipo edición, listado, html o panel.
- * Además, hace uso de archivos de XMLView para definir qué columnas mostrar y cómo.
- *
- * https://facturascripts.com/publicaciones/editcontroller-642
- */
 class EditCfdiProveedor extends EditController
 {
+    use FormaPagoControllerTrait;
+
     const DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
 
     protected string $fileName;
@@ -38,73 +49,53 @@ class EditCfdiProveedor extends EditController
         $data = parent::getPageData();
         $data['menu'] = 'CFDI';
         $data['title'] = 'EditCfdiProveedor';
-        $data['icon'] = 'fa-solid fa-search';
+        $data['icon'] = 'fa-solid fa-file-import';
         return $data;
     }
 
-    protected function createViews()
+    protected function createViews(): void
     {
         parent::createViews();
+
+        $column = $this->tab('EditCfdiProveedor')->columnForName('forma-pago');
+        $widgetClosure = $this->createFormaPagoWidget();
+        $widgetClosure($column);
     }
 
-    protected function addProcessButton(string $url)
+    protected function addImportWizardButton(string $url)
     {
         $this->addButton('EditCfdiProveedor', [
             'action' => $url,
-            'icon' => 'fas fa-plus',
-            'label' => 'Procesar',
+            'color' => 'info',
+            'icon' => 'fa-solid fa-truck-field',
+            'label' => 'Asistente de importación',
             'type' => 'link'
         ]);
     }
 
-    public function execPreviousAction($action)
+    public function execPreviousAction($action): void
     {
-        if ($action === 'insert') {
-
-            if (!$this->processFile() || !$this->loadReader()) {
-                return;
-            }
-
-            if (!$this->loadSupplier()) {
-                Tools::log()->warning('Error al seleccionar el proveedor');
-                return;
-            }
-
-            if ($this->testCfdiExists()) {
-                Tools::log()->warning('El cfdi ya fue registrado');
-                return;
-            }
-
-            $reader = $this->reader;
-
-            $cfdi = $this->getModel();
-            $cfdi->codproveedor = $this->supplier->codproveedor;
-            $cfdi->coddivisa = "MXN";
-            $cfdi->estado = "vigente";
-            $cfdi->receptor_rfc = $reader->receptorRfc();
-            $cfdi->receptor_nombre = $reader->receptorRfc();
-            $cfdi->emisor_rfc = $reader->receptorRfc();
-            $cfdi->emisor_nombre = $reader->receptorNombre();
-            $cfdi->emisor_rfc = $reader->emisorRfc();
-            $cfdi->emisor_nombre = $reader->emisorNombre();
-            $cfdi->fecha_emision = $reader->fechaExpedicion();
-            $cfdi->fecha_timbrado = $reader->fechaTimbrado();
-            $cfdi->folio = $reader->folio();
-            $cfdi->forma_pago = $reader->formaPago();
-            $cfdi->idempresa = $this->empresa->idempresa;
-            $cfdi->metodo_pago = $reader->metodoPago();
-            $cfdi->serie = $reader->serie();
-            $cfdi->tipo = $reader->tipoComprobamte();
-            $cfdi->uuid = $reader->uuid();
-            $cfdi->version = $reader->version();
-
-            $cfdi->filename = $this->fileName;
-            $cfdi->save();
+        if ($action === 'import-cfdi-file') {
+            $this->importCfdiAction();
 
             return;
         }
 
         parent::execPreviousAction($action);
+    }
+
+    protected function importCfdiAction(): void
+    {
+        try {
+            $importer = new CfdiSupplierImporter();
+            $uploadedFile = $this->request->files->get('cfdifile');
+            $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
+
+            Tools::log()->info('CFDI importado correctamente: ' . $cfdi->uuid);
+
+        } catch (Exception $e) {
+            Tools::log()->warning($e->getMessage());
+        }
     }
 
     protected function loadReader(): bool
@@ -181,7 +172,7 @@ class EditCfdiProveedor extends EditController
             if ($this->getModel()->primaryColumnValue()) {
                 $url = $this->getModel()->url('wizard');
 
-                $this->addProcessButton($url);
+                $this->addImportWizardButton($url);
             }
         }
 

@@ -16,29 +16,61 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Model\Base;
 
-class CfdiRelation extends Base\ModelClass
+class RelacionCfdiProveedor extends Base\ModelClass
 {
     use Base\ModelTrait;
 
-    public $cfdirelacionado;
-    public $idrelacion;
-    public $idcfdi;
-    public $tiporelacion;
+    /**
+     * ID interno de la relación
+     * @var int
+     */
+    public $id;
+
+    /**
+     * ID del CFDI principal
+     * @var int
+     */
+    public $cfdi_id;
+
+    /**
+     * ID del CFDI relacionado
+     * @var int
+     */
+    public $cfdi_id_relacionado;
+
+    /**
+     * Tipo de relación SAT (por ejemplo 04, 07)
+     * @var string
+     */
+    public $tipo_relacion;
+
+    /**
+     * @var string
+     */
     public $uuid;
-    public $uuidrelacionado;
+
+    /**
+     * @var string
+     */
+    public $uuid_relacionado;
 
     public static function primaryColumn(): string
     {
-        return 'idrelacion';
+        return 'id';
     }
 
     public static function tableName(): string
     {
-        return 'cfdis_relacionados';
+        return 'cfdis_proveedores_relacion';
+    }
+
+    public function primaryDescriptionColumn(): string
+    {
+        return 'uuid';
     }
 }

@@ -1,35 +1,17 @@
 <?php
-/**
- * This file is part of FacturacionMexico plugin for FacturaScripts
- * Copyright (C) 2019 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Services;
 
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Contract\CfdiStorageInterface;
-use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiData;
 
-class CfdiDatabaseStorage implements CfdiStorageInterface
+class CfdiFileStorage implements CfdiStorageInterface
 {
-    protected CfdiQuickReader $reader;
+    public const DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/customer/';
 
-    public function __construct()
-    {
-    }
+    protected CfdiQuickReader $reader;
 
     public function save(FacturaCliente $invoice, string $xmlContent): ?CfdiCliente
     {
@@ -58,12 +40,24 @@ class CfdiDatabaseStorage implements CfdiStorageInterface
 
     public function saveXml(CfdiCliente $cfdi, string $xmlContent): bool
     {
-        $cfdiData = new CfdiData();
-        $cfdiData->idcfdi = $cfdi->primaryColumnValue();
-        $cfdiData->uuid = $cfdi->uuid;
-        $cfdiData->xml = $xmlContent;
+        $subFolder = date('Y') . '/' . date('m') . '/';
+        $fullPath = self::DESTINATION_FOLDER . $subFolder;
 
-        return $cfdiData->save();
+        if (!Tools::folderCheckOrCreate($fullPath)) {
+            Tools::log()->warning('No se pudo crear la carpeta para el CFDI: ' . $fullPath);
+            return false;
+        }
+
+        $destinationName = date('Ymd_His') . '_' . $cfdi->uuid . '.xml';
+        $filePath = $fullPath . $destinationName;
+
+        if (false === file_put_contents($filePath, $xmlContent)) {
+            Tools::log()->warning('No se pudo guardar el archivo CFDI: ' . $filePath);
+            return false;
+        }
+
+        $cfdi->filename = $subFolder . $destinationName;
+        return $cfdi->save();
     }
 
     public function updateMailDate(CfdiCliente $cfdi): bool
@@ -80,21 +74,30 @@ class CfdiDatabaseStorage implements CfdiStorageInterface
 
     public function deleteCfdi(CfdiCliente $cfdi): bool
     {
-        $cfdiData = new CfdiData();
-        if ($cfdiData->loadFromCode($cfdi->primaryColumnValue())) {
-            $cfdiData->delete();
+        $fileDeleted = true;
+
+        if (is_file(self::DESTINATION_FOLDER . $cfdi->filename)) {
+            $fileDeleted = unlink(self::DESTINATION_FOLDER . $cfdi->filename);
         }
 
-        return $cfdi->delete();
-    }
+        if ($fileDeleted) {
+            $cfdi->estado = 'eliminado';
+            $cfdi->filename = null;
+            return $cfdi->save();
+        }
 
-    public function getReader(): CfdiQuickReader
-    {
-        return $this->reader;
+        return false;
     }
 
     public function getXml(CfdiCliente $cfdi): ?string
     {
-        return $cfdi->getXml();
+        $filePath = self::DESTINATION_FOLDER . $cfdi->filename;
+
+        if (is_file($filePath)) {
+            return file_get_contents($filePath) ?: null;
+        }
+
+        Tools::log()->warning('Archivo XML no encontrado: ' . $filePath);
+        return null;
     }
 }

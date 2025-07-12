@@ -19,12 +19,13 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
+use Exception;
 use FacturaScripts\Core\Lib\ExtendedController;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiSupplierImporter;
 
 /**
- * Controller to list the items in the TerminalPOS model
- *
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
 class ListCfdiProveedor extends ExtendedController\ListController
@@ -39,10 +40,19 @@ class ListCfdiProveedor extends ExtendedController\ListController
     {
         $pagedata = parent::getPageData();
         $pagedata['title'] = 'CFDI Proveedores';
-        $pagedata['icon'] = 'fas fa-file-invoice';
+        $pagedata['icon'] = 'fa-solid fa-truck-field';
         $pagedata['menu'] = 'CFDI';
 
         return $pagedata;
+    }
+
+    protected function execPreviousAction($action)
+    {
+        if ($action === 'import-cfdi-file') {
+            $this->importCfdiAction();
+        }
+
+        return parent::execPreviousAction($action);
     }
 
     /**
@@ -65,15 +75,22 @@ class ListCfdiProveedor extends ExtendedController\ListController
         $this->addFilterSelect($viewName, 'tipo', 'type', 'tipocfdi', CfdiCatalogo::tipoCfdi());
         $this->addFilterSelect($viewName, 'estado', 'state', 'estado', CfdiCatalogo::estadoCfdi());
 
-        //$this->setSettings($viewName, 'btnNew', false);
-        $this->setSettings($viewName, 'btnDelete', false);
+        $this->setSettings($viewName, 'btnNew', false);
+        //$this->setSettings($viewName, 'btnDelete', false);
+    }
 
-        $this->addButton($viewName, [
-            'action' => 'CfdiProveedorImporter',
-            'color' => 'info',
-            'icon' => 'fas fa-file-import',
-            'label' => 'Importar',
-            'type' => 'link'
-        ]);
+    protected function importCfdiAction(): void
+    {
+        try {
+            $importer = new CfdiSupplierImporter();
+            $uploadedFile = $this->request->files->get('cfdifile');
+            $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
+
+            Tools::log()->info('CFDI importado correctamente: ' . $cfdi->uuid);
+
+            $this->redirect($cfdi->url());
+        } catch (Exception $e) {
+            Tools::log()->warning($e->getMessage());
+        }
     }
 }

@@ -29,4 +29,8 @@
         <name>ca_cfdisdata_cfdis_clientes</name>
         <type>FOREIGN KEY (idcfdi) REFERENCES cfdis_clientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
     </constraint>
+    <constraint>
+        <name>ca_cfdis_data_idcfdi</name>
+        <type>FOREIGN KEY (idcfdi) REFERENCES cfdis_clientes (id) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
 </table>
