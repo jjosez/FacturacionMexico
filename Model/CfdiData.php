@@ -19,12 +19,12 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
-use FacturaScripts\Core\Model\Base;
+use FacturaScripts\Core\Template\ModelClass;
+use FacturaScripts\Core\Template\ModelTrait;
 
-class CfdiData extends Base\ModelClass
+class CfdiData extends ModelClass
 {
-    use Base\ModelTrait;
+    use ModelTrait;
 
     public $idcfdi;
     public $xml;

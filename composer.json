@@ -1,7 +1,7 @@
 {
   "require": {
     "eclipxe/cfdiutils": "^3.0",
-    "phpcfdi/finkok": "^0.5.0",
+    "phpcfdi/finkok": "^0.6",
     "chillerlan/php-qrcode": "^4.3",
     "luecano/numero-a-letras":"^3.0",
     "techlab/smartwizard": "^6.0"

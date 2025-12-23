@@ -28,8 +28,8 @@
                     <i class="fas fa-code" aria-hidden="true"></i>&nbsp;XML
                 </a>
             </div>
-            <div class="col text-right">
-                <h1 class="h3">
+            <div class="col text-end">
+                <h1 class="h5">
                     Pre CFDI
                     <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
                 </h1>
@@ -62,13 +62,13 @@
         <input type="hidden" name="invoice" value="{{ fsc.factura.idfactura }}">
         <ul class="nav nav-pills nav-justified m-3 wizard-pills" id="wizardTabs" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="step1-tab" data-toggle="tab" href="#step1" role="tab">1. Generales</a>
+                <a class="nav-link active" id="step1-tab" data-bs-toggle="tab" href="#step1" role="tab">1. Generales</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="step2-tab" data-toggle="tab" href="#step2" role="tab">2. CFDIs Relacionados</a>
+                <a class="nav-link" id="step2-tab" data-bs-toggle="tab" href="#step2" role="tab">2. CFDIs Relacionados</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="step3-tab" data-toggle="tab" href="#step3" role="tab">3. Enviar al PAC</a>
+                <a class="nav-link" id="step3-tab" data-bs-toggle="tab" href="#step3" role="tab">3. Enviar al PAC</a>
             </li>
         </ul>
 
@@ -84,11 +84,11 @@
             </div>
         </div>
 
-        <div class="m-3">
-            <button type="button" class="btn btn-secondary" id="prevBtn">Anterior</button>
-            <button type="button" class="btn btn-primary" id="nextBtn">Siguiente</button>
+        <div class="m-3 d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary ms-2" id="prevBtn">Anterior</button>
+            <button type="button" class="btn btn-primary ms-2" id="nextBtn">Siguiente</button>
 {#            <button class="btn btn-success d-none" id="timbrarBtn">Timbrar</button>#}
-            <button type="submit" class="btn btn-success d-none" id="wizardSubmitBtn" data-label="Timbrar">Timbrar</button>
+            <button type="submit" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn" data-label="Timbrar">Timbrar</button>
         </div>
     </form>
     <div class="modal fade" id="xmlModal" tabindex="-1" role="dialog">

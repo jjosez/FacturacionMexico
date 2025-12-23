@@ -19,16 +19,16 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
-use FacturaScripts\Core\Model\Base;
 use FacturaScripts\Core\Session;
+use FacturaScripts\Core\Template\ModelClass;
+use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
-class CfdiCliente extends Base\ModelClass
+class CfdiCliente extends ModelClass
 {
-    use Base\ModelTrait;
+    use ModelTrait;
     use CfdiTrait;
 
     public $codcliente;
@@ -40,16 +40,16 @@ class CfdiCliente extends Base\ModelClass
      */
     public $cfdiglobal;
 
-    public function clear()
+    public function clear(): void
     {
         parent::clear();
 
-        $this->created_at = date(self::DATETIME_STYLE);
+        $this->created_at = Tools::dateTime();
         $this->nick = Session::user()->nick;
         $this->cfdiglobal = false;
     }
 
-    public function getXml()
+    public function getXml(): string
     {
         if (!$this->id) {
             return "";
@@ -63,7 +63,7 @@ class CfdiCliente extends Base\ModelClass
         return 'cfdis_clientes';
     }
 
-    public static function searchRelated(string $codcliente, string $tipoComprobante, string $fromDate = null, string $toDate = null): array
+    public static function searchRelated(string $codcliente, string $tipoComprobante, ?string $fromDate = null, ?string $toDate = null): array
     {
         $where = [
             Where::eq('codcliente', $codcliente)
@@ -83,7 +83,7 @@ class CfdiCliente extends Base\ModelClass
     public function test(): bool
     {
         $this->last_nick = Session::user()->nick;
-        $this->updated_at = date(self::DATETIME_STYLE);
+        $this->updated_at = Tools::dateTime();
 
         return parent::test();
     }

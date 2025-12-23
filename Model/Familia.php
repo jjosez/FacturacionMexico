@@ -25,7 +25,7 @@ class Familia extends ParentModel
     public $clavesat;
     public $claveunidad;
 
-    public function clear()
+    public function clear(): void
     {
         parent::clear();
 
@@ -34,9 +34,9 @@ class Familia extends ParentModel
         $this->claveunidad = 'H87';
     }
 
-    public function loadFromData(array $data = [], array $exclude = [])
+    public function loadFromData(array $data = [], array $exclude = [], bool $sync = true): void
     {
-        parent::loadFromData($data, $exclude);
+        parent::loadFromData($data, $exclude, $sync);
 
         $this->clavesat = empty($this->clavesat) ? '01010101' : $this->clavesat;
         $this->claveunidad = empty($this->claveunidad) ? 'H87' : $this->claveunidad;

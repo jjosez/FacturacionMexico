@@ -5,12 +5,9 @@
  */
 #}
 {% import 'Macro/Form.html.twig' as form %}
+
 <div class="card mb-3">
-    <div class="card-header">
-        <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modalRelacionados">
-            <i class="fas fa-plus-circle"></i> Agregar CFDI's Relacionados
-        </button>
-    </div>
+    <div class="card-header">CFDI's Relacionados</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm table-striped">
@@ -29,22 +26,32 @@
             </table>
         </div>
     </div>
+    <div class="card-footer d-flexex">
+        <button type="button"
+                class="btn btn-warning ms-auto"
+                data-bs-toggle="modal"
+                data-bs-target="#modalRelacionados">
+            <i class="fas fa-plus-circle"></i> Agregar
+        </button>
+    </div>
 </div>
 
 <!-- MODAL -->
-<div class="modal fade" id="modalRelacionados" tabindex="-1" role="dialog" aria-labelledby="modalRelacionadosLabel">
-    <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade" id="modalRelacionados" tabindex="-1"
+     aria-labelledby="modalRelacionadosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Seleccionar CFDI's del cliente</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                    <span>&times;</span>
-                </button>
+                <h5 class="modal-title" id="modalRelacionadosLabel">
+                    Seleccionar CFDI's del cliente
+                </h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <div class="form-row mb-2">
+                <div class="row g-2 mb-2">
                     <div class="col-md-4">
-                        <label for="filterTipoModal">Tipo CFDI</label>
+                        <label for="filterTipoModal" class="form-label">Tipo CFDI</label>
                         <select id="filterTipoModal" class="form-control form-control-sm">
                             <option value="">Todos</option>
                             <option value="I">Ingreso</option>
@@ -54,18 +61,19 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label for="filterFechaDesdeModal">Fecha desde</label>
-                        <input type="date" id="filterFechaDesdeModal" class="form-control form-control-sm">
+                        <label for="filterFechaDesdeModal" class="form-label">Fecha desde</label>
+                        <input type="date" id="filterFechaDesdeModal"
+                               class="form-control form-control-sm">
                     </div>
                     <div class="col-md-4">
-                        <label for="filterFechaHastaModal">Fecha hasta</label>
-                        <input type="date" id="filterFechaHastaModal" class="form-control form-control-sm">
+                        <label for="filterFechaHastaModal" class="form-label">Fecha hasta</label>
+                        <input type="date" id="filterFechaHastaModal"
+                               class="form-control form-control-sm">
                     </div>
                 </div>
-
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
-                        <thead class="thead-light">
+                        <thead class="table-light">
                         <tr>
                             <th></th>
                             <th>Tipo</th>
@@ -79,22 +87,23 @@
                         </tbody>
                     </table>
                 </div>
-
-                <div class="form-group">
-                    {# <label for="tipoRelacionModal">Tipo de relación</label> #}
-                    {# <select id="tipoRelacionModal" class="form-control">
-                        {% for value, label in fsc.getCatalogoSat().tipoRelacion().all() %}
-                            <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select> #}
-                    {{ form.inputselect('tipoRelacionModal', 'tipoRelacionModal', 'Tipo de relación',
-                        fsc.getCatalogoSat().tipoRelacion().all(), tipoRelacion) }}
+                <div class="mb-3">
+                    {{ form.inputselect(
+                        'tipoRelacionModal',
+                        'tipoRelacionModal',
+                        'Tipo de relación',
+                        fsc.getCatalogoSat().tipoRelacion().all(),
+                        tipoRelacion
+                    ) }}
                 </div>
-
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="confirmRelacionados">Agregar seleccionados</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmRelacionados">
+                    Agregar seleccionados
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
             </div>
         </div>
     </div>

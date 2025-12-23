@@ -21,6 +21,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use FacturaScripts\Core\Response;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\Cliente;
@@ -30,16 +31,15 @@ use FacturaScripts\Plugins\FacturacionMexico\Contract\StampProviderInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters\CfdiBuildResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiFactory;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware\RelationValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\Middleware\Validator;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiEmailService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiFileStorage;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\PDF\PDFCfdi;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Providers\FinkokStampService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiDatabaseStorage;
-use Symfony\Component\HttpFoundation\Response;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiEmailService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiFileStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
 
 class EditCfdiCliente extends Controller
 {
@@ -409,8 +409,12 @@ class EditCfdiCliente extends Controller
 
     protected function storageServiceProvider(): CfdiStorageInterface
     {
-        return new CfdiFileStorage();
-        //return new CfdiDatabaseStorage();
+        $storageType = Tools::settings('cfdi', 'storage-type', 'file');
+
+        return match ($storageType) {
+            'database' => new CfdiDatabaseStorage(),
+            default => new CfdiFileStorage(),
+        };
     }
 
     private function processCfdiRelacionadosRequest(): array

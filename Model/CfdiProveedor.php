@@ -19,16 +19,18 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
-use FacturaScripts\Core\Model\Base;
 use FacturaScripts\Core\Session;
+use FacturaScripts\Core\Template\ModelClass;
+use FacturaScripts\Core\Template\ModelTrait;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
-class CfdiProveedor extends Base\ModelClass
+class CfdiProveedor extends ModelClass
 {
     public const SUPPLIER_CFDI_BASEPATH = FS_FOLDER . '/MyFiles/CFDI/supplier/';
 
-    use Base\ModelTrait;
+    use ModelTrait;
     use CfdiTrait;
 
     /**
@@ -41,11 +43,11 @@ class CfdiProveedor extends Base\ModelClass
      */
     public $codproveedor;
 
-    public function clear()
+    public function clear(): void
     {
         parent::clear();
 
-        $this->created_at = date(self::DATETIME_STYLE);
+        $this->created_at = Tools::dateTime();
         $this->nick = Session::user()->nick;
     }
 
@@ -89,7 +91,7 @@ class CfdiProveedor extends Base\ModelClass
     public function url(string $type = 'auto', string $list = 'List'): string
     {
         if ($type === 'wizard') {
-            $value = $this->primaryColumnValue();
+            $value = $this->id();
 
             return 'CfdiSupplierWizard?type=' . rawurlencode($this->tipo) . '&code=' . rawurlencode($value);
         }
@@ -100,7 +102,7 @@ class CfdiProveedor extends Base\ModelClass
     public function test(): bool
     {
         $this->last_nick = Session::user()->nick;
-        $this->updated_at = date(self::DATETIME_STYLE);
+        $this->updated_at = Tools::dateTime();
 
         return parent::test();
     }

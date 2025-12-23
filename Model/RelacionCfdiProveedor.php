@@ -19,11 +19,12 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
-use FacturaScripts\Core\Model\Base;
+use FacturaScripts\Core\Template\ModelClass;
+use FacturaScripts\Core\Template\ModelTrait;
 
-class RelacionCfdiProveedor extends Base\ModelClass
+class RelacionCfdiProveedor extends ModelClass
 {
-    use Base\ModelTrait;
+    use ModelTrait;
 
     /**
      * ID interno de la relación

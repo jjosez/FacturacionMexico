@@ -1,7 +1,7 @@
 {#
 /**
  *  This file is part of FacturacionMexico plugin for FacturaScripts
- *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ *  Copyright (C) 2025 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
 #}
 {% extends 'Master/MenuTemplate.html.twig' %}
@@ -17,7 +17,7 @@
                     </a>
                 </div>
             </div>
-            <div class="col-11 text-right">
+            <div class="col-11 text-end">
                 <h1 class="h4">
                     {{ fsc.title }}
                     <i class="{{ pageData.icon }} fa-fw" aria-hidden="true"></i>
@@ -31,150 +31,220 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-2">
-                <div class="nav flex-column nav-pills">
-                    <a class="nav-link active show" data-toggle="pill" href="#general">
-                        <i class="fas fa-building fa-fw"></i> General</a>
-                    <a class="nav-link" data-toggle="pill" href="#satcredentials">
-                        <i class="fas fa-file-contract fa-fw"></i> SAT</a>
-                    <a class="nav-link" data-toggle="pill" href="#wscredentials">
-                        <i class="fas fa-file-contract fa-fw"></i> PAC</a>
-                    <a class="nav-link" data-toggle="pill" href="#libfiles">
-                        <i class="fas fa-cloud-download-alt fa-fw"></i> Archivos</a>
+                <div class="nav flex-column nav-pills" id="cfdi-config-tabs" role="tablist" aria-orientation="vertical">
+                    <a class="nav-link active show"
+                       id="tab-general"
+                       data-bs-toggle="pill"
+                       href="#general"
+                       role="tab"
+                       aria-controls="general"
+                       aria-selected="true">
+                        <i class="fas fa-building fa-fw"></i> General
+                    </a>
+                    <a class="nav-link"
+                       id="tab-satcredentials"
+                       data-bs-toggle="pill"
+                       href="#satcredentials"
+                       role="tab"
+                       aria-controls="satcredentials"
+                       aria-selected="false">
+                        <i class="fas fa-file-contract fa-fw"></i> SAT
+                    </a>
+                    <a class="nav-link"
+                       id="tab-wscredentials"
+                       data-bs-toggle="pill"
+                       href="#wscredentials"
+                       role="tab"
+                       aria-controls="wscredentials"
+                       aria-selected="false">
+                        <i class="fas fa-file-contract fa-fw"></i> PAC
+                    </a>
+                    <a class="nav-link"
+                       id="tab-libfiles"
+                       data-bs-toggle="pill"
+                       href="#libfiles"
+                       role="tab"
+                       aria-controls="libfiles"
+                       aria-selected="false">
+                        <i class="fas fa-cloud-download-alt fa-fw"></i> Archivos
+                    </a>
                 </div>
             </div>
             <div class="col-lg-10">
-                <div class="card shadow">
-                    <div class="card-body">
-                        <div class="tab-content">
-                            <div class="tab-pane container-fluid active" id="general">
-                                <form action="{{ fsc.url() }}" autocomplete="off" method="post">
-                                    <input type="hidden" name="action" value='save-cfdi-settings'>
-                                    {% set defaultRegimen = settings('cfdi','regimen') %}
-                                    <div class="form-group row">
-                                        {{ form.inputselect('regimenFiscal', 'regimenfiscal', 'Régimen Fiscal',
-                                            fsc.getCatalogoSat().regimenFiscal().all(), defaultRegimen) }}
-                                    </div>
-                                    {% set defaultUso = settings('cfdi','uso') %}
-                                    <div class="form-group row mb-4">
-                                        {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI',
-                                            fsc.getCatalogoSat().usoCfdi.all(), defaultUso) }}
-                                    </div>
-                                    {% set estadoFactura = settings('cfdi','stamped-status') %}
-                                    <div class="form-group row mb-4">
-                                        <label for="estadoFacturaTimbrado">Estado Factura Cfdi Timbrado</label>
-                                        <select id="estadoFacturaTimbrado" name="estadotimbrada" class="form-control"
-                                                required>
-                                            <option value="">----</option>
-                                            {% for item in fsc.getInvoiceStatus() %}
-                                                <option value="{{ item.idestado }}" {% if estadoFactura == item.idestado %} selected {% endif %}>
-                                                    {{ item.nombre }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    {% set estadoFactura = settings('cfdi','canceled-status') %}
-                                    <div class="form-group row mb-4">
-                                        <label for="estadoFacturaCancelada">Estado Factura Cfdi Cancelado</label>
-                                        <select id="estadoFacturaCancelada" name="estadocancelada" class="form-control">
-                                            <option value="">----</option>
-                                            {% for item in fsc.getInvoiceStatus() %}
-                                                <option value="{{ item.idestado }}" {% if estadoFactura == item.idestado %} selected {% endif %}>
-                                                    {{ item.nombre }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="row">
-                                        <button type="submit" class="btn btn-primary ml-auto">Guardar</button>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="tab-pane container-fluid" id="satcredentials">
-                                <form action="{{ fsc.url() }}" autocomplete="off" enctype="multipart/form-data"
-                                      method="post">
-                                    <input type="hidden" name="action" value='save-sat-credentials'>
-                                    <div class="row">
-                                        <div class="alert alert-warning col" role="alert">
-                                            <strong>¡Importante!</strong>
-                                            <p>Es responsabilidad del administrador mantener segura tu instalacion,
-                                                debido a la importancia de mantener segura tu llave privada.
-                                                De igual forma puedes omitir esta informacion e ingresarla cada vez que
-                                                envies un CFDI al PAC para su timbrado.</p>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="general" role="tabpanel" aria-labelledby="tab-general">
+                        <form action="{{ fsc.url() }}" autocomplete="off" method="post">
+                            <input type="hidden" name="action" value="save-cfdi-settings">
+                            <div class="card shadow">
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col">
+                                            {% set defaultRegimen = settings('cfdi','regimen') %}
+                                            {{ form.inputselect('regimenFiscal', 'regimenfiscal', 'Régimen Fiscal',
+                                                fsc.getCatalogoSat().regimenFiscal().all(), defaultRegimen) }}
                                         </div>
                                     </div>
-                                    <div class="form-group row">
+                                    <div class="row mb-3">
+                                        <div class="col">
+                                            {% set defaultUso = settings('cfdi','uso') %}
+                                            {{ form.inputselect('usoCfdi', 'usocfdi', 'Uso CFDI',
+                                                fsc.getCatalogoSat().usoCfdi.all(), defaultUso) }}
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col">
+                                            {% set estadoFactura = settings('cfdi','stamped-status') %}
+                                            <label for="estadoFacturaTimbrado">Estado Factura Cfdi Timbrado</label>
+                                            <select id="estadoFacturaTimbrado" name="estadotimbrada"
+                                                    class="form-control"
+                                                    required>
+                                                <option value="">----</option>
+                                                {% for item in fsc.getInvoiceStatus() %}
+                                                    <option value="{{ item.idestado }}" {% if estadoFactura == item.idestado %} selected{% endif %}>
+                                                        {{ item.nombre }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col">
+                                            {% set estadoFactura = settings('cfdi','canceled-status') %}
+                                            <label for="estadoFacturaCancelada">Estado Factura Cfdi Cancelado</label>
+                                            <select id="estadoFacturaCancelada" name="estadocancelada"
+                                                    class="form-control">
+                                                <option value="">----</option>
+                                                {% for item in fsc.getInvoiceStatus() %}
+                                                    <option value="{{ item.idestado }}" {% if estadoFactura == item.idestado %} selected{% endif %}>
+                                                        {{ item.nombre }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer d-flex p-2">
+                                    <button type="submit" class="btn btn-sm btn-primary ms-auto">Guardar</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane" id="satcredentials" role="tabpanel" aria-labelledby="tab-satcredentials">
+                        <form action="{{ fsc.url() }}" autocomplete="off" enctype="multipart/form-data"
+                              method="post">
+                            <input type="hidden" name="action" value="save-sat-credentials">
+                            <div class="card shadow">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="alert alert-warning m-0 mb-3" role="alert">
+                                                <strong>¡Importante!</strong>
+                                                <p>Es responsabilidad del administrador mantener segura tu instalación,
+                                                    debido a la importancia de mantener segura tu llave privada.
+                                                    De igual forma puedes omitir esta información e ingresarla cada vez
+                                                    que
+                                                    envíes un CFDI al PAC para su timbrado.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
                                         {% set text = settings('cfdi', 'cerfile', 'Certificado') %}
                                         {{ form.inputfile('cerFile', 'cerfile', text, '.cer', text) }}
                                     </div>
-                                    <div class="form-group row">
+                                    <div class="row mb-3">
                                         {% set text = settings('cfdi', 'keyfile', 'Llave privada') %}
-                                        {{ form.inputfile('keyFile', 'keyfile', text, '.key') }}
+                                        {{ form.inputfile('keyFile', 'keyfile', text, '.key', text) }}
                                     </div>
-                                    <div class="form-group row">
+                                    <div class="row mb-3">
                                         {% set text = settings('cfdi', 'passphrase', '') %}
                                         {{ form.inputpassword('certPassword', 'passphrase', 'Contraseña', text) }}
                                         <small class="form-text text-muted">Contraseña de la llave privada</small>
                                     </div>
-                                    <div class="row">
-                                        <button type="submit" class="btn btn-primary ml-auto">Guardar</button>
-                                    </div>
-                                </form>
+                                </div>
+                                <div class="card-footer d-flex p-2">
+                                    <button type="submit" class="btn btn-sm btn-primary ms-auto">Guardar</button>
+                                </div>
                             </div>
-                            <div class="tab-pane container-fluid fade" id="wscredentials">
-                                <div class="row"><small>** Solicite su informacion de acceso para poder utilizar el
-                                        servicio de timbrado.</small></div>
-                                <form action="{{ fsc.url() }}" autocomplete="off" method="post">
-                                    <input type="hidden" name="action" value='save-stamp-settings'>
-                                    <div class="form-group row">
-                                        {% set text = settings('cfdi', 'stamp-user', '') %}
-                                        {{ form.inputtext('stampuser', 'Usuario', text) }}
-                                        <small class="form-text text-muted">Usuario servicio de timbrado</small>
+                        </form>
+                    </div>
+
+                    <div class="tab-pane fade" id="wscredentials" role="tabpanel" aria-labelledby="tab-wscredentials">
+                        <form action="{{ fsc.url() }}" autocomplete="off" method="post">
+                            <input type="hidden" name="action" value="save-stamp-settings">
+                            <div class="card shadow">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col">
+                                            <small>** Solicite su información de acceso para poder utilizar el servicio
+                                                de timbrado.</small>
+                                        </div>
                                     </div>
-                                    <div class="form-group row">
+                                    <div class="row mb-3">
+                                        <div class="col">
+                                            {% set text = settings('cfdi', 'stamp-user', '') %}
+                                            {{ form.inputtext('stampuser', 'Usuario', text) }}
+                                            <small class="form-text text-muted">Usuario servicio de timbrado</small>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
                                         {% set text = settings('cfdi', 'stamp-token', '') %}
-                                        {{ form.inputpassword('stamptoken', 'stamptoken', 'Token',text) }}
+                                        {{ form.inputpassword('stamptoken', 'stamptoken', 'Token', text) }}
                                         <small class="form-text text-muted">Token de acceso al servicio</small>
                                     </div>
-                                    <div class="form-group row">
-                                        <div class="form-check">
+                                    <div class="row mb-3">
+                                        <div class="col">
                                             {% set checked = (settings('cfdi', 'test-mode') is same as(true)) ? ' checked' : '' %}
                                             <input class="form-check-input" type="checkbox" id="testMode"
                                                    name="testmode"{{ checked }}>
                                             <label class="form-check-label" for="testMode">Modo prueba</label>
                                         </div>
                                     </div>
-                                    <div class="row">
-                                        <button type="submit" class="btn btn-primary ml-auto">Guardar</button>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="tab-pane container-fluid fade" id="libfiles">
-                                <div class="row">
-                                    <p>Almacen de recursos locales para agilizar el proceso de generacion de la cadena
-                                        original.</p>
-                                    {% set cacheExists = settings('cfdi', 'cachefiles', '0') %}
-                                    {% if cacheExists == '1' %}
-                                        <div class="col-12 alert alert-info" role="alert">
-                                            Almacen local de archivos XSLT <i class="fas fa-check-circle"></i>
-                                        </div>
-                                    {% else %}
-                                        <div class="col-12 alert alert-success" role="alert">
-                                            Aun no se tiene la copia local de los archivos
-                                        </div>
-                                    {% endif %}
                                 </div>
-                                <div class="row d-flex justify-content-center">
+                                <div class="card-footer d-flex p-2">
+                                    <button type="submit" class="btn btn-sm btn-primary ms-auto">Guardar</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="libfiles" role="tabpanel" aria-labelledby="tab-libfiles">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col mb-3">
+                                        <small>Almacén de recursos locales para agilizar el proceso de generación de la
+                                            cadena original.</small>
+                                    </div>
+                                    <div class="col-12">
+                                        {% set cacheExists = settings('cfdi', 'cachefiles', '0') %}
+                                        {% if cacheExists == '1' %}
+                                            <div class="alert alert-info m-0" role="alert">
+                                                Almacén local de archivos XSLT <i class="fas fa-check-circle"></i>
+                                            </div>
+                                        {% else %}
+                                            <div class="alert alert-success m-0" role="alert">
+                                                Aún no se tiene la copia local de los archivos
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row d-flex">
                                     <div id="spinnerbox" class="d-none">
                                         <div class="spinner-grow text-primary" role="status">
-                                            <span class="sr-only">Loading...</span>
+                                            <span class="visually-hidden">Loading...</span>
                                         </div>
                                         <div class="spinner-grow text-primary" role="status"></div>
                                         <div class="spinner-grow text-primary" role="status"></div>
                                     </div>
-                                    <div id="downloadResponse" class="col alert" role="alert"></div>
+                                    <div id="downloadResponse" class="col alert m-0" role="alert"></div>
                                 </div>
                                 <div class="row">
-                                    <button type="submit" id="sourceDownloadBtn" class="btn btn-primary ml-auto">
-                                        <i class="fas fa-arrow-alt-circle-down"></i>&nbsp;Descargar archivos
-                                    </button>
+                                    <div class="col">
+                                        <button type="button" id="sourceDownloadBtn" class="btn btn-primary ms-auto">
+                                            <i class="fas fa-arrow-alt-circle-down"></i>&nbsp;Descargar archivos
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -183,48 +253,35 @@
             </div>
         </div>
     </div>
-    <script>
-        $('.custom-file-input').on('change', function () {
-            let fileName = $(this).val().split('\\').pop();
-            let label = $(this).siblings('.custom-file-label');
 
-            if (label.data('default-title') === undefined) {
-                label.data('default-title', label.html());
-            }
-            if (fileName === '') {
-                label.removeClass("selected").html(label.data('default-title'));
-            } else {
-                label.addClass("selected").html(fileName);
-            }
-        });
+    <script>
         $('#sourceDownloadBtn').on('click', function () {
             var msg = $('#downloadResponse');
             var sipnner = $('#spinnerbox');
 
             msg.hide();
             sipnner.removeClass('d-none');
+
             $.ajax({
                 type: 'post',
                 url: '{{ fsc.url() }}',
                 dataType: 'text',
                 data: {action: 'download-resources'},
                 success: function (data, textStatus, jQxhr) {
-                    console.log(data)
+                    console.log(data);
                     msg.html(data);
-                    msg.addClass('alert-success');
+                    msg.removeClass('alert-danger').addClass('alert-success');
                 },
                 error: function (jqXhr, textStatus, errorThrown) {
                     console.log(errorThrown);
                     msg.html(errorThrown);
-                    msg.addClass('alert-danger');
+                    msg.removeClass('alert-success').addClass('alert-danger');
                 },
                 complete: function () {
                     sipnner.addClass('d-none');
                     msg.show();
                 }
             });
-        })
+        });
     </script>
 {% endblock %}
-
-

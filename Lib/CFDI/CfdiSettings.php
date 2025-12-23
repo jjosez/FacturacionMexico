@@ -32,16 +32,16 @@ class CfdiSettings
 
     public static function stampedInvoiceStatus(): string
     {
-        return Tools::settings('cfdi', 'stamped-status');
+        return Tools::settings('cfdi', 'stamped-status', '');
     }
 
     public static function canceledInvoiceStatus(): string
     {
-        return Tools::settings('cfdi', 'canceled-status');
+        return Tools::settings('cfdi', 'canceled-status', '');
     }
 
     public static function cfdiUsage(): string
     {
-        return Tools::settings('cfdi', 'cfdi-usage');
+        return Tools::settings('cfdi', 'cfdi-usage', '');
     }
 }
