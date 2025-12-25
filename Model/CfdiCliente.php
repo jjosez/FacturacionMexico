@@ -70,14 +70,10 @@ class CfdiCliente extends ModelClass
         ];
 
         if (!empty($tipoComprobante)) {
-            $where[] = Where::eq('tipocfdi', $tipoComprobante);
+            $where[] = Where::eq('tipo', $tipoComprobante);
         }
 
-        return self::table()
-            ->where($where)
-            ->limit(15)
-            ->orderBy('fecha', 'DESC')
-            ->get();
+        return self::all($where);
     }
 
     public function test(): bool

@@ -76,34 +76,50 @@ export class CfdiRelated {
                        value="${c.uuid}"
                        data-tipo="${c.tipo}"
                        data-total="${c.total}"
-                       data-fecha="${c.fecha}"
+                       data-fecha="${c.fecha_timbrado}"
                        data-global="${c.cfdiglobal}"
                        data-estado="${c.estado}"
+                       data-receptor="${c.receptor_nombre}"
                        ${c.estado === 'cancelado' ? 'disabled' : ''}></td>
-            <td>${c.tipocfdi}</td>
+            <td>${c.receptor_nombre}</td>
+            <td>${c.tipo}</td>
             <td>${c.uuid} ${this.buildEstadoBadge(c.estado)} ${this.buildGlobalBadge(c.cfdiglobal)}</td>
             <td>${c.total}</td>
-            <td>${c.fecha}</td>`;
+            <td>${c.fecha_timbrado}</td>`;
     }
 
     addSelectedCfdis() {
         const seleccionados = this.tablaCfdiModal.querySelectorAll('input[type="checkbox"]:checked');
         const tipoRelacion = this.tipoRelacionModal.value;
 
+        if (!tipoRelacion) {
+            alert('Por favor seleccione un tipo de relación');
+            return;
+        }
+
+        if (seleccionados.length === 0) {
+            alert('Por favor seleccione al menos un CFDI');
+            return;
+        }
+
         seleccionados.forEach(cb => {
             if (!this.isUuidInRelacionados(cb.value)) {
                 const row = document.createElement('tr');
                 row.innerHTML = this.relatedRowTemplate(cb, tipoRelacion);
                 this.tablaRelacionados.appendChild(row);
+                cb.checked = false; // Desmarcar después de agregar
             }
         });
 
-        //document.getElementById('modalRelacionados').classList.remove('show');
-        $('#modalRelacionados').modal('hide');
+        // Cerrar el collapse usando Bootstrap 5
+        const collapseElement = document.getElementById('collapseBusqueda');
+        const bsCollapse = bootstrap.Collapse.getInstance(collapseElement) || new bootstrap.Collapse(collapseElement, {toggle: false});
+        bsCollapse.hide();
     }
 
     relatedRowTemplate(cb, tipoRelacion) {
         return `
+            <td>${cb.dataset.receptor}</td>
             <td>${tipoRelacion}</td>
             <td>${cb.value} ${this.buildEstadoBadge(cb.dataset.estado)} ${this.buildGlobalBadge(cb.dataset.global)}
                 <input type="hidden" name="relacionados[${tipoRelacion}][]" value="${cb.value}">

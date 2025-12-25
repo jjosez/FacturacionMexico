@@ -429,10 +429,10 @@ class EditCfdiCliente extends Controller
 
     private function apiSearchRelated(): void
     {
-        $customerCode = $this->request()->request->getString('codcliente', '');
-        $type = $this->request()->request->getString('tipo', '');
-        $dateFrom = $this->request()->request->getString('desde', '');
-        $dateTo = $this->request()->request->getString('hasta', '');
+        $customerCode = $this->request()->input('codcliente', '');
+        $type = $this->request()->input('tipo', '');
+        $dateFrom = $this->request()->input('desde');
+        $dateTo = $this->request()->input('hasta');
 
         $results = CfdiCliente::searchRelated($customerCode, $type, $dateFrom, $dateTo);
 

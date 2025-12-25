@@ -7,7 +7,7 @@
 {% import 'Macro/Form.html.twig' as form %}
 <div class="card-deck mb-3">
     <div class="card">
-        <div class="card-header">Cliente</div>
+        <div class="card-header bg-dark text-white">Cliente</div>
         <div class="card-body">
             <div class="form-group mb-4">
                 {% set usoCfdi = fsc.getCustomerCfdiUsage(fsc.factura.codcliente) %}
@@ -23,7 +23,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header">Factura</div>
+        <div class="card-header bg-dark text-white">Factura</div>
         <div class="card-body">
             <div class="form-group">
                 {% set lugarexpedicion = fsc.empresa.ciudad %}

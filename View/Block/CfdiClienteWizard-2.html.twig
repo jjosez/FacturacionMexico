@@ -7,12 +7,15 @@
 {% import 'Macro/Form.html.twig' as form %}
 
 <div class="card mb-3">
-    <div class="card-header">CFDI's Relacionados</div>
-    <div class="card-body">
+    <div class="card-header bg-dark text-white fw-bold">
+        CFDI's Relacionados
+    </div>
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-sm table-striped">
+            <table class="table table-striped">
                 <thead>
                 <tr>
+                    <th>Receptor</th>
                     <th>Tipo Relación</th>
                     <th>UUID</th>
                     <th>Total</th>
@@ -26,85 +29,87 @@
             </table>
         </div>
     </div>
-    <div class="card-footer d-flexex">
+    <div class="card-footer">
         <button type="button"
-                class="btn btn-warning ms-auto"
-                data-bs-toggle="modal"
-                data-bs-target="#modalRelacionados">
-            <i class="fas fa-plus-circle"></i> Agregar
+                class="btn btn-warning"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseBusqueda"
+                aria-expanded="false"
+                aria-controls="collapseBusqueda">
+            Buscar CFDI
         </button>
     </div>
 </div>
 
-<!-- MODAL -->
-<div class="modal fade" id="modalRelacionados" tabindex="-1"
-     aria-labelledby="modalRelacionadosLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalRelacionadosLabel">
-                    Seleccionar CFDI's del cliente
-                </h5>
-                <button type="button" class="btn-close"
-                        data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-2 mb-2">
-                    <div class="col-md-4">
-                        <label for="filterTipoModal" class="form-label">Tipo CFDI</label>
-                        <select id="filterTipoModal" class="form-control form-control-sm">
-                            <option value="">Todos</option>
-                            <option value="I">Ingreso</option>
-                            <option value="E">Egreso</option>
-                            <option value="T">Traslado</option>
-                            <option value="P">Pago</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="filterFechaDesdeModal" class="form-label">Fecha desde</label>
-                        <input type="date" id="filterFechaDesdeModal"
-                               class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="filterFechaHastaModal" class="form-label">Fecha hasta</label>
-                        <input type="date" id="filterFechaHastaModal"
-                               class="form-control form-control-sm">
-                    </div>
+<!-- COLLAPSE DE BÚSQUEDA -->
+<div class="collapse" id="collapseBusqueda">
+    <div class="card mb-3">
+        <div class="card-header bg-info text-white fw-bold">
+            Buscar CFDI.
+        </div>
+        <div class="card-body">
+            <!-- Filtros de búsqueda -->
+            <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                    <label for="filterTipoModal" class="form-label">Tipo CFDI</label>
+                    <select id="filterTipoModal" class="form-control form-control-sm">
+                        <option value="">Todos</option>
+                        <option value="I">Ingreso</option>
+                        <option value="E">Egreso</option>
+                        <option value="T">Traslado</option>
+                        <option value="P">Pago</option>
+                    </select>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered">
-                        <thead class="table-light">
-                        <tr>
-                            <th></th>
-                            <th>Tipo</th>
-                            <th>UUID</th>
-                            <th>Total</th>
-                            <th>Fecha</th>
-                        </tr>
-                        </thead>
-                        <tbody id="tablaCfdiModal">
-                        <!-- Filas dinámicas -->
-                        </tbody>
-                    </table>
+                <div class="col-md-4">
+                    <label for="filterFechaDesdeModal" class="form-label">Fecha desde</label>
+                    <input type="date" id="filterFechaDesdeModal"
+                           class="form-control form-control-sm">
                 </div>
-                <div class="mb-3">
-                    {{ form.inputselect(
-                        'tipoRelacionModal',
-                        'tipoRelacionModal',
-                        'Tipo de relación',
-                        fsc.getCatalogoSat().tipoRelacion().all(),
-                        tipoRelacion
-                    ) }}
+                <div class="col-md-4">
+                    <label for="filterFechaHastaModal" class="form-label">Fecha hasta</label>
+                    <input type="date" id="filterFechaHastaModal"
+                           class="form-control form-control-sm">
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="confirmRelacionados">
-                    Agregar seleccionados
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Cancelar
-                </button>
+            <!-- Tipo de relación -->
+            <div class="mb-3">
+                {{ form.inputselect(
+                    'tipoRelacionModal',
+                    'tipoRelacionModal',
+                    'Tipo de relación',
+                    fsc.getCatalogoSat().tipoRelacion().all(),
+                    tipoRelacion
+                ) }}
             </div>
+
+            <!-- Tabla de resultados -->
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead class="thead-light">
+                    <tr>
+                        <th></th>
+                        <th>Receptor</th>
+                        <th>Tipo</th>
+                        <th>UUID</th>
+                        <th>Total</th>
+                        <th>Fecha</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tablaCfdiModal">
+                    <!-- Filas dinámicas -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn btn-primary" id="confirmRelacionados">
+                <i class="fas fa-plus-circle"></i> Agregar seleccionados
+            </button>
+
+            <button type="button" class="btn btn-secondary" data-bs-toggle="collapse"
+                    data-bs-target="#collapseBusqueda">
+                Cerrar
+            </button>
         </div>
     </div>
 </div>
