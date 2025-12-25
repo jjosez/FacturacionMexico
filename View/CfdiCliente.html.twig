@@ -6,10 +6,11 @@
 #}
 {% extends 'Master/MenuBgTemplate.html.twig' %}
 {% import 'Macro/Form.html.twig' as form %}
+
 {% block bodyHeaderOptions %}
     <div class="container-fluid mb-2">
-        <div class="row">
-            <div class="col">
+        <div class="row align-items-center">
+            <div class="col-md-8">
                 <div class="btn-group mb-2 mb-md-0">
                     <a class="btn btn-sm btn-dark" href="{{ fsc.url() }}" title="Recargar">
                         <i class="fas fa-redo" aria-hidden="true"></i>
@@ -21,52 +22,69 @@
                         <i class="fas fa-file-invoice" aria-hidden="true"></i>
                         {{ fsc.factura.codigo }}
                     </a>
-                    <a class="btn btn-sm btn-warning" href="{{ fsc.url() }}" title="Pendientes}" data-toggle="modal"
-                       data-target="#pendientesTimbradoModal">
+                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                            data-bs-target="#pendientesTimbradoModal">
                         <i class="fas fa-hourglass-half" aria-hidden="true"></i>
                         Pendientes
-                    </a>
-                </div>
-                <div class="dropdown d-inline-block">
-                    <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
-                            aria-expanded="false">Exportar
                     </button>
-                    <div class="dropdown-menu">
-                        <a href="{{ fsc.url() }}&amp;action=download-pdf" target="_blank" class="dropdown-item">
-                            <i class="fas fa-file-pdf fa-fw" aria-hidden="true"></i>&nbsp;Archivo PDF
-                        </a>
-                        <a href="{{ fsc.url() }}&amp;action=download-xml" class="dropdown-item">
-                            <i class="fas fa-download fa-fw" aria-hidden="true"></i>&nbsp;Archivo XML
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="{{ fsc.url() }}&amp;action=enviar-email" class="dropdown-item">
-                            <i class="fas fa-envelope fa-fw"></i>&nbsp;Email
-                        </a>
-                    </div>
                 </div>
+
                 <div class="dropdown d-inline-block">
-                    <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown"
-                            aria-expanded="false">PAC
+                    <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        Exportar
                     </button>
-                    <div class="dropdown-menu">
-                        <a href="{{ fsc.url() }}&amp;action=status"
-                           class="dropdown-item">
-                            <i class="fas fa-info-circle fa-fw"></i>&nbsp;Consultar Estado
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <form id="cancelarCfdiForm" method="post">
-                            <input type="hidden" name="action" value="cancelar">
-                            <button type="submit" class="dropdown-item text-danger">
-                                <i class="fas fa-skull fa-fw" aria-hidden="true"></i>&nbsp;Cancelar
-                            </button>
-                        </form>
-                    </div>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="{{ fsc.url() }}&amp;action=download-pdf" target="_blank" class="dropdown-item">
+                                <i class="fas fa-file-pdf fa-fw" aria-hidden="true"></i>&nbsp;Archivo PDF
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ fsc.url() }}&amp;action=download-xml" class="dropdown-item">
+                                <i class="fas fa-download fa-fw" aria-hidden="true"></i>&nbsp;Archivo XML
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a href="{{ fsc.url() }}&amp;action=enviar-email" class="dropdown-item">
+                                <i class="fas fa-envelope fa-fw"></i>&nbsp;Email
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        PAC
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="{{ fsc.url() }}&amp;action=status" class="dropdown-item">
+                                <i class="fas fa-info-circle fa-fw"></i>&nbsp;Consultar Estado
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <form id="cancelarCfdiForm" method="post">
+                                <input type="hidden" name="action" value="cancelar">
+                                <button type="submit" class="dropdown-item text-danger border-0 bg-transparent">
+                                    <i class="fas fa-skull fa-fw" aria-hidden="true"></i>&nbsp;Cancelar
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
                 </div>
             </div>
-            <div class="col text-right">
-                <h1 class="h3">
-                    <strong>UUID:</strong>&nbsp;{{ fsc.cfdi.uuid }}
-                    <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
+            <div class="col-md-4 text-md-end">
+                <h1 class="h5 mb-0">
+                    <strong class="small text-muted">UUID:</strong> <span class="fs-6">{{ fsc.cfdi.uuid }}</span>
+                    <i class="fas fa-file-invoice fa-fw text-secondary" aria-hidden="true"></i>
                 </h1>
             </div>
         </div>
@@ -76,98 +94,122 @@
 {% block body %}
     <div class="container-fluid">
         {% if 'Cancelado' == fsc.cfdi.estado %}
-            <div class="alert alert-danger" role="alert">
-                <strong>Cancelado</strong>
+            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                <i class="fas fa-ban me-2"></i>
+                <div><strong>Cancelado</strong></div>
             </div>
         {% endif %}
         {% if fsc.cfdi.fechaemail is null %}
-            <div class="alert alert-info" role="alert">
-                Aun no se ha enviado el email.
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <div>Aun no se ha enviado el email.</div>
             </div>
         {% endif %}
-        <div class="card-deck mb-3">
-            <div class="card">
-                <div class="card-header">Cliente</div>
-                <div class="card-body">
-                    <div class="form-group">
-                        {# {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.reader.receptorUsoCfdi(), 'disabled') }} #}
-                    </div>
-                    <div class="form-group">
-                        {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptorNombre(), 'disabled') }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.inputtext('rfc', 'RFC', fsc.reader.receptorRfc(), 'disabled') }}
+
+        {# Reemplazo de card-deck por row g-3 (Gutters) #}
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-dark text-white">Cliente</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {# SE MANTIENE EL MACRO form.inputtext #}
+                            {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptorNombre(), 'disabled') }}
+                        </div>
+                        <div class="mb-3">
+                            {# SE MANTIENE EL MACRO form.inputtext #}
+                            {{ form.inputtext('rfc', 'RFC', fsc.reader.receptorRfc(), 'disabled') }}
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header">Factura</div>
-                <div class="card-body">
-                    <div class="form-group">
-                        {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', fsc.reader.lugarExpedicion, 'disabled') }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.inputtext('fechaemision', 'Fecha de expedición', fsc.reader.fechaExpedicion, 'disabled') }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.inputtext('fechatimbrado', 'Fecha de timbrado', fsc.reader.fechaTimbrado, 'disabled') }}
-                        <small>Factura enviada el: {{ fsc.factura.femail }}</small>
-                    </div>
-                    <div class="form-group">
-                        <p>Observaciones: {{ fsc.reader.addendaObservaciones() }}</p>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-dark text-white">Factura</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', fsc.reader.lugarExpedicion, 'disabled') }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.inputtext('fechaemision', 'Fecha de expedición', fsc.reader.fechaExpedicion, 'disabled') }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.inputtext('fechatimbrado', 'Fecha de timbrado', fsc.reader.fechaTimbrado, 'disabled') }}
+                            <div class="form-text mt-1 text-muted">Factura enviada el: {{ fsc.factura.femail }}</div>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">Observaciones:</label>
+                            <p class="mb-0 text-muted small">{{ fsc.reader.addendaObservaciones() }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
         {{ _self.blockCfdiRelacionados(fsc.reader.relacionados(), fsc) }}
         {{ _self.blockCfdiConceptos(fsc.reader.conceptos(), fsc) }}
+
         <div class="card mb-3">
-            <div class="card-header">Totales</div>
-            <div class="card-body">
-                <table class="table">
-                    <thead class="thead-light">
-                    <tr>
-                        <th scope="col">Subtotal:</th>
-                        <th scope="col">Descuento:</th>
-                        <th scope="col">Impuesto:</th>
-                        <th scope="col">Total:</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td class="text-right">{{ fsc.factura.neto }}</td>
-                        <td class="text-right">0</td>
-                        <td class="text-right">{{ fsc.factura.totaliva }}</td>
-                        <td class="text-right">{{ fsc.cfdi.total }}</td>
-                    </tr>
-                    </tbody>
-                </table>
+            <div class="card-header bg-dark text-white">
+                <i class="fa-solid fa-calculator me-2"></i>Totales
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th scope="col">Subtotal:</th>
+                            <th scope="col">Descuento:</th>
+                            <th scope="col">Impuesto:</th>
+                            <th scope="col">Total:</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td class="text-center">{{ fsc.factura.neto }}</td>
+                            <td class="text-center">0</td>
+                            <td class="text-center">{{ fsc.factura.totaliva }}</td>
+                            <td class="text-center fw-bold">{{ fsc.cfdi.total }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
         <div class="card">
-            <div class="card-header">SAT</div>
+            <div class="card-header bg-dark text-white">SAT</div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-3"></div>
-                    <div class="col">
-                        <div class="d-flex pb-2">
-                            <div class="flex-fill">
-                                <span><strong>NoCertificadoSAT:</strong></span>
-                                {{ fsc.reader.certificadoSAT() }}
+                <div class="row align-items-center">
+                    <div class="col-lg-3 d-none d-lg-block text-center border-end">
+                        {% set qrUrl = myFilesUrl('MyFiles/CFDI/qrcode.png') %}
+                        {% if qrUrl %}
+                            <img src="{{ qrUrl }}" alt="QRCode" class="img-fluid w-100 d-block mx-auto">
+                        {% else %}
+                            <i class="fas fa-certificate fa-3x text-light"></i>
+                        {% endif %}
+                    </div>
+                    <div class="col-lg-9">
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <span class="d-block fw-bold small text-muted">NoCertificadoSAT:</span>
+                                <span class="small">{{ fsc.reader.certificadoSAT() }}</span>
                             </div>
-                            <div class="flex-fill">
-                                <span><strong>RfcProvCertif:</strong></span>
-                                {{ fsc.reader.proveedorCertificacion() }}
+                            <div class="col-md-4 mb-2">
+                                <span class="d-block fw-bold small text-muted">RfcProvCertif:</span>
+                                <span class="small">{{ fsc.reader.proveedorCertificacion() }}</span>
                             </div>
-                            <div class="flex-fill">
-                                <span><strong>FechaTimbrado:</strong></span>
-                                {{ fsc.reader.fechaTimbrado() }}
+                            <div class="col-md-4 mb-2">
+                                <span class="d-block fw-bold small text-muted">FechaTimbrado:</span>
+                                <span class="small">{{ fsc.reader.fechaTimbrado() }}</span>
                             </div>
                         </div>
-                        <span><strong>Sello CFD</strong></span>
-                        <p>{{ fsc.reader.selloCfd() }}</p>
-                        <span><strong>Sello SAT</strong></span>
-                        <p>{{ fsc.reader.selloSat() }}</p>
+                        <div class="row">
+                            <span><strong>Sello CFD</strong></span>
+                            <p>{{ fsc.reader.selloCfd() }}</p>
+                            <span><strong>Sello SAT</strong></span>
+                            <p>{{ fsc.reader.selloSat() }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -176,104 +218,69 @@
     {% include 'Modal/CfdiModals.html.twig' %}
 {% endblock %}
 
-{%- macro blockCfdiConceptos(conceptos, fsc) %}
+{% macro blockCfdiRelacionados(relacionados, fsc) %}
+    {% if relacionados is not empty %}
+        <div class="card mb-3">
+            <div class="card-header bg-light"><i class="fas fa-link me-2"></i>CFDIs Relacionados</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Tipo Relación</th>
+                            <th>UUID</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for rel in relacionados %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ rel.tipoRelacion }}</span></td>
+                                <td class="font-monospace small">{{ rel.uuid }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{% macro blockCfdiConceptos(conceptos, fsc) %}
     <div class="card mb-3">
-        <div class="card-header">Conceptos</div>
-        <div class="card-body">
+        <div class="card-header bg-dark text-white"><i class="fas fa-list-ol me-2"></i>Conceptos</div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead class="thead-light">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
                     <tr>
-                        <th scope="col">Cantidad</th>
-                        <th scope="col">No. identificacion</th>
-                        <th scope="col">Descripcion</th>
-                        <th scope="col">Clave SAT</th>
-                        <th scope="col">Clave UM</th>
-                        <th scope="col">Precio</th>
-                        <th scope="col">Total</th>
+                        <th>Clave SAT</th>
+                        <th>Cantidad</th>
+                        <th>Unidad</th>
+                        <th>Descripción</th>
+                        <th class="text-end">Valor Unitario</th>
+                        <th class="text-end">Importe</th>
                     </tr>
                     </thead>
                     <tbody>
                     {% for concepto in conceptos %}
                         <tr>
-                            <td>{{ concepto.cantidad }}</td>
-                            <td>{{ concepto.noidentificacion }}</td>
-                            <td>{{ concepto.descripcion }}</td>
-                            <td>{{ concepto.ClaveProdServ }}</td>
-                            <td>{{ concepto.claveunidad }}</td>
-                            <td>{{ concepto.valorunitario }}</td>
-                            <td>{{ concepto.importe }}</td>
+                            <td><span class="badge border text-dark">{{ concepto.ClaveProdServ }}</span></td>
+                            <td>{{ concepto.Cantidad }}</td>
+                            <td>{{ concepto.ClaveUnidad }}</td>
+                            <td>
+                                {{ concepto.Descripcion }}
+                                {% if concepto.Descuento > 0 %}
+                                    <div class="small text-danger">Descuento: {{ concepto.Descuento }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">{{ concepto.ValorUnitario }}</td>
+                            <td class="text-end fw-bold">{{ concepto.Importe }}</td>
                         </tr>
-                        {% for traslado in fsc.reader.conceptosTraslados(concepto) %}
-                            <tr>
-                                <td colspan="3" class="text-right">Impuesto: {{ traslado.impuesto }}</td>
-                                <td colspan="2" class="text-right">Tasa: {{ traslado.tasa }}</td>
-                                <td colspan="2" class="text-right">Importe: {{ traslado.importe }}</td>
-                            </tr>
-                        {% endfor %}
                     {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-{% endmacro -%}
-
-{% macro blockCfdiRelacionados(relaciones, fsc) %}
-    {% if relaciones %}
-        <div class="card mb-3">
-            <div class="card-header">
-                CFDI Relacionados
-            </div>
-            <div class="card-body">
-                {% for relacion in relaciones %}
-                    <div class="mb-3">
-                        <strong>Tipo de relación:</strong>
-                        {{ fsc.getCatalogoSat().tipoRelacion().getDescripcion(relacion.tiporelacion) }}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead class="">
-                                    <tr>
-                                        <th scope="col">Cliente</th>
-                                        <th scope="col">UUID</th>
-                                        <th scope="col">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for relacionado in relacion.relacionados %}
-                                        {% set cfdi = fsc.loadCfdiFromUUID(relacionado) %}
-                                        {% if cfdi %}
-                                            <tr>
-                                                <td>{{ cfdi.razonreceptor }}</td>
-                                                <td><a href="{{ cfdi.url() }}">{{ cfdi.uuid }}</a></td>
-                                                <td>{{ number(cfdi.total) }}</td>
-                                            </tr>
-                                        {% else %}
-                                            <tr>
-                                                <td colspan="3">CFDI no encontrado: {{ relacionado }}</td>
-                                            </tr>
-                                        {% endif %}
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    {% else %}
-        <div class="card mb-3">
-            <div class="card-header">
-                <i class="fas fa-link"></i> CFDI Relacionados
-            </div>
-            <div class="card-body">
-                <p class="text-muted mb-0">No hay CFDI relacionados para este comprobante.</p>
-            </div>
-        </div>
-    {% endif %}
 {% endmacro %}
-
-
-
-
-

@@ -36,8 +36,7 @@ class StampResult
         string $code = '',
         string $detail = '',
         bool $previous = false
-    )
-    {
+    ) {
         $this->error = $error;
         $this->uuid = $uuid;
         $this->xml = $xml;

@@ -87,4 +87,9 @@ class CfdiCliente extends ModelClass
 
         return parent::test();
     }
+
+    public function isStampedSuccessfully(): bool
+    {
+        return $this->estatus === 'timbrada';
+    }
 }

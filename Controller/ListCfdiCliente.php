@@ -21,8 +21,8 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiSettings;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiSettings;
 
 /**
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
@@ -79,8 +79,8 @@ class ListCfdiCliente extends ExtendedController\ListController
     {
         switch ($viewName) {
             case 'ListFacturaCliente':
-                $stampedState = CfdiSettings::stampedInvoiceStatus();
-                $canceledState = CfdiSettings::canceledInvoiceStatus();
+                $stampedState = CfdiSettings::stampedInvoiceStatus($this->empresa);
+                $canceledState = CfdiSettings::canceledInvoiceStatus($this->empresa);
 
                 $where = [
                     new DataBaseWhere('idestado', $stampedState, '!='),

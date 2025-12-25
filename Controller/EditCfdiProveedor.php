@@ -25,8 +25,8 @@ use FacturaScripts\Core\Lib\ExtendedController\EditController;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Extension\Controller\FormaPagoControllerTrait;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiSupplierImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiSupplierImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
 
 class EditCfdiProveedor extends EditController

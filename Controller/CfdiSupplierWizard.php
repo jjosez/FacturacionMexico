@@ -27,8 +27,8 @@ use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiQuickReader;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Services\CfdiSupplierInvoiceImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiSupplierInvoiceImporter;
 
 class CfdiSupplierWizard extends Controller
 {

@@ -18,39 +18,25 @@
  */
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters;
 
-class CfdiBuildResult
+class CfdiSatStatus
 {
-    private readonly string $xml;
-    private readonly string $buildMessage;
-    private readonly bool $buildError;
+    public string $cfdiStatus;
+    public string $cancelableStatus;
+    public string $cancellationStatus;
+    public string $statusCode;
+    public string $statusMessage;
 
     public function __construct(
-        string $xml,
-        string $buildMessage,
-        bool $buildError,
+        string $cfdiStatus,
+        string $cancelableStatus,
+        string $cancellationStatus,
+        string $statusCode = '',
+        string $statusMessage = ''
     ) {
-        $this->xml = $xml;
-        $this->buildError = $buildError;
-        $this->buildMessage = $buildMessage;
-    }
-
-    public function xml(): string
-    {
-        return $this->xml;
-    }
-
-    public function getBuildMessage(): string
-    {
-        return $this->buildMessage;
-    }
-
-    public function getBuildMessages(): array
-    {
-        return explode($this->buildMessage, PHP_EOL) ?? [];
-    }
-
-    public function hasError(): bool
-    {
-        return $this->buildError;
+        $this->cfdiStatus = $cfdiStatus;
+        $this->cancelableStatus = $cancelableStatus;
+        $this->cancellationStatus = $cancellationStatus;
+        $this->statusCode = $statusCode;
+        $this->statusMessage = $statusMessage;
     }
 }

@@ -16,41 +16,17 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters;
 
-class CfdiBuildResult
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Contracts;
+
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters\CfdiSatStatus;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters\StampResult;
+use PhpCfdi\Credentials\Credential;
+
+interface StampProviderInterface
 {
-    private readonly string $xml;
-    private readonly string $buildMessage;
-    private readonly bool $buildError;
-
-    public function __construct(
-        string $xml,
-        string $buildMessage,
-        bool $buildError,
-    ) {
-        $this->xml = $xml;
-        $this->buildError = $buildError;
-        $this->buildMessage = $buildMessage;
-    }
-
-    public function xml(): string
-    {
-        return $this->xml;
-    }
-
-    public function getBuildMessage(): string
-    {
-        return $this->buildMessage;
-    }
-
-    public function getBuildMessages(): array
-    {
-        return explode($this->buildMessage, PHP_EOL) ?? [];
-    }
-
-    public function hasError(): bool
-    {
-        return $this->buildError;
-    }
+    public function stamp(string $xml): StampResult;
+    public function cancel(string $uuid, Credential $credential): StampResult;
+    public function getStamped(string $xml): StampResult;
+    public function getStatus(array $query): CfdiSatStatus;
 }

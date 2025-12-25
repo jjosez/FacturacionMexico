@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table>
+    <column>
+        <name>cfdi_canceled_status</name>
+        <type>character varying(10)</type>
+    </column>
+    <column>
+        <name>cfdi_cert_filename</name>
+        <type>character varying(30)</type>
+    </column>
+    <column>
+        <name>cfdi_key_filename</name>
+        <type>character varying(30)</type>
+    </column>
+    <column>
+        <name>cfdi_key_password</name>
+        <type>character varying(100)</type>
+    </column>
+    <column>
+        <name>cfdi_pac_test</name>
+        <type>boolean</type>
+        <default>false</default>
+    </column>
+    <column>
+        <name>cfdi_pac_token</name>
+        <type>character varying(200)</type>
+    </column>
+    <column>
+        <name>cfdi_pac_user</name>
+        <type>character varying(50)</type>
+    </column>
+    <column>
+        <name>cfdi_stamped_status</name>
+        <type>character varying(10)</type>
+    </column>
+    <column>
+        <name>cfdi_tax_regime</name>
+        <type>character varying(5)</type>
+    </column>
+</table>

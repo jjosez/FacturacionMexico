@@ -20,7 +20,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Controller;
 
 use Closure;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CFDI\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
 
 /**
  * @method addButton(string $string, string[] $array)

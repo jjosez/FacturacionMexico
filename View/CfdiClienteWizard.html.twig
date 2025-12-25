@@ -6,15 +6,17 @@
 #}
 {% extends 'Master/MenuBgTemplate.html.twig' %}
 {% import 'Macro/Form.html.twig' as form %}
+
 {% block css %}
     {{ parent() }}
-    <link rel="stylesheet"
-          href="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/css/smart_wizard_all.css') }}">
+    <link rel="stylesheet" href="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/css/smart_wizard_all.css') }}">
 {% endblock %}
-{% set isGlobalInvoiceCustomer =  fsc.isGlobalInvoiceCustomer() %}
+
+{% set isGlobalInvoiceCustomer = fsc.isGlobalInvoiceCustomer() %}
+
 {% block bodyHeaderOptions %}
     <div class="container-fluid mb-2">
-        <div class="row">
+        <div class="row align-items-center">
             <div class="col">
                 <div class="btn-group">
                     <a class="btn btn-sm btn-dark" href="" title="Recargar">
@@ -24,12 +26,13 @@
                         <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;{{ fsc.factura.codigo }}
                     </a>
                 </div>
-                <a class="btn btn-sm btn-info" data-toggle="modal" data-target="#xmlModal">
+                {# Actualizado data-bs-target para Bootstrap 5 #}
+                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#xmlModal">
                     <i class="fas fa-code" aria-hidden="true"></i>&nbsp;XML
-                </a>
+                </button>
             </div>
             <div class="col text-end">
-                <h1 class="h5">
+                <h1 class="h5 mb-0">
                     Pre CFDI
                     <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
                 </h1>
@@ -41,9 +44,9 @@
 {% block body %}
     <style>
         .wizard-pills .nav-link {
-            background-color: #e9ecef; /* light gray */
+            background-color: #e9ecef;
             color: #495057;
-            margin-right: 4px; /* Pequeño gap */
+            margin-right: 4px;
         }
 
         .wizard-pills .nav-item:last-child .nav-link {
@@ -51,35 +54,36 @@
         }
 
         .wizard-pills .nav-link.active {
-            background-color: #007bff;
+            background-color: #0d6efd; /* Azul primary B5 */
             color: #fff;
             font-weight: bold;
-            position: relative;
         }
     </style>
+
     <form id="formCfdiWizard" name="formCfdiWizard" autocomplete="off" enctype="multipart/form-data" method="post">
         <input type="hidden" name="action" value="timbrar">
         <input type="hidden" name="invoice" value="{{ fsc.factura.idfactura }}">
+
         <ul class="nav nav-pills nav-justified m-3 wizard-pills" id="wizardTabs" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="step1-tab" data-bs-toggle="tab" href="#step1" role="tab">1. Generales</a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active w-100" id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab">1. Generales</button>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" id="step2-tab" data-bs-toggle="tab" href="#step2" role="tab">2. CFDIs Relacionados</a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link w-100" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2" type="button" role="tab">2. CFDIs Relacionados</button>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" id="step3-tab" data-bs-toggle="tab" href="#step3" role="tab">3. Enviar al PAC</a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link w-100" id="step3-tab" data-bs-toggle="tab" data-bs-target="#step3" type="button" role="tab">3. Enviar al PAC</button>
             </li>
         </ul>
 
         <div class="tab-content m-3" id="wizardContent">
-            <div class="tab-pane fade show active" id="step1" role="tabpanel">
+            <div class="tab-pane fade show active" id="step1" role="tabpanel" aria-labelledby="step1-tab">
                 {{ include('Block/CfdiClienteWizard-1.html.twig') }}
             </div>
-            <div class="tab-pane fade" id="step2" role="tabpanel">
+            <div class="tab-pane fade" id="step2" role="tabpanel" aria-labelledby="step2-tab">
                 {{ include('Block/CfdiClienteWizard-2.html.twig') }}
             </div>
-            <div class="tab-pane fade" id="step3" role="tabpanel">
+            <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
                 {{ include('Block/CfdiClienteWizard-3.html.twig') }}
             </div>
         </div>
@@ -87,47 +91,42 @@
         <div class="m-3 d-flex justify-content-end">
             <button type="button" class="btn btn-secondary ms-2" id="prevBtn">Anterior</button>
             <button type="button" class="btn btn-primary ms-2" id="nextBtn">Siguiente</button>
-{#            <button class="btn btn-success d-none" id="timbrarBtn">Timbrar</button>#}
-            <button type="submit" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn" data-label="Timbrar">Timbrar</button>
+            <button type="submit" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn2" data-label="Timbrar">Timbrar</button>
+            <button type="button"  class="btn btn-primary ms-2 d-none" id="wizardSubmitBtn" data-label="Timbrar">Timbrar</button>
         </div>
     </form>
-    <div class="modal fade" id="xmlModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+
+    {# Modal XML #}
+    <div class="modal fade" id="xmlModal" tabindex="-1" aria-labelledby="xmlModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Pre CFDI</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <h5 class="modal-title" id="xmlModalLabel">Pre CFDI</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <pre>
-                        {{- fsc.xml -}}
-                    </pre>
+                    <pre class="bg-light p-3 border"><code>{{- fsc.xml -}}</code></pre>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
-    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+
+    {# Modal Confirmación #}
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="confirmModalLabel">Confirmar acción</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="confirmModalMessage">
                     <!-- Mensaje dinámico -->
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="confirmModalCancel" data-dismiss="modal">
-                        Cancelar
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-warning" id="confirmModalOk">Continuar</button>
                 </div>
             </div>
@@ -136,6 +135,3 @@
 
     <script type="module" src="{{ asset('Plugins/FacturacionMexico/Assets/JS/CustomerCfdiWizard.js') }}"></script>
 {% endblock %}
-
-
-

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * This file is part of FacturacionMexico plugin for FacturaScripts
+ * Copyright (C) 2019 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+-->
+
+<view>
+    <columns>
+        <group name="general" title="general" numcolumns="12">
+            <column name="cfdi-tax-regime" title="Régimen Fiscal" numcolumns="12" order="100">
+                <widget type="select" fieldname="cfdi_tax_regime">
+                </widget>
+            </column>
+            <column name="cfdi-stamped-status" title="Estado Factura: CFDI Timbrado" numcolumns="12" order="100">
+                <widget type="select" fieldname="cfdi_stamped_status">
+                </widget>
+            </column>
+            <column name="cfdi-cenceled-status" title="Estado Factura: CFDI Cancelado" numcolumns="12" order="100">
+                <widget type="select" fieldname="cfdi_canceled_status">
+                </widget>
+            </column>
+        </group>
+    </columns>
+    <rows>
+        <row type='footer'>
+            <group name='cfdi-certificates' footer='La información registrada es sensible manejala con cautela.'>
+                <button type='modal' label='Credenciales del SAT' color='info' action='cfdi-credentials-data'
+                        icon='fa-solid fa-certificate'/>
+                <button type='modal' label='Credenciales del PAC' color='info' action='pac-credentials-data'
+                        icon='fa-solid fa-user'/>
+                <button type='action' label='Descargar recursos del SAT.' color='info' action='download-sat-resources'
+                        icon='fa-solid fa-download'/>
+                <button type='modal' label='Limpiar certificados' color='danger' action='clear-cfdi-certificates'
+                        icon='fa-solid fa-trash'/>
+            </group>
+        </row>
+    </rows>
+    <modals>
+        <group name="cfdi-credentials-data" title="Credenciales SAT" icon="fa-solid fa-cert">
+            <column name="cfdi-certfile" title="Certificado *.cer" numcolumns="12" order="100">
+                <widget type="file" fieldname="cfdi_cert_file" accept=".cer" required="true"/>
+            </column>
+            <column name="cfdi-keyfile" title="Llave privada *.key" numcolumns="12" order="100">
+                <widget type="file" fieldname="cfdi_key_file" accept=".key" required="true"/>
+            </column>
+            <column name="cfdi-key-password" title="Contraseña de la llave privada" numcolumns="12" order="110">
+                <widget type="password" fieldname="cfdi_password" required="true"/>
+            </column>
+        </group>
+        <group name="pac-credentials-data" title="Credenciales SAT" icon="fa-solid fa-cert">
+            <column name="pac-username" title="username" numcolumns="12" order="100">
+                <widget type="text" fieldname="cfdi_pac_user" required="true"/>
+            </column>
+            <column name="pac-token" title="password" numcolumns="12" order="110">
+                <widget type="password" fieldname="pac_token" required="true"/>
+            </column>
+            <column name="pac-test-mode" title="Modo prueba"
+                    description=" Si esta activado, se necesitan certificados de prueba." display="center" order="120">
+                <widget type="checkbox" fieldname="cfdi_pac_test"/>
+            </column>
+        </group>
+        <group name="clear-cfdi-certificates" title="Limpiar credenciales" icon="fa-solid fa-trash">
+        </group>
+    </modals>
+</view>
