@@ -27,8 +27,8 @@ use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiQuickReader;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiSupplierInvoiceImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierInvoiceImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 
 class CfdiSupplierWizard extends Controller
 {
@@ -52,7 +52,7 @@ class CfdiSupplierWizard extends Controller
         parent::privateCore($response, $user, $permissions);
         $this->setTemplate(false);
 
-        $action = $this->request->get('action', '');
+        $action = $this->request->inputOrQuery('action', '');
 
         if ($this->execPreviousAction($action)) {
             return;
@@ -61,7 +61,7 @@ class CfdiSupplierWizard extends Controller
         $this->initWizard();
 
         $this->execAction($action);
-        $this->setTemplate('CfdiProveedorImporter');
+        $this->setTemplate('CfdiSupplierWizard');
     }
 
     protected function execAction(string $action): void
@@ -89,10 +89,10 @@ class CfdiSupplierWizard extends Controller
 
     protected function initWizard(): void
     {
-        $code = $this->request->get('code');
+        $code = $this->request->inputOrQuery('code');
 
         $this->cfdi = new CfdiProveedor();
-        $this->cfdi->loadFromCode($code);
+        $this->cfdi->load($code);
 
         $this->loadSupplier();
         $this->loadCfdiReader();
@@ -100,10 +100,10 @@ class CfdiSupplierWizard extends Controller
 
     protected function searchProduct(): void
     {
-        $query = $this->request->request->get('query');
+        $query = $this->request->input('query');
 
         $where = [
-            Where::like('referencia', $query),
+            Where::orLike('referencia', $query),
             Where::orLike('descripcion', $query),
         ];
 
@@ -111,22 +111,25 @@ class CfdiSupplierWizard extends Controller
             array_unshift($where, Where::orLike('referencia_fabricante', $query));
         }
 
-        $result = json_encode(Producto::table()->where($where)->get());
+        $result = json_encode(Producto::all($where));
         $this->response->setContent($result);
     }
 
     protected function importCfdiAction(): void
     {
         try {
+            $conceptos = $this->request()->request->getArray('conceptos');
+
             $importer = new CfdiSupplierInvoiceImporter();
             $invoice = $importer->import(
                 $this->cfdi,
                 $this->supplier,
-                $this->request->request->get('conceptos', [])
+                $conceptos
             );
 
             $this->redirect($invoice->url());
         } catch (Exception $e) {
+            Tools::log()->warning('Error al cargar los conceptos.');
         }
     }
 
@@ -162,4 +165,3 @@ class CfdiSupplierWizard extends Controller
         return 'referencia';
     }
 }
-

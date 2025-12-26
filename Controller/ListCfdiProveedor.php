@@ -22,8 +22,8 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 use Exception;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiSupplierImporter;
 
 /**
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>

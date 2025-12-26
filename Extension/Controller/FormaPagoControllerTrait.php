@@ -20,8 +20,8 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Controller;
 
 use Closure;
-use FacturaScripts\Dinamic\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Dinamic\Lib\Widget\ColumnItem;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
 
 /**
  * @method tab(string $string)
@@ -40,7 +40,6 @@ trait FormaPagoControllerTrait
                         'value' => $item->id,
                         'title' => "{$item->id} - {$item->descripcion}",
                     ];
-
                 }
 
                 $column->widget->setValuesFromArray($customValues);

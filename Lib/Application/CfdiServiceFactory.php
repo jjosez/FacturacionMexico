@@ -125,7 +125,7 @@ class CfdiServiceFactory
     public static function createStorageProvider(): CfdiRepositoryInterface
     {
         return match (CfdiSettings::storageType()) {
-            //'database' => new CfdiDatabaseStorage(),
+            'database' => new CfdiDatabaseStorage(),
             'file' => new CfdiFileStorage(),
             default => new CfdiFileStorage(),
         };

@@ -23,11 +23,10 @@ use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
-use FacturaScripts\Core\Response;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiServiceFactory;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
@@ -339,7 +338,7 @@ class EditCfdiCliente extends Controller
 
     public function isGlobalInvoiceCustomer(): bool
     {
-        return Validator::validateGlobalInvoiceCustomer($this->factura);
+        return Validator::validateGlobalInvoice($this->factura);
     }
 
     public function url(): string

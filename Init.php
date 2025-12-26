@@ -12,11 +12,12 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use FacturaScripts\Core\Lib\Import\CSVImport;
 use FacturaScripts\Core\Template\InitClass;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Dinamic\Lib\CFDI\CfdiCatalogo;
 use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\EstadoDocumento;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
 
 class Init extends InitClass
 {
@@ -33,6 +34,7 @@ class Init extends InitClass
         $this->loadExtension(new Extension\Controller\EditEmpresa());
         $this->loadExtension(new Extension\Model\FacturaCliente());
         $this->loadExtension(new Extension\Model\Empresa());
+        $this->loadExtension(new Extension\Model\FormaPago());
     }
 
     /**
@@ -54,29 +56,9 @@ class Init extends InitClass
 
     public function update(): void
     {
-        $this->setMetodosDePago();
+        $this->updateTableData('formaspago');
+        $this->updateTableData('impuestos');
         $this->setEstadosDocumento();
-    }
-
-    protected function setMetodosDePago(): void
-    {
-        $formaPagoFiltro = ['01','02','03','04', '28', '99'];
-        $formaPago = new FormaPago();
-
-        foreach (CfdiCatalogo::formaPago()->all() as $satFormaPago) {
-            if (false === in_array($satFormaPago->id, $formaPagoFiltro)) {
-                continue;
-            }
-
-            if ($formaPago->load($satFormaPago->id)) {
-                continue;
-            }
-
-            $formaPago->codpago = $satFormaPago->id;
-            $formaPago->descripcion = $satFormaPago->descripcion;
-            $formaPago->pagado = true;
-            $formaPago->save();
-        }
     }
 
     protected function setEstadosDocumento(): void
@@ -97,12 +79,6 @@ class Init extends InitClass
 
             $canceledStatus->save();
         }
-    }
-
-    public function updateTableColumnsV1(): void
-    {
-        $database = new DataBase();
-        $database->beginTransaction();
     }
 
     public function uninstall(): void

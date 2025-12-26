@@ -68,42 +68,40 @@ export class CfdiWizard {
             });
         }
 
-        // Bloquea navegación directa por los tabs
-        this.tabs.forEach(tab => {
-            tab.addEventListener('click', e => e.preventDefault());
+        this.tabs.forEach((tab, index) => {
+            tab.addEventListener('shown.bs.tab', () => {
+                this.currentStep = index + 1;
+                this.updateButtons();
+            });
         });
+    }
+
+    updateButtons() {
+        this.prevBtn.disabled = (this.currentStep === 1);
+        this.nextBtn.classList.toggle('d-none', this.currentStep === this.totalSteps);
+        if (this.finalBtn) {
+            this.finalBtn.classList.toggle('d-none', this.currentStep !== this.totalSteps);
+        }
     }
 
     showStep(step) {
-        this.tabs.forEach((tab, i) => {
-            tab.classList.toggle('active', i === step - 1);
-        });
-        this.panes.forEach((pane, i) => {
-            pane.classList.toggle('show', i === step - 1);
-            pane.classList.toggle('active', i === step - 1);
-        });
-
-        this.prevBtn.disabled = (step === 1);
-        this.nextBtn.classList.toggle('d-none', step === this.totalSteps);
-        if (this.finalBtn) {
-            this.finalBtn.classList.toggle('d-none', step !== this.totalSteps);
-        }
+        this.currentStep = step;
+        this.updateButtons();
     }
 
     next() {
-        if (this.validateStep(this.currentStep)) {
-            if (this.currentStep < this.totalSteps) {
-                this.currentStep++;
-                this.showStep(this.currentStep);
-            }
-        }
+        if (!this.validateStep(this.currentStep)) return;
+        if (this.currentStep >= this.totalSteps) return;
+
+        const nextTab = this.tabs[this.currentStep]; // currentStep es 1-based
+        bootstrap.Tab.getOrCreateInstance(nextTab).show();
     }
 
     prev() {
-        if (this.currentStep > 1) {
-            this.currentStep--;
-            this.showStep(this.currentStep);
-        }
+        if (this.currentStep <= 1) return;
+
+        const prevTab = this.tabs[this.currentStep - 2];
+        bootstrap.Tab.getOrCreateInstance(prevTab).show();
     }
 
     validateStep(step) {

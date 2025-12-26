@@ -24,7 +24,7 @@ class FacturaCliente
         return function () {
             /** @var FacturaClienteModel $this */
             if ($this->isGlobalInvoice()) {
-                return Validator::validateGlobalInvoiceCustomer($this);
+                return Validator::validateGlobalInvoice($this);
             }
 
             return true;

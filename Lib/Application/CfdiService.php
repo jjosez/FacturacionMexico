@@ -7,7 +7,6 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application;
 
 use Exception;
-use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Adapters\CfdiBuildResult;
@@ -123,9 +122,8 @@ class CfdiService
 
             return CfdiStampResult::fromStampResult($cancelResult, $cfdi);
         } catch (Exception $e) {
-            Tools::log()->error('Error al cancelar CFDI: ' . $e->getMessage());
             return CfdiStampResult::failed(
-                new StampResult(true, '', '', $e->getMessage())
+                new StampResult(true, '', '', 'Error al cancelar CFDI: ' . $e->getMessage())
             );
         }
     }
@@ -170,9 +168,7 @@ class CfdiService
                 break;
         }
 
-        if (!$factura->save()) {
-            Tools::log()->warning('No se pudo actualizar el estado de la factura');
-        }
+        $factura->save();
     }
 
     /**
@@ -201,8 +197,6 @@ class CfdiService
 
     private function handlePreviousStamp(CfdiBuildResult $result): StampResult
     {
-        Tools::log()->notice('Detectado timbrado previo, recuperando...');
-
         return $this->stampProvider->getStamped($result->xml());
     }
 }

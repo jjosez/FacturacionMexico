@@ -20,7 +20,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistenc
 
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Contracts\CfdiRepositoryInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Enums\CfdiStatus;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiData;

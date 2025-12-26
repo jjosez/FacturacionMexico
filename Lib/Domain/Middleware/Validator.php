@@ -34,10 +34,16 @@ class Validator
         });
     }
 
-    public static function validateGlobalInvoiceCustomer(FacturaCliente $invoice): bool
+    public static function validateGlobalInvoice(FacturaCliente $invoice): bool
     {
         return $invoice->isGlobalInvoice()
             && CfdiSettings::rfcGenerico() === $invoice->cifnif
+            && CfdiSettings::razonSocialGenerico() === $invoice->nombrecliente;
+    }
+
+    public static function validateGlobalInvoiceCustomer(FacturaCliente $invoice)
+    {
+        return CfdiSettings::rfcGenerico() === $invoice->cifnif
             && CfdiSettings::razonSocialGenerico() === $invoice->nombrecliente;
     }
 

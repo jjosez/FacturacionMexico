@@ -6,7 +6,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\PDF;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use FacturaScripts\Dinamic\Model\AttachedFile;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 
 class PDFCfdi extends PDFCfdiCore
 {

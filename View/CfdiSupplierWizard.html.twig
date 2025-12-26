@@ -1,0 +1,166 @@
+{#
+/**
+ *  This file is part of FacturacionMexico plugin for FacturaScripts
+ *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% extends 'Master/MenuBgTemplate.html.twig' %}
+{% import 'Macro/Form.html.twig' as form %}
+{% block css %}
+    {{ parent() }}
+    <style>
+        .wizard-pills .nav-link {
+            background-color: #e9ecef; /* light gray */
+            color: #495057;
+            margin-right: 4px; /* Pequeño gap */
+        }
+
+        .wizard-pills .nav-item:last-child .nav-link {
+            margin-right: 0;
+        }
+
+        .wizard-pills .nav-link.active {
+            background-color: #007bff;
+            color: #fff;
+            font-weight: bold;
+            position: relative;
+        }
+    </style>
+{% endblock %}
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-2">
+        <div class="row">
+            <div class="col">
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-dark" href="" title="Recargar">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col text-end">
+                <h1 class="h3">
+                    Importar CFDI
+                    <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
+                </h1>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <form id="formCfdiWizard" name="formCfdiWizard" action="{{ fsc.url() }}" method="post">
+            <input type="hidden" value="import-supplier-cfdi" name="action">
+            <input type="hidden" value="{{ fsc.cfdi.primaryColumnValue() }}" name="code">
+            <input type="hidden" value="{{ fsc.cfdi.tipo }}" name="type">
+
+            <ul class="nav nav-pills nav-justified mb-3 wizard-pills" id="wizardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active"
+                            id="step1-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#step1"
+                            type="button"
+                            role="tab"
+                            aria-controls="step1"
+                            aria-selected="true">
+                        1. Generales
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link"
+                            id="step2-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#step2"
+                            type="button"
+                            role="tab"
+                            aria-controls="step2"
+                            aria-selected="false">
+                        2. Productos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link"
+                            id="step3-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#step3"
+                            type="button"
+                            role="tab"
+                            aria-controls="step3"
+                            aria-selected="false">
+                        3. Confirmación
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="wizardContent">
+                <div class="tab-pane fade show active" id="step1" role="tabpanel" aria-labelledby="step1-tab">
+                    {{ include('Block/CfdiSupplierWizard-1.html.twig') }}
+                </div>
+                <div class="tab-pane fade" id="step2" role="tabpanel" aria-labelledby="step2-tab">
+                    {{ include('Block/CfdiSupplierWizard-2.html.twig') }}
+                </div>
+                <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
+                    {{ include('Block/CfdiSupplierWizard-3.html.twig') }}
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex justify-content-end">
+                <button type="button" class="btn btn-secondary" id="prevBtn">Anterior</button>
+                <button type="button" class="btn btn-primary ms-2" id="nextBtn">Siguiente</button>
+                <button type="button" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn"
+                        data-label="Importar">Importar
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirmar acción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" id="confirmModalMessage"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" id="confirmModalOk">Continuar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="vincularModal" tabindex="-1" aria-labelledby="vincularModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="vincularModalLabel">
+                        Vincular producto <span class="text-muted" id="tablaProductosCode"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="buscarProductoInput" class="form-control mb-2"
+                           placeholder="Buscar producto por SKU o descripción">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="tablaProductos">
+                            <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Descripción</th>
+                                <th>Acción</th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="{{ asset('Plugins/FacturacionMexico/Assets/JS/SupplierCfdiWizard.js') }}"></script>
+{% endblock %}
+
+
+
+
+

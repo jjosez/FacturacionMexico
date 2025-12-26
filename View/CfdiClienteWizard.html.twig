@@ -9,7 +9,8 @@
 
 {% block css %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/css/smart_wizard_all.css') }}">
+    <link rel="stylesheet"
+          href="{{ asset('Plugins/FacturacionMexico/vendor/techlab/smartwizard/dist/css/smart_wizard_all.css') }}">
 {% endblock %}
 
 {% set isGlobalInvoiceCustomer = fsc.isGlobalInvoiceCustomer() %}
@@ -66,13 +67,22 @@
 
         <ul class="nav nav-pills nav-justified m-3 wizard-pills" id="wizardTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active w-100" id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab">1. Generales</button>
+                <button class="nav-link active w-100 rounded-end-0" id="step1-tab" data-bs-toggle="tab"
+                        data-bs-target="#step1"
+                        type="button" role="tab">1. Generales
+                </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link w-100" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2" type="button" role="tab">2. CFDIs Relacionados</button>
+                <button class="nav-link w-100 rounded-0" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2"
+                        type="button"
+                        role="tab">2. CFDI Relacionados
+                </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link w-100" id="step3-tab" data-bs-toggle="tab" data-bs-target="#step3" type="button" role="tab">3. Enviar al PAC</button>
+                <button class="nav-link w-100 rounded-start-0" id="step3-tab" data-bs-toggle="tab"
+                        data-bs-target="#step3" type="button"
+                        role="tab">3. Enviar al PAC
+                </button>
             </li>
         </ul>
 
@@ -91,8 +101,12 @@
         <div class="m-3 d-flex justify-content-end">
             <button type="button" class="btn btn-secondary ms-2" id="prevBtn">Anterior</button>
             <button type="button" class="btn btn-primary ms-2" id="nextBtn">Siguiente</button>
-            <button type="submit" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn2" data-label="Timbrar">Timbrar</button>
-            <button type="button"  class="btn btn-primary ms-2 d-none" id="wizardSubmitBtn" data-label="Timbrar">Timbrar</button>
+            <button type="submit" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn2" data-label="Timbrar">
+                Timbrar
+            </button>
+            <button type="button" class="btn btn-primary ms-2 d-none" id="wizardSubmitBtn" data-label="Timbrar">
+                Timbrar
+            </button>
         </div>
     </form>
 
@@ -130,6 +144,17 @@
                     <button type="button" class="btn btn-warning" id="confirmModalOk">Continuar</button>
                 </div>
             </div>
+        </div>
+    </div>
+    {# Modal toast #}
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;">
+        <div id="cfdiToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto" id="cfdiToastTitle">Aviso</strong>
+                <small class="text-muted" id="cfdiToastTime"></small>
+                <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="cfdiToastBody"></div>
         </div>
     </div>
 

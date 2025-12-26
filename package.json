@@ -1,0 +1,23 @@
+{
+  "name": "facturacionmexico",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jjosez/FacturacionMexico.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jjosez/FacturacionMexico/issues"
+  },
+  "homepage": "https://github.com/jjosez/FacturacionMexico#readme",
+  "description": "",
+  "dependencies": {
+    "eta": "^4.5.0"
+  }
+}

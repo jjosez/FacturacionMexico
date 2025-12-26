@@ -8,6 +8,7 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\Proveedor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 
 class CfdiSupplierImporter
 {
