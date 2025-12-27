@@ -126,18 +126,18 @@ abstract class CfdiBuilder
 
         if ($customer->tipoidfiscal === 'RFC') {
             $receptor = [
-                'Rfc' => $customer->cifnif,
+                'Rfc' => $customer->rfc(),
                 'Nombre' => $customer->razonsocial,
-                'UsoCFDI' => $customer->usocfdi,
-                'RegimenFiscalReceptor' => $customer->regimenfiscal,
-                'DomicilioFiscalReceptor' => $customer->getDefaultAddress()->codpostal,
+                'UsoCFDI' => $customer->usoCfdi(),
+                'RegimenFiscalReceptor' => $customer->regimenFiscal(),
+                'DomicilioFiscalReceptor' => $customer->domicilioFiscal(),
             ];
         } else {
             $receptor = [
                 'Rfc' => self::RFC_EXTRANJERO,
                 'Nombre' => $customer->razonsocial,
                 'UsoCFDI' => 'P01',
-                'NumRegIdTrib' => $customer->cifnif,
+                'NumRegIdTrib' => $customer->rfc(),
                 'ResidenciaFiscal' => $this->factura->codpais
             ];
         }
@@ -148,7 +148,7 @@ abstract class CfdiBuilder
     protected function setEmisor(): void
     {
         $emisor = [
-            'RegimenFiscal' => $this->empresa->fiscalRegime(),
+            'RegimenFiscal' => $this->empresa->regimenFiscal(),
         ];
 
         $this->comprobante->addEmisor($emisor);

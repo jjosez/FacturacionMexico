@@ -36,7 +36,7 @@ class IngresoCfdiBuilder extends CfdiBuilder
             $productoFamilia = $producto->getFamilia();
 
             $this->comprobante->addConcepto([
-                'ClaveProdServ' => $productoFamilia->clavesat,
+                'ClaveProdServ' => $productoFamilia->clavesat(),
                 'NoIdentificacion' => $linea->referencia,
                 'Cantidad' => $linea->cantidad,
                 'ClaveUnidad' => $productoFamilia->claveunidad,

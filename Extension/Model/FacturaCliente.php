@@ -8,7 +8,6 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\Validator;
 
 /**
  * @property bool $factura_global
- * @property $cfdi_tax_regime
  */
 class FacturaCliente
 {

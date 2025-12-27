@@ -43,10 +43,10 @@ class GlobalCfdiBuilder extends CfdiBuilder
 
         // UsoCFDI set as SAT requirement 'S01' Sin efectos fiscales.
         $receptor = [
-            'Rfc' => $customer->cifnif,
+            'Rfc' => $customer->rfc(),
             'Nombre' => 'PUBLICO EN GENERAL',
-            'UsoCFDI' => $customer->usocfdi,
-            'RegimenFiscalReceptor' => $customer->regimenfiscal,
+            'UsoCFDI' => $customer->usoCfdi(),
+            'RegimenFiscalReceptor' => $customer->regimenFiscal(),
             'DomicilioFiscalReceptor' => '97780',
         ];
 

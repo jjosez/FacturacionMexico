@@ -60,8 +60,7 @@ class EgresoCfdiBuilder extends CfdiBuilder
 
         if ($customer->cifnif !== $fiscalID) {
             throw new Exception('El ID Fiscal del cliente ' . $fiscalID
-                . 'no coincide con el de la Factura ' . $this->factura->cifnif
-            );
+                . 'no coincide con el de la Factura ' . $this->factura->cifnif);
         }
 
         if ($customer->tipoidfiscal === 'RFC') {
@@ -69,8 +68,8 @@ class EgresoCfdiBuilder extends CfdiBuilder
                 'Rfc' => $customer->cifnif,
                 'Nombre' => $customer->razonsocial,
                 'UsoCFDI' => 'G02',
-                'RegimenFiscalReceptor' => $customer->regimenfiscal,
-                'DomicilioFiscalReceptor' => $customer->getDefaultAddress()->codpostal,
+                'RegimenFiscalReceptor' => $customer->regimenFiscal(),
+                'DomicilioFiscalReceptor' => $customer->domicilioFiscal(),
             ];
         } else {
             $receptor = [

@@ -291,7 +291,7 @@ class EditCfdiCliente extends Controller
         }
 
         $cliente = $this->factura->getSubject();
-        return $cliente->getCfdiUsage();
+        return $cliente->usoCfdi();
     }
 
     public function getCfdiRelation(): string

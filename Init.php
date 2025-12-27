@@ -32,8 +32,10 @@ class Init extends InitClass
         // Crear directorios necesarios para CFDI
         $this->createRequiredDirectories();
         $this->loadExtension(new Extension\Controller\EditEmpresa());
+        $this->loadExtension(new Extension\Model\Cliente());
         $this->loadExtension(new Extension\Model\FacturaCliente());
         $this->loadExtension(new Extension\Model\Empresa());
+        $this->loadExtension(new Extension\Model\Familia());
         $this->loadExtension(new Extension\Model\FormaPago());
     }
 

@@ -9,7 +9,7 @@ use Closure;
  */
 class Empresa
 {
-    public function fiscalRegime(): Closure
+    public function regimenFiscal(): Closure
     {
         return function () {
             return $this->cfdi_tax_regime;

@@ -3,6 +3,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware;
 
 use DateTime;
+use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiSettings;
@@ -29,7 +30,7 @@ class Validator
     {
         $catalog = CfdiCatalogo::formaPago();
 
-        return array_any($catalog->all(), function ($item) use ($invoice) {
+        return array_any(array: $catalog->all(), callback: function ($item) use ($invoice) {
             return $invoice->codpago === $item->id;
         });
     }
@@ -61,5 +62,19 @@ class Validator
         $pattern = '/^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$/';
 
         return preg_match($pattern, $rfc) === 1;
+    }
+
+    /**
+     * Valida que el cliente cumpla con las condiciones mínimas para recibir CFDI
+     *
+     * @param Cliente $cliente
+     * @return bool True si cumple con todos los requisitos
+     */
+    public static function validateCustomerForCfdi(Cliente $cliente): bool
+    {
+        return !empty($cliente->domicilioFiscal())
+            && !empty($cliente->regimenFiscal())
+            && !empty($cliente->usoCfdi())
+            && self::validateRFC($cliente->cifnif);
     }
 }
