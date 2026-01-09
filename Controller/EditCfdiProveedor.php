@@ -20,20 +20,19 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use Exception;
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController\EditController;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Extension\Controller\FormaPagoControllerTrait;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiSupplierImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
 
 class EditCfdiProveedor extends EditController
 {
     use FormaPagoControllerTrait;
 
-    const DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
+    const string DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
 
     protected string $fileName;
     protected CfdiQuickReader $reader;
@@ -62,7 +61,7 @@ class EditCfdiProveedor extends EditController
         $widgetClosure($column);
     }
 
-    protected function addImportWizardButton(string $url)
+    protected function addImportWizardButton(string $url): void
     {
         $this->addButton('EditCfdiProveedor', [
             'action' => $url,
@@ -92,7 +91,6 @@ class EditCfdiProveedor extends EditController
             $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
 
             Tools::log()->info('CFDI importado correctamente: ' . $cfdi->uuid);
-
         } catch (Exception $e) {
             Tools::log()->warning($e->getMessage());
         }
@@ -116,11 +114,7 @@ class EditCfdiProveedor extends EditController
     {
         $this->supplier = new Proveedor();
 
-        $where = [
-            new DataBaseWhere('cifnif', $this->reader->emisorRfc())
-        ];
-
-        if ($this->supplier->loadFromCode('', $where)) {
+        if ($this->supplier->loadWhereEq('cifnif', $this->reader->emisorRfc())) {
             return true;
         }
 
@@ -164,7 +158,7 @@ class EditCfdiProveedor extends EditController
         return false;
     }
 
-    protected function loadData($viewName, $view)
+    protected function loadData($viewName, $view): void
     {
         parent::loadData($viewName, $view);
 
@@ -175,6 +169,5 @@ class EditCfdiProveedor extends EditController
                 $this->addImportWizardButton($url);
             }
         }
-
     }
 }

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : cfdisdata.xml
+    Author     : Juan José Prieto Dzul 
+    Description:
+        Structure for the cfdisdata table.
+-->
+<table>
+    <column>
+        <name>cfdi_id</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>uuid</name>
+        <type>character varying(36)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>xml</name>
+        <type>blob</type>
+        <nulo>YES</nulo>
+    </column>
+    <constraint>
+        <name>cfdis_proveedores_data_pkey</name>
+        <type>PRIMARY KEY (uuid)</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdis_proveedores_data_cfdi_id</name>
+        <type>FOREIGN KEY (cfdi_id) REFERENCES cfdis_proveedores (id) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+</table>

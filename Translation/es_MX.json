@@ -1,0 +1,12 @@
+{
+  "cannot-generate-invoice": "No se puede generar la factura",
+  "default-serie": "Serie por defecto",
+  "generate-invoice": "Generar Factura",
+  "global-invoice": "Factura Global",
+  "group-and-invoice": "Agrupar y Facturar",
+  "group-delivery-notes-info": "Agrupe múltiples remisiones en una sola factura",
+  "invoice-date": "Fecha de la factura",
+  "invoice-serie": "Serie de la factura",
+  "mark-as-global-invoice-cfdi": "Marcar como CFDI de Factura Global",
+  "selected-delivery-notes": "Remisiones seleccionadas"
+}

@@ -1,0 +1,158 @@
+{#
+/**
+ *  This file is part of FacturacionMexico plugin for FacturaScripts
+ *  Copyright (C) 2020-2025 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% extends 'Master/MenuBgTemplate.html.twig' %}
+
+{% set customer = fsc.factura.getSubject() %}
+{% set validationErrors = fsc.getCustomerValidationErrors() %}
+
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-2">
+        <div class="row align-items-center">
+            <div class="col">
+                <div class="btn-group">
+                    <a class="btn btn-sm btn-dark" href="" title="Recargar">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                    </a>
+                    <a class="btn btn-sm btn-info" href="{{ fsc.factura.url() }}" title="{{ fsc.factura.codigo }}">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;{{ fsc.factura.codigo }}
+                    </a>
+                </div>
+            </div>
+            <div class="col text-end">
+                <h1 class="h5 mb-0">
+                    Error de Validación
+                    <i class="fas fa-exclamation-triangle fa-fw" aria-hidden="true"></i>
+                </h1>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-danger mt-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Datos del Cliente Incompletos
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">
+                            No se puede generar el CFDI porque los datos del cliente <strong>{{ customer.nombre }}</strong> no están completos.
+                        </p>
+                        
+                        <div class="alert alert-warning" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle"></i> Errores encontrados:
+                            </h6>
+                            <ul class="mb-0">
+                                {% for error in validationErrors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-info" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-lightbulb"></i> ¿Qué necesitas hacer?
+                            </h6>
+                            <p class="mb-2">Para poder timbrar esta factura, el cliente debe tener:</p>
+                            <ul class="mb-0">
+                                <li><strong>RFC válido:</strong> Formato correcto según el SAT</li>
+                                <li><strong>Código Postal:</strong> Del domicilio fiscal</li>
+                                <li><strong>Régimen Fiscal:</strong> Clave del régimen fiscal del SAT</li>
+                                <li><strong>Uso de CFDI:</strong> Uso que se le dará al comprobante</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                            <a href="{{ customer.url() }}" class="btn btn-primary">
+                                <i class="fas fa-user-edit"></i>
+                                Editar Cliente
+                            </a>
+                            <a href="{{ fsc.factura.url() }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Volver a la Factura
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {% if customer %}
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-user"></i>
+                                Datos Actuales del Cliente
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th width="30%">Nombre / Razón Social:</th>
+                                        <td>{{ customer.nombre }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>RFC:</th>
+                                        <td>
+                                            {% if customer.cifnif %}
+                                                <code>{{ customer.cifnif }}</code>
+                                                {% if not fsc.isValidRfc(customer.cifnif) %}
+                                                    <span class="badge bg-danger ms-2">Formato inválido</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">No registrado</span>
+                                                <span class="badge bg-danger ms-2">Requerido</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Código Postal:</th>
+                                        <td>
+                                            {% if customer.domicilioFiscal() %}
+                                                {{ customer.domicilioFiscal() }}
+                                            {% else %}
+                                                <span class="text-muted">No registrado</span>
+                                                <span class="badge bg-danger ms-2">Requerido</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Régimen Fiscal:</th>
+                                        <td>
+                                            {% if customer.regimenFiscal() %}
+                                                {{ customer.regimenFiscal() }}
+                                            {% else %}
+                                                <span class="text-muted">No registrado</span>
+                                                <span class="badge bg-danger ms-2">Requerido</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Uso de CFDI:</th>
+                                        <td>
+                                            {% if customer.usoCfdi() %}
+                                                {{ customer.usoCfdi() }}
+                                            {% else %}
+                                                <span class="text-muted">No registrado</span>
+                                                <span class="badge bg-danger ms-2">Requerido</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

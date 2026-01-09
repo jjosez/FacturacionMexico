@@ -106,53 +106,28 @@
             </div>
 
             <div class="mt-3 d-flex justify-content-end">
-                <button type="button" class="btn btn-secondary" id="prevBtn">Anterior</button>
-                <button type="button" class="btn btn-primary ms-2" id="nextBtn">Siguiente</button>
+                <button type="button" class="btn btn-secondary" id="prevBtn" data-action="wizard:step:previous">Anterior</button>
+                <button type="button" class="btn btn-primary ms-2" id="nextBtn" data-action="wizard:step:next">Siguiente</button>
                 <button type="button" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn"
-                        data-label="Importar">Importar
+                        data-action="wizard:submit" data-label="Importar">Importar
                 </button>
             </div>
         </form>
     </div>
-    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+
+    {% include 'Modal/CfdiSuppliersModals.html.twig' %}
+
+    <div class="modal fade" id="wizard:confirm:modal" tabindex="-1" aria-labelledby="wizard:confirm:modal:label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="confirmModalLabel">Confirmar acción</h5>
+                    <h5 class="modal-title" id="wizard:confirm:modal:label">Confirmar acción</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body" id="confirmModalMessage"></div>
+                <div class="modal-body" id="wizard:confirm:modal:message"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-warning" id="confirmModalOk">Continuar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="vincularModal" tabindex="-1" aria-labelledby="vincularModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="vincularModalLabel">
-                        Vincular producto <span class="text-muted" id="tablaProductosCode"></span>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="text" id="buscarProductoInput" class="form-control mb-2"
-                           placeholder="Buscar producto por SKU o descripción">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="tablaProductos">
-                            <thead>
-                            <tr>
-                                <th>SKU</th>
-                                <th>Descripción</th>
-                                <th>Acción</th>
-                            </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
+                    <button type="button" class="btn btn-warning" id="wizard:confirm:modal:ok">Continuar</button>
                 </div>
             </div>
         </div>

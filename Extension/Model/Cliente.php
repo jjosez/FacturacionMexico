@@ -3,8 +3,9 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Model;
 
 use Closure;
+use FacturaScripts\Core\Model\Cliente as Customer;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\Validator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\CustomerValidator;
 
 /**
  * @method getDefaultAddress()
@@ -39,13 +40,13 @@ class Cliente
     public function domicilioFiscal(): Closure
     {
         return function () {
-            $this->getDefaultAddress()->codpostal;
+            return $this->getDefaultAddress()->codpostal;
         };
     }
 
     public function rfc(): Closure
     {
-        return function () {
+        return function (): string {
             return $this->cifnif;
         };
     }
@@ -53,19 +54,36 @@ class Cliente
     public function isValidForCfdi(): Closure
     {
         return function () {
-            return Validator::validateCustomerForCfdi($this);
+            return CustomerValidator::isValidForCfdi($this);
         };
     }
 
-    public function save(): Closure
+    public function test(): Closure
     {
         return function () {
-            $result = !Validator::validateCustomerForCfdi($this);
+            $this->cifnif = CustomerValidator::cleanFiscalString($this->rfc());
+            $this->nombre = CustomerValidator::cleanFiscalString($this->nombre);
+            $this->razonsocial = CustomerValidator::cleanFiscalString($this->razonsocial);
 
-            if (true === $result) {
-                Tools::log()->warning('Datos fiscales incorrectos.
-                Verificar Constancia de Situación Fiscal para emisión de CFDI.');
+            $this->personafisica = CustomerValidator::isPersonaFisica($this->rfc());
+
+            return true;
+        };
+    }
+
+    public function saveInsertBefore(): Closure
+    {
+        return function () {
+            $customer = new Customer();
+
+            if ($customer->loadWhereEq('cifnif', $this->rfc())
+                && !CustomerValidator::isRfcGenerico($this->cifnif)) {
+                Tools::log()->warning('El RFC ya se encuentra registrado');
+
+                return false;
             }
+
+            return true;
         };
     }
 }

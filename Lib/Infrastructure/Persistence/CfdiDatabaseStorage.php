@@ -62,7 +62,7 @@ class CfdiDatabaseStorage implements CfdiRepositoryInterface
     public function saveXml(CfdiCliente $cfdi, string $xmlContent): bool
     {
         $cfdiData = new CfdiData();
-        $cfdiData->idcfdi = $cfdi->primaryColumnValue();
+        $cfdiData->cfdi_id = $cfdi->id();
         $cfdiData->uuid = $cfdi->uuid;
         $cfdiData->xml = $xmlContent;
 
@@ -84,7 +84,7 @@ class CfdiDatabaseStorage implements CfdiRepositoryInterface
     public function deleteCfdi(CfdiCliente $cfdi): bool
     {
         $cfdiData = new CfdiData();
-        if ($cfdiData->loadFromCode($cfdi->primaryColumnValue())) {
+        if ($cfdiData->loadWhereEq('cfdi_id', $cfdi->id())) {
             $cfdiData->delete();
         }
 
@@ -103,6 +103,11 @@ class CfdiDatabaseStorage implements CfdiRepositoryInterface
 
     public function findByUuid(string $uuid): ?CfdiCliente
     {
-        // TODO: Implement findByUuid() method.
+        return null;
+    }
+
+    public function cfdiFilePath(CfdiCliente $cfdi): ?string
+    {
+        return '';
     }
 }

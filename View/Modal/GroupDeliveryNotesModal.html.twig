@@ -1,0 +1,129 @@
+{#
+/**
+ * This file is part of FacturacionMexico plugin for FacturaScripts
+ * Copyright (C) 2019 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+
+<!-- Modal para agrupar remisiones -->
+<form id="groupDeliveryNotesForm" method="post">
+    {{ formToken() }}
+    <input type="hidden" name="action" value="group-delivery-notes-confirm"/>
+    <input type="hidden" id="selectedCodes" name="code"/>
+
+    <div class="modal fade" id="groupDeliveryNotesModal" tabindex="-1" aria-labelledby="groupDeliveryNotesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="groupDeliveryNotesModalLabel">
+                        <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
+                        {{ trans('group-and-invoice') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fa-solid fa-info-circle me-2"></i>
+                        {{ trans('group-delivery-notes-info') }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="groupFecha" class="form-label">
+                            <i class="fa-solid fa-calendar me-1"></i>
+                            {{ trans('date') }}
+                        </label>
+                        <input type="date" class="form-control" id="groupFecha" name="fecha" value="{{ 'now' | date('Y-m-d') }}" required>
+                        <small class="form-text text-muted">{{ trans('invoice-date') }}</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="groupCodserie" class="form-label">
+                            <i class="fa-solid fa-list-ol me-1"></i>
+                            {{ trans('serie') }}
+                        </label>
+                        <select class="form-select" id="groupCodserie" name="codserie">
+                            <option value="">{{ trans('default-serie') }}</option>
+                            {% for serie in fsc.codeModel.all('series', 'codserie', 'descripcion') %}
+                                <option value="{{ serie.code }}">{{ serie.code }} - {{ serie.description }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">{{ trans('invoice-serie') }}</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="groupCfdiGlobal" name="cfdiglobal" value="1">
+                            <label class="form-check-label" for="groupCfdiGlobal">
+                                <i class="fa-solid fa-globe me-1"></i>
+                                {{ trans('global-invoice') }}
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">{{ trans('mark-as-global-invoice-cfdi') }}</small>
+                    </div>
+
+                    <div id="selectedNotesInfo" class="alert alert-secondary">
+                        <strong>{{ trans('selected-delivery-notes') }}:</strong>
+                        <span id="selectedNotesCount">0</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-times me-1"></i>
+                        {{ trans('cancel') }}
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-file-invoice me-1"></i>
+                        {{ trans('generate-invoice') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    function openGroupDeliveryNotesModal() {
+        const checkedBoxes = document.querySelectorAll('input[name="code[]"]:checked');
+
+        if (checkedBoxes.length === 0) {
+            alert('{{ trans('no-selected-item') }}');
+            return false;
+        }
+
+        // Recopilar los códigos seleccionados
+        const codes = Array.from(checkedBoxes).map(cb => cb.value);
+        document.getElementById('selectedCodes').value = JSON.stringify(codes);
+        document.getElementById('selectedNotesCount').textContent = codes.length;
+
+        // Mostrar el modal
+        const modal = new bootstrap.Modal(document.getElementById('groupDeliveryNotesModal'));
+        modal.show();
+
+        return false;
+    }
+
+    // Prevenir el envío del formulario por defecto y usar AJAX o envío normal
+    document.getElementById('groupDeliveryNotesForm').addEventListener('submit', function(e) {
+        // Convertir el JSON de vuelta a array para envío
+        const codesJson = document.getElementById('selectedCodes').value;
+        const codes = JSON.parse(codesJson);
+
+        // Crear inputs hidden para cada código
+        const form = this;
+        const existingInputs = form.querySelectorAll('input[name="code[]"]');
+        existingInputs.forEach(input => input.remove());
+
+        codes.forEach(code => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'code[]';
+            input.value = code;
+            form.appendChild(input);
+        });
+
+        // Remover el campo JSON
+        document.getElementById('selectedCodes').remove();
+
+        // El formulario se enviará normalmente
+    });
+</script>

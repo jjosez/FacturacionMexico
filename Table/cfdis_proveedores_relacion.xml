@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : cfdi_clientes_relacion.xml
+    Author     : Juan José Prieto Dzul
+    Description:
+        Structure for the cfdisclientes table.
+-->
+<table>
+    <column>
+        <name>cfdi_id</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>cfdi_id_relacionado</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>id</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>tipo_relacion</name>
+        <type>character varying(2)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>uuid</name>
+        <type>character varying(36)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>uuid_relacionado</name>
+        <type>character varying(36)</type>
+        <null>NO</null>
+    </column>
+    <constraint>
+        <name>cfdis_proveedores_relacion_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdis_proveedores_relacion_cfdi_id</name>
+        <type>FOREIGN KEY (cfdi_id) REFERENCES cfdis_proveedores (id) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>ca_cfdis_proveedores_relacion_cfdi_id_relacionado</name>
+        <type>FOREIGN KEY (cfdi_id_relacionado) REFERENCES cfdis_proveedores (id) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>uniq_cfdis_proveedores_relacion_cfdi_id_cfdi_id_relacionado</name>
+        <type>UNIQUE (cfdi_id,cfdi_id_relacionado)</type>
+    </constraint>
+</table>

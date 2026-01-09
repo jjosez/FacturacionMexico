@@ -21,10 +21,12 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use Exception;
 use FacturaScripts\Core\Base\Controller;
+use FacturaScripts\Core\DataSrc\FormasPago;
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
+use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierInvoiceImporter;
@@ -111,7 +113,11 @@ class CfdiSupplierWizard extends Controller
             array_unshift($where, Where::orLike('referencia_fabricante', $query));
         }
 
-        $result = json_encode(Producto::all($where));
+        $result = [];
+        foreach (Producto::all($where, [], 0, 50) as $product) {
+            $result[] = $product->toArray(true);
+        }
+        $result = json_encode($result);
         $this->response->setContent($result);
     }
 
@@ -163,5 +169,17 @@ class CfdiSupplierWizard extends Controller
         }
 
         return 'referencia';
+    }
+
+    /**
+     * @return FormaPago[]
+     */
+    public function cfdiToInvoicePaymentMethods(): array
+    {
+        $where = [
+            Where::isNotNull('clavesat')
+        ];
+
+        return FormaPago::all($where);
     }
 }

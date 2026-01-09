@@ -26,6 +26,7 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\CustomerValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiServiceFactory;
@@ -81,6 +82,33 @@ class EditCfdiCliente extends Controller
 
         $template = $this->cfdi->id ? 'CfdiCliente' : 'CfdiClienteWizard';
         $this->setTemplate($template);
+    }
+
+    public function setTemplate($template): bool
+    {
+        if ($this->cfdi->id) return parent::setTemplate('CfdiCliente');
+
+        if (CustomerValidator::isValidForCfdi($this->factura->getSubject())) {
+            return parent::setTemplate('CfdiClienteWizard');
+        }
+        
+        return parent::setTemplate('CfdiCustomerFail');
+    }
+
+    /**
+     * Obtiene los errores de validación del cliente
+     */
+    public function getCustomerValidationErrors(): array
+    {
+        return CustomerValidator::validateForCfdi($this->factura->getSubject());
+    }
+
+    /**
+     * Verifica si el RFC del cliente tiene formato válido
+     */
+    public function isValidRfc(string $rfc): bool
+    {
+        return CustomerValidator::validateRfcFormat($rfc);
     }
 
     /**

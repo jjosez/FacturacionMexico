@@ -7,7 +7,7 @@
 -->
 <table>
     <column>
-        <name>idcfdi</name>
+        <name>cfdi_id</name>
         <type>integer</type>
         <null>NO</null>
     </column>
@@ -22,15 +22,11 @@
         <nulo>YES</nulo>
     </column>
     <constraint>
-        <name>cfdisdata_pkey</name>
+        <name>cfdis_clientes_data_pkey</name>
         <type>PRIMARY KEY (uuid)</type>
     </constraint>
     <constraint>
-        <name>ca_cfdisdata_cfdis_clientes</name>
-        <type>FOREIGN KEY (idcfdi) REFERENCES cfdis_clientes (idcfdi) ON DELETE RESTRICT ON UPDATE CASCADE</type>
-    </constraint>
-    <constraint>
-        <name>ca_cfdis_data_idcfdi</name>
-        <type>FOREIGN KEY (idcfdi) REFERENCES cfdis_clientes (id) ON DELETE RESTRICT ON UPDATE CASCADE</type>
+        <name>ca_cfdis_clientes_data_cfdi_id</name>
+        <type>FOREIGN KEY (cfdi_id) REFERENCES cfdis_clientes (id) ON DELETE RESTRICT ON UPDATE CASCADE</type>
     </constraint>
 </table>

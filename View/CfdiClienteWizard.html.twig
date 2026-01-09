@@ -28,7 +28,7 @@
                     </a>
                 </div>
                 {# Actualizado data-bs-target para Bootstrap 5 #}
-                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#xmlModal">
+                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#cfdi:xml:modal">
                     <i class="fas fa-code" aria-hidden="true"></i>&nbsp;XML
                 </button>
             </div>
@@ -99,23 +99,20 @@
         </div>
 
         <div class="m-3 d-flex justify-content-end">
-            <button type="button" class="btn btn-secondary ms-2" id="prevBtn">Anterior</button>
-            <button type="button" class="btn btn-primary ms-2" id="nextBtn">Siguiente</button>
-            <button type="submit" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn2" data-label="Timbrar">
-                Timbrar
-            </button>
-            <button type="button" class="btn btn-primary ms-2 d-none" id="wizardSubmitBtn" data-label="Timbrar">
+            <button type="button" class="btn btn-secondary ms-2" id="prevBtn" data-action="wizard:step:previous">Anterior</button>
+            <button type="button" class="btn btn-primary ms-2" id="nextBtn" data-action="wizard:step:next">Siguiente</button>
+            <button type="button" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn" data-action="wizard:submit" data-label="Timbrar">
                 Timbrar
             </button>
         </div>
     </form>
 
     {# Modal XML #}
-    <div class="modal fade" id="xmlModal" tabindex="-1" aria-labelledby="xmlModalLabel" aria-hidden="true">
+    <div class="modal fade" id="cfdi:xml:modal" tabindex="-1" aria-labelledby="cfdi:xml:modal:label" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="xmlModalLabel">Pre CFDI</h5>
+                    <h5 class="modal-title" id="cfdi:xml:modal:label">Pre CFDI</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -129,19 +126,19 @@
     </div>
 
     {# Modal Confirmación #}
-    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal fade" id="wizard:confirm:modal" tabindex="-1" aria-labelledby="wizard:confirm:modal:label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="confirmModalLabel">Confirmar acción</h5>
+                    <h5 class="modal-title" id="wizard:confirm:modal:label">Confirmar acción</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="confirmModalMessage">
+                <div class="modal-body" id="wizard:confirm:modal:message">
                     <!-- Mensaje dinámico -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-warning" id="confirmModalOk">Continuar</button>
+                    <button type="button" class="btn btn-warning" id="wizard:confirm:modal:ok">Continuar</button>
                 </div>
             </div>
         </div>

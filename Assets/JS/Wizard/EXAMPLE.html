@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Wizard Example</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <div class="wizard-container">
+
+        <!-- Alertas -->
+        <div class="wizard-alerts"></div>
+
+        <!-- Tabs de navegación -->
+        <ul class="nav nav-tabs" id="wizardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="step1-tab" data-bs-toggle="tab"
+                        data-bs-target="#step1" type="button" role="tab">
+                    Paso 1
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="step2-tab" data-bs-toggle="tab"
+                        data-bs-target="#step2" type="button" role="tab">
+                    Paso 2
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="step3-tab" data-bs-toggle="tab"
+                        data-bs-target="#step3" type="button" role="tab">
+                    Paso 3
+                </button>
+            </li>
+        </ul>
+
+        <!-- Contenido del Wizard -->
+        <div class="tab-content p-4 border border-top-0" id="wizardContent">
+
+            <!-- Paso 1 -->
+            <div class="tab-pane fade show active" id="step1" role="tabpanel">
+                <h4>Información del Cliente</h4>
+                <form id="formCfdiWizard">
+                    <div class="mb-3">
+                        <label for="codcliente" class="form-label">Cliente *</label>
+                        <input type="text" class="form-control" id="codcliente"
+                               name="codcliente"
+                               data-action="wizard:field:update"
+                               data-field="codcliente">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email"
+                               name="email"
+                               data-action="wizard:field:update"
+                               data-field="email">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Paso 2 -->
+            <div class="tab-pane fade" id="step2" role="tabpanel">
+                <h4>Productos</h4>
+
+                <button type="button" class="btn btn-primary mb-3"
+                        data-action="product:link:open"
+                        data-index="1">
+                    Buscar Producto
+                </button>
+
+                <div id="product-list-container">
+                    <!-- Aquí se renderizan productos con TemplateManager -->
+                </div>
+            </div>
+
+            <!-- Paso 3 -->
+            <div class="tab-pane fade" id="step3" role="tabpanel">
+                <h4>Confirmación</h4>
+                <p>Revisa la información antes de enviar.</p>
+
+                <div class="alert alert-info">
+                    <strong>Cliente:</strong> <span id="review-codcliente"></span><br>
+                    <strong>Email:</strong> <span id="review-email"></span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Botones de navegación -->
+        <div class="d-flex justify-content-between mt-3">
+            <button type="button" class="btn btn-secondary"
+                    id="prevBtn"
+                    data-action="wizard:step:previous">
+                Anterior
+            </button>
+
+            <div>
+                <button type="button" class="btn btn-primary"
+                        id="nextBtn"
+                        data-action="wizard:step:next">
+                    Siguiente
+                </button>
+
+                <button type="button" class="btn btn-success d-none"
+                        id="wizardSubmitBtn"
+                        data-action="wizard:submit"
+                        data-confirm-message="¿Está seguro de que desea enviar el formulario?">
+                    Finalizar
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal de búsqueda de productos -->
+<div class="modal fade" id="vincularModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Buscar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control"
+                           id="buscarProductoInput"
+                           placeholder="Buscar producto...">
+                </div>
+                <table class="table" id="tablaProductos">
+                    <thead>
+                        <tr>
+                            <th>Referencia</th>
+                            <th>Descripción</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Resultados de búsqueda -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plantillas (Templates) -->
+<script type="text/template" id="product:list:template">
+<div class="row">
+    <% if (it.products && it.products.length > 0) { %>
+        <% it.products.forEach(product => { %>
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><%= product.descripcion %></h5>
+                        <p class="card-text">Ref: <%= product.referencia %></p>
+                        <button type="button"
+                                class="btn btn-sm btn-primary"
+                                data-action="product:select"
+                                data-referencia="<%= product.referencia %>"
+                                data-descripcion="<%= product.descripcion %>">
+                            Seleccionar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        <% }); %>
+    <% } else { %>
+        <div class="col-12">
+            <p class="text-center text-muted">No hay productos disponibles</p>
+        </div>
+    <% } %>
+</div>
+</script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Wizard JS (módulos ES6) -->
+<script type="module">
+    import WizardController from './controllers/WizardController.js';
+    import eventDispatcher from './core/EventDispatcher.js';
+    import eventManager from './core/EventManager.js';
+
+    // Configuración de validación
+    const validationRules = {
+        1: [
+            {
+                field: 'codcliente',
+                required: true,
+                message: 'El cliente es obligatorio'
+            }
+        ],
+        2: [
+            {
+                field: 'email',
+                required: true,
+                message: 'El email es obligatorio',
+                validator: (value) => {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        return {valid: false, message: 'Formato de email inválido'};
+                    }
+                    return {valid: true};
+                }
+            }
+        ]
+    };
+
+    // Inicializar wizard
+    const wizard = new WizardController({
+        totalSteps: 3,
+        formId: 'formCfdiWizard',
+        submitLabel: 'Enviar',
+        validationRules: validationRules,
+        viewConfig: {
+            tabsSelector: '#wizardTabs .nav-link',
+            panesSelector: '.tab-pane',
+            prevBtnId: 'prevBtn',
+            nextBtnId: 'nextBtn',
+            submitBtnId: 'wizardSubmitBtn'
+        },
+        onSubmit: async (data, form) => {
+            console.log('Datos a enviar:', data);
+            // Aquí puedes hacer tu lógica de envío personalizada
+            // form.submit(); // O enviar por AJAX
+        }
+    });
+
+    // Activar EventDispatcher
+    eventDispatcher.listen();
+
+    // Inicializar
+    wizard.init();
+
+    // Eventos personalizados
+    eventManager.on('wizard:step:changed', (data) => {
+        console.log('Paso cambiado a:', data.step);
+
+        // Actualizar vista de revisión en paso 3
+        if (data.step === 3) {
+            const codcliente = document.getElementById('codcliente').value;
+            const email = document.getElementById('email').value;
+            document.getElementById('review-codcliente').textContent = codcliente;
+            document.getElementById('review-email').textContent = email;
+        }
+    });
+
+    eventManager.on('wizard:validation:failed', (result) => {
+        console.warn('Validación fallida:', result.errors);
+    });
+
+    eventManager.on('wizard:submitted', (data) => {
+        console.log('Formulario enviado:', data);
+    });
+
+    // Ejemplo de búsqueda de productos
+    const searchInput = document.getElementById('buscarProductoInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            if (query.length >= 2) {
+                // Simular búsqueda
+                setTimeout(() => {
+                    const productos = [
+                        {referencia: 'REF001', descripcion: 'Producto 1'},
+                        {referencia: 'REF002', descripcion: 'Producto 2'}
+                    ];
+                    updateProductsTable(productos);
+                }, 300);
+            }
+        });
+    }
+
+    function updateProductsTable(productos) {
+        const tbody = document.querySelector('#tablaProductos tbody');
+        tbody.innerHTML = '';
+
+        productos.forEach(p => {
+            const row = `<tr>
+                <td>${p.referencia}</td>
+                <td>${p.descripcion}</td>
+                <td>
+                    <button type="button"
+                            class="btn btn-sm btn-success"
+                            data-action="product:select"
+                            data-referencia="${p.referencia}">
+                        Seleccionar
+                    </button>
+                </td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+        });
+    }
+
+    // Manejador para selección de productos
+    eventDispatcher.register('product:select', (el) => {
+        const referencia = el.dataset.referencia;
+        console.log('Producto seleccionado:', referencia);
+
+        // Cerrar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('vincularModal'));
+        if (modal) modal.hide();
+
+        eventManager.emit('product:selected', {referencia});
+    });
+</script>
+
+</body>
+</html>

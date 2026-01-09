@@ -22,10 +22,12 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Controller;
 use Closure;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\Validator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\CustomerValidator;
 
 /**
  * @method addButton(string $string, string[] $array)
+ * @method getMainViewName()
+ * @property $views
  */
 class EditCliente
 {
@@ -33,21 +35,12 @@ class EditCliente
     {
         return function () {
             $viewName = $this->getMainViewName();
-            $column = $this->views[$viewName]->columnForName('regimenfiscal');
-            if ($column && $column->widget->getType() === 'select') {
-                foreach (CfdiCatalogo::regimenFiscal()->all() as $item) {
-                    $regimenValues[] = ['value' => $item->id, 'title' => $item->id . ' - ' . $item->descripcion];
-                }
-                $column->widget->setValuesFromArray($regimenValues, false, true);
-            }
 
-            $column = $this->views[$viewName]->columnForName('usocfdi');
-            if ($column && $column->widget->getType() === 'select') {
-                foreach (CfdiCatalogo::usoCfdi()->all() as $item) {
-                    $usoValues[] = ['value' => $item->id, 'title' => $item->id . ' - ' . $item->descripcion];
-                }
-                $column->widget->setValuesFromArray($usoValues, false, true);
-            }
+            $result = $this->loadValuesForUsoCfdi($viewName);
+            $result = $this->loadValusForRegimenFiscal($viewName);
+
+
+            $result = $this->disableColumns();
         };
     }
 
@@ -57,11 +50,58 @@ class EditCliente
             if ($viewName === $this->getMainViewName()) {
                 if (!$view->model->exists()) return;
 
-                if (!Validator::validateCustomerForCfdi($view->model))
-                {
-                    Tools::log()->warning('Datos fiscales incorrectos.  
-                    Verificar Constancia de Situación Fiscal para emisión de CFDI.');
+                $result = CustomerValidator::validateForCfdi($view->model);
+
+                if (!empty($result)) {
+                    Tools::log()->warning('Verificar Constancia de Situación Fiscal para emisión de CFDI.');
                 }
+
+                foreach ($result as $message) {
+                    Tools::log()->warning($message);
+                }
+            }
+        };
+    }
+
+    private function disableColumns(): Closure
+    {
+        return function () {
+            $this->views['EditCliente']->disableColumn('vat-regime', true);
+            $this->views['EditCliente']->disableColumn('vat-exception', true);
+            $this->views['EditCliente']->disableColumn('retention', true);
+        };
+    }
+
+    private function loadValusForRegimenFiscal(): Closure
+    {
+        return function ($viewName) {
+            $column = $this->views[$viewName]->columnForName('regimenfiscal');
+
+            if ($column && $column->widget->getType() === 'select') {
+                foreach (CfdiCatalogo::regimenFiscal()->all() as $item) {
+                    $regimenValues[] = [
+                        'value' => $item->id,
+                        'title' => $item->id . ' - ' . $item->descripcion
+                    ];
+                }
+                $column->widget->setValuesFromArray($regimenValues, false, true);
+            }
+        };
+    }
+
+    private function loadValuesForUsoCfdi(): Closure
+    {
+        return function ($viewName) {
+            $column = $this->views[$viewName]->columnForName('usocfdi');
+
+            if ($column && $column->widget->getType() === 'select') {
+                foreach (CfdiCatalogo::usoCfdi()->all() as $item) {
+                    $usoValues[] = [
+                        'value' => $item->id,
+                        'title' => $item->id . ' - ' . $item->descripcion
+                    ];
+                }
+                $column->widget->setValuesFromArray($usoValues, false, true);
             }
         };
     }

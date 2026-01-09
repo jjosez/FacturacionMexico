@@ -26,7 +26,7 @@ class CfdiData extends ModelClass
 {
     use ModelTrait;
 
-    public $idcfdi;
+    public $cfdi_id;
     public $xml;
     public $uuid;
 
@@ -48,6 +48,6 @@ class CfdiData extends ModelClass
 
     public static function tableName(): string
     {
-        return 'cfdis_data';
+        return 'cfdis_clientes_data';
     }
 }

@@ -28,7 +28,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
 class CfdiProveedor extends ModelClass
 {
-    public const SUPPLIER_CFDI_BASEPATH = FS_FOLDER . '/MyFiles/CFDI/supplier/';
+    public const string SUPPLIER_CFDI_BASEPATH = FS_FOLDER . '/MyFiles/CFDI/supplier/';
 
     use ModelTrait;
     use CfdiTrait;
@@ -54,7 +54,7 @@ class CfdiProveedor extends ModelClass
     public function getSupplier(): Proveedor
     {
         $proveedor = new Proveedor();
-        $proveedor->loadFromCode($this->codproveedor);
+        $proveedor->load($this->codproveedor);
 
         return $proveedor;
     }

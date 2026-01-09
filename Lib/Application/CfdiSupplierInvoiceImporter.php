@@ -17,14 +17,17 @@ use FacturaScripts\Dinamic\Model\Proveedor;
 
 class CfdiSupplierInvoiceImporter
 {
+    /**
+     * @throws Exception
+     */
     public function import(CfdiProveedor $cfdi, Proveedor $supplier, array $conceptos): FacturaProveedor
     {
-        $invoice = $this->loadOrCreateInvoice($cfdi, $supplier);
-
         $db = new DataBase();
         $db->beginTransaction();
 
         try {
+            $invoice = $this->loadOrCreateInvoice($cfdi, $supplier);
+
             $this->clearInvoiceLines($invoice);
             $lines = $this->createInvoiceLines($invoice, $conceptos, $supplier);
 
@@ -32,7 +35,6 @@ class CfdiSupplierInvoiceImporter
 
             $db->commit();
             return $invoice;
-
         } catch (Exception $e) {
             $db->rollBack();
             Tools::log()->error($e->getMessage());
@@ -40,6 +42,9 @@ class CfdiSupplierInvoiceImporter
         }
     }
 
+    /**
+     * @throws Exception
+     */
     protected function loadOrCreateInvoice(CfdiProveedor $cfdi, Proveedor $supplier): FacturaProveedor
     {
         $invoice = new FacturaProveedor();
@@ -48,7 +53,7 @@ class CfdiSupplierInvoiceImporter
             new DataBaseWhere('codproveedor', $supplier->codproveedor)
         ];
 
-        if ($invoice->loadFromCode('', $where)) {
+        if ($invoice->loadWhere($where)) {
             return $invoice;
         }
 
@@ -67,6 +72,9 @@ class CfdiSupplierInvoiceImporter
         }
     }
 
+    /**
+     * @throws Exception
+     */
     protected function createInvoiceLines(FacturaProveedor $invoice, array $conceptos, Proveedor $supplier): array
     {
         $lines = [];
@@ -116,6 +124,9 @@ class CfdiSupplierInvoiceImporter
         $linea->iva = $iva;
     }
 
+    /**
+     * @throws Exception
+     */
     protected function linkSupplierProduct(array $concepto, Proveedor $supplier): void
     {
         if (empty($concepto['referencia']) || empty($concepto['referencia_proveedor'])) {
@@ -123,11 +134,8 @@ class CfdiSupplierInvoiceImporter
         }
 
         $product = new ProductoProveedor();
-        $where = [
-            new DataBaseWhere('refproveedor', $concepto['referencia_proveedor'])
-        ];
 
-        if ($product->loadFromCode('', $where)) {
+        if ($product->loadWhereEq('refproveedor', $concepto['referencia_proveedor'])) {
             return;
         }
 
@@ -140,10 +148,17 @@ class CfdiSupplierInvoiceImporter
         }
     }
 
+    /**
+     * @throws Exception
+     */
     protected function formaPagoFromCfdi(CfdiProveedor $cfdi): string
     {
         $result = FormaPago::table()->whereEq('clavesat', $cfdi->forma_pago)->first();
 
-        return $result['clavesat'] ?? '99';
+        if ($result['codpago']) {
+            return $result['codpago'];
+        }
+
+        throw new Exception('Forma de pago invalida: ' . $cfdi->forma_pago . $result['codpago']);
     }
 }

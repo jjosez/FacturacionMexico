@@ -36,11 +36,11 @@
                         <td>{{ concepto.importe }}</td>
                         <td>
                             <button type="button" class="btn btn-sm btn-info vincular-btn"
-                                    data-index="{{ loop.index0 }}">
+                                    data-action="product:link:open" data-index="{{ loop.index0 }}">
                                 Vincular
                             </button>
                             <button type="button" class="btn btn-sm btn-secondary desvincular-btn"
-                                    data-index="{{ loop.index0 }}">
+                                    data-action="product:unlink" data-index="{{ loop.index0 }}">
                                 Desvincular
                             </button>
                             {% set newProductUrl = fsc.buildNewProductUrl(concepto.noidentificacion, concepto.descripcion) %}
