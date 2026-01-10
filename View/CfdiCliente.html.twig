@@ -220,8 +220,11 @@
 
 {% macro blockCfdiRelacionados(relacionados, fsc) %}
     {% if relacionados is not empty %}
+        {{ fsc.relatedCfdisValidation(relacionados) }}
         <div class="card mb-3">
-            <div class="card-header bg-light"><i class="fas fa-link me-2"></i>CFDIs Relacionados</div>
+            <div class="card-header bg-light">
+                <i class="fas fa-link me-2"></i>CFDIs Relacionados
+            </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
@@ -234,8 +237,10 @@
                         <tbody>
                         {% for rel in relacionados %}
                             <tr>
-                                <td><span class="badge bg-secondary">{{ rel.tipoRelacion }}</span></td>
-                                <td class="font-monospace small">{{ rel.uuid }}</td>
+                                {% for uuid in rel.relacionados %}
+                                    <td><span class="badge bg-secondary">{{ rel.tiporelacion }}</span></td>
+                                    <td>{{ uuid }}</td>
+                                {% endfor %}
                             </tr>
                         {% endfor %}
                         </tbody>

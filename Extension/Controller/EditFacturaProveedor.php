@@ -27,29 +27,18 @@ use Closure;
  * @method redirect(string $string)
  * @property $request
  */
-class EditFacturaCliente
+class EditFacturaProveedor
 {
     public function createViews(): Closure
     {
         return function () {
             $this->addButton('main', [
-                'action' => 'EditCfdiCliente?invoice=' . $this->getModel()->primaryColumnValue(),
+                'action' => 'EditCfdiProveedor?invoice=' . $this->getModel()->numproveedor,
                 'color' => 'info',
                 'icon' => 'fas fa-file-invoice',
                 'label' => 'CFDI',
                 'type' => 'link'
             ]);
-        };
-    }
-
-
-    public function execPreviousAction(): Closure
-    {
-        return function ($action = '') {
-            if ('cfdi-action' === $action) {
-                $code = $this->request->query->get('code');
-                $this->redirect('EditCfdiCliente?invoice=' . $code);
-            }
         };
     }
 }

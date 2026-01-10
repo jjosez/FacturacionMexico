@@ -19,9 +19,9 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Model\Base;
 
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use DateTime;
 use FacturaScripts\Core\Model\Base\CompanyRelationTrait;
-use FacturaScripts\Core\Session;
+use FacturaScripts\Core\Tools;
 
 trait CfdiTrait
 {
@@ -158,6 +158,20 @@ trait CfdiTrait
     /** @var string Último usuario que modificó el CFDI */
     public $last_nick;
 
+    public function emissionDate(): string
+    {
+         $date = new DateTime($this->fecha_emision);
+
+        return $date->format('Y-m-d');
+    }
+
+    public function emissionTime(): string
+    {
+        $date = new DateTime($this->fecha_emision);
+
+        return $date->format('H:i:s');
+    }
+
     /**
      * Carga los datos del CFDI asociados a un código de factura (idfactura).
      *
@@ -166,8 +180,7 @@ trait CfdiTrait
      */
     public function loadFromInvoice($code): bool
     {
-        $where = [new DataBaseWhere('idfactura', $code)];
-        return $this->loadFromCode('', $where);
+        return $this->loadWhereEq('idfactura', $code);
     }
 
     /**
@@ -178,8 +191,7 @@ trait CfdiTrait
      */
     public function loadFromUuid($uuid): bool
     {
-        $where = [new DataBaseWhere('uuid', $uuid)];
-        return $this->loadFromCode('', $where);
+        return $this->loadWhereEq('uuid', $uuid);
     }
 
     /**
@@ -197,6 +209,6 @@ trait CfdiTrait
      */
     public function updateMailDate(): void
     {
-        $this->mail_at = date(self::DATETIME_STYLE);
+        $this->mail_at = Tools::dateTime();
     }
 }

@@ -26,6 +26,7 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiRelationService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\CustomerValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiService;
@@ -359,6 +360,12 @@ class EditCfdiCliente extends Controller
         return $relatedCfdis;
     }
 
+    public function relatedCfdisValidation(array $related)
+    {
+        $relationService = new CfdiRelationService();
+        $relationService->validateAndSyncRelations($this->cfdi, $related);
+    }
+
     public function isEgresoInvoice(): bool
     {
         return CfdiSettings::serieEgreso() === $this->factura->codserie;
@@ -418,7 +425,7 @@ class EditCfdiCliente extends Controller
      */
     private function mapRelatedCfdisFromRequest(): array
     {
-        $input = $this->request()->input('relacionados');
+        $input = $this->request()->request->getArray('relacionados');
 
         if (!is_array($input)) {
             return [];
@@ -470,7 +477,6 @@ class EditCfdiCliente extends Controller
     {
         $this->setTemplate(false);
         $this->response->setHttpCode($status);
-        $this->response->headers->set('Content-Type', 'application/json');
-        $this->response->setContent(json_encode($data));
+        $this->response()->json($data);
     }
 }

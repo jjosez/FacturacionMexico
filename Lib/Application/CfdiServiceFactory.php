@@ -132,6 +132,16 @@ class CfdiServiceFactory
     }
 
     /**
+     * Crea el servicio de gestión de relaciones CFDI
+     *
+     * @return CfdiRelationService
+     */
+    public static function createRelationService(): CfdiRelationService
+    {
+        return new CfdiRelationService();
+    }
+
+    /**
      * Crea el servicio principal de CFDI
      *
      * @param Empresa $company
@@ -141,7 +151,8 @@ class CfdiServiceFactory
     {
         return new CfdiService(
             self::createStampProvider($company),
-            self::createStorageProvider()
+            self::createStorageProvider(),
+            self::createRelationService()
         );
     }
 }

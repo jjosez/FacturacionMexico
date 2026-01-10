@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML;
 
 use CfdiUtils\Cfdi;
@@ -102,6 +103,41 @@ class CfdiQuickReader
         $conceptos = $this->comprobante->conceptos;
 
         return $conceptos();
+    }
+
+    public function conceptosNormalized(): array
+    {
+        $out = [];
+
+        foreach (($this->comprobante->conceptos)() as $concepto) {
+            $traslados = [];
+
+            if (isset($concepto->impuestos->traslados)) {
+                foreach (($concepto->impuestos->traslados)() as $traslado) {
+                    $traslados[] = [
+                        'Impuesto' => $traslado['Impuesto'],
+                        'Base' => $traslado['Base'],
+                        'TipoFactor' => $traslado['TipoFactor'],
+                        'TasaOCuota' => $traslado['TasaOCuota'],
+                        'Importe' => $traslado['Importe'],
+                    ];
+                }
+            }
+
+            $out[] = [
+                'ClaveProdServ' => $concepto['ClaveProdServ'],
+                'NoIdentificacion' => $concepto['NoIdentificacion'],
+                'Cantidad' => $concepto['Cantidad'],
+                'ClaveUnidad' => $concepto['ClaveUnidad'],
+                'Descripcion' => $concepto['Descripcion'],
+                'ValorUnitario' => $concepto['ValorUnitario'],
+                'Importe' => $concepto['Importe'],
+                'Descuento' => $concepto['Descuento'],
+                'Traslados' => $traslados,
+            ];
+        }
+
+        return $out;
     }
 
     public function conceptosData(): array

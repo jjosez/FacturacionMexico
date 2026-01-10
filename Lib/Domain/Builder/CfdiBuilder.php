@@ -121,7 +121,7 @@ abstract class CfdiBuilder
 
         if ($customer->cifnif !== $fiscalID) {
             throw new Exception('El ID Fiscal del cliente ' . $fiscalID
-                . 'no coincide con el de la Factura ' . $this->factura->cifnif);
+                . ' no coincide con el de la Factura ' . $this->factura->cifnif);
         }
 
         if ($customer->tipoidfiscal === 'RFC') {

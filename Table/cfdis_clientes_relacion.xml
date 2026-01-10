@@ -18,7 +18,7 @@
     </column>
     <column>
         <name>id</name>
-        <type>integer</type>
+        <type>serial</type>
         <null>NO</null>
     </column>
     <column>

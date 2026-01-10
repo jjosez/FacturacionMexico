@@ -5,32 +5,36 @@
  */
 #}
 {% import 'Macro/Form.html.twig' as form %}
-<div class="card-deck mb-3">
-    <div class="card">
-        <div class="card-header">Cliente</div>
-        <div class="card-body">
-            <div class="form-group">
-                {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptorNombre(), 'disabled') }}
-            </div>
-            <div class="form-group">
-                {{ form.inputtext('rfc', 'RFC', fsc.reader.receptorRfc(), 'disabled') }}
-            </div>
-            <div class="form-group">
-                {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.reader.receptorUsoCfdi(), 'disabled') }}
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header">Cliente</div>
+            <div class="card-body">
+                <div class="form-group">
+                    {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptorNombre(), 'disabled') }}
+                </div>
+                <div class="form-group">
+                    {{ form.inputtext('rfc', 'RFC', fsc.reader.receptorRfc(), 'disabled') }}
+                </div>
+                <div class="form-group">
+                    {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.reader.receptorUsoCfdi(), 'disabled') }}
+                </div>
             </div>
         </div>
     </div>
-    <div class="card">
-        <div class="card-header">Proveedor</div>
-        <div class="card-body">
-            <div class="form-group">
-                {{ form.inputtext('emisorazonsocial', 'Razón social', fsc.reader.emisorNombre(), 'readonly') }}
-            </div>
-            <div class="form-group">
-                {{ form.inputtext('emisorrfc', 'RFC', fsc.reader.emisorRfc(), 'readonly') }}
-            </div>
-            <div class="form-group">
-                {{ form.inputtext('fechaemision', 'Fecha de emisión', fsc.reader.fechaExpedicion(), 'readonly') }}
+    <div class="col">
+        <div class="card">
+            <div class="card-header">Proveedor</div>
+            <div class="card-body">
+                <div class="form-group">
+                    {{ form.inputtext('emisorazonsocial', 'Razón social', fsc.reader.emisorNombre(), 'readonly') }}
+                </div>
+                <div class="form-group">
+                    {{ form.inputtext('emisorrfc', 'RFC', fsc.reader.emisorRfc(), 'readonly') }}
+                </div>
+                <div class="form-group">
+                    {{ form.inputtext('fechaemision', 'Fecha de emisión', fsc.reader.fechaExpedicion(), 'readonly') }}
+                </div>
             </div>
         </div>
     </div>

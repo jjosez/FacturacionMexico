@@ -48,7 +48,7 @@ class RelationValidator
                     if (empty($factura->codigorect) || empty($factura->idfacturarect)) {
                         $parentInvoice = new FacturaCliente();
 
-                        if ($parentInvoice->loadFromCode($parentCfdi->idfactura)) {
+                        if ($parentInvoice->load($parentCfdi->idfactura)) {
                             $factura->codigorect = $parentInvoice->codigo;
                             $factura->idfacturarect = $parentInvoice->idfactura;
                             $factura->save();

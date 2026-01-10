@@ -21,7 +21,6 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use Exception;
 use FacturaScripts\Core\Base\Controller;
-use FacturaScripts\Core\DataSrc\FormasPago;
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;

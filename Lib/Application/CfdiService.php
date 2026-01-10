@@ -23,11 +23,13 @@ class CfdiService
 {
     private CfdiRepositoryInterface $repository;
     private StampProviderInterface $stampProvider;
+    private CfdiRelationService $relationService;
 
-    public function __construct(StampProviderInterface $stampProvider, CfdiRepositoryInterface $storage)
+    public function __construct(StampProviderInterface $stampProvider, CfdiRepositoryInterface $storage, CfdiRelationService $relationService)
     {
         $this->repository = $storage;
         $this->stampProvider = $stampProvider;
+        $this->relationService = $relationService;
     }
 
     /**
@@ -39,6 +41,13 @@ class CfdiService
      */
     public function stampInvoice(FacturaCliente $factura, array $relations = []): CfdiStampResult
     {
+        // Validar relaciones adicionales (además de la validación en buildCfdi)
+        if (!empty($relations) && !$this->relationService->validateRelations($factura->codcliente, $relations)) {
+            return CfdiStampResult::failed(
+                new StampResult(true, '', '', 'Las relaciones de CFDI no son válidas')
+            );
+        }
+
         $buildResult = $this->buildCfdi($factura, $relations);
 
         if ($buildResult->hasError()) {
@@ -63,6 +72,11 @@ class CfdiService
 
         if (!$this->repository->saveXml($savedCfdi, $stampResult->getXml())) {
             return CfdiStampResult::failed($stampResult);
+        }
+
+        // Guardar las relaciones de CFDI después del timbrado exitoso
+        if (!empty($relations)) {
+            $this->relationService->saveCfdiRelations($savedCfdi, $relations);
         }
 
         $this->updateInvoiceStatus($factura, CfdiStatus::STAMPED);

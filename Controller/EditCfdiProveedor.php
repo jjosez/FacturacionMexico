@@ -38,6 +38,7 @@ class EditCfdiProveedor extends EditController
     protected CfdiQuickReader $reader;
     protected Proveedor $supplier;
 
+
     public function getModelClassName(): string
     {
         return 'CfdiProveedor';
@@ -59,6 +60,20 @@ class EditCfdiProveedor extends EditController
         $column = $this->tab('EditCfdiProveedor')->columnForName('forma-pago');
         $widgetClosure = $this->createFormaPagoWidget();
         $widgetClosure($column);
+
+        $this->createViewCfdiSupplier();
+        $this->setTabsPosition('top');
+    }
+
+    protected function createViewCfdiSupplier($viewName = 'CfdiSupplier'): void
+    {
+        $this->addHtmlView(
+            $viewName,
+            'CfdiSupplier',
+            'CfdiProveedor',
+            'preview',
+            'fa-solid fa-file-invoice'
+        );
     }
 
     protected function addImportWizardButton(string $url): void
@@ -85,15 +100,24 @@ class EditCfdiProveedor extends EditController
 
     protected function importCfdiAction(): void
     {
+        $uploadedFile = $this->request->files->get('cfdifile');
+
         try {
             $importer = new CfdiSupplierImporter();
-            $uploadedFile = $this->request->files->get('cfdifile');
             $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
 
             Tools::log()->info('CFDI importado correctamente: ' . $cfdi->uuid);
         } catch (Exception $e) {
             Tools::log()->warning($e->getMessage());
         }
+    }
+
+    /**
+     * @return CfdiQuickReader
+     */
+    public function getReader(): ?CfdiQuickReader
+    {
+        return $this->reader;
     }
 
     protected function loadReader(): bool
@@ -167,6 +191,8 @@ class EditCfdiProveedor extends EditController
                 $url = $this->getModel()->url('wizard');
 
                 $this->addImportWizardButton($url);
+                $this->fileName = $this->getModel()->filename;
+                $this->loadReader();
             }
         }
     }

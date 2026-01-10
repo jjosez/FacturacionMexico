@@ -3,6 +3,7 @@ import eventDispatcher from '../../Wizard/core/EventDispatcher.js';
 import eventManager from '../../Wizard/core/EventManager.js';
 import { ProductLinkController } from './ProductLinkController.js';
 import { FileInputView } from '../views/FileInputView.js';
+import supplierTemplateManager from '../views/SupplierTemplateManager.js';
 
 /**
  * SupplierWizardController
@@ -29,15 +30,19 @@ export class SupplierWizardController {
         this.wizardController = null;
         this.productLinkController = null;
         this.fileInputView = null;
+        this.templateManager = supplierTemplateManager;
 
         // Callbacks personalizados
         this.onSubmitCallback = options.onSubmit ?? null;
     }
 
     /**
-     * Inicializa el controlador principal
+     * Inicializa el controlador principal de manera asíncrona
      */
-    init() {
+    async init() {
+        // Inicializar templates primero
+        await this.initTemplates();
+
         // Inicializar wizard base
         this.initWizard();
 
@@ -53,6 +58,14 @@ export class SupplierWizardController {
         // Registrar eventos personalizados
         this.registerWizardEvents();
         this.registerCustomEvents();
+    }
+
+    /**
+     * Inicializa el gestor de templates
+     */
+    async initTemplates() {
+        await this.templateManager.init();
+        console.log('✅ Templates inicializados');
     }
 
     /**

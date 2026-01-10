@@ -1,10 +1,12 @@
+import supplierTemplateManager from './SupplierTemplateManager.js';
+
 /**
  * ProductLinkView
  * Vista para la tabla de conceptos y vinculación de productos
  */
 export class ProductLinkView {
-    constructor() {
-        // No necesita configuración inicial, trabaja con IDs dinámicos
+    constructor({ templateManager = supplierTemplateManager } = {}) {
+        this.templateManager = templateManager;
     }
 
     /**
@@ -147,7 +149,7 @@ export class ProductLinkView {
     }
 
     /**
-     * Crea un elemento toast
+     * Crea un elemento toast usando template
      * @param {string} message - Mensaje
      * @param {string} type - Tipo
      * @returns {HTMLElement}
@@ -159,20 +161,31 @@ export class ProductLinkView {
         toast.setAttribute('aria-live', 'assertive');
         toast.setAttribute('aria-atomic', 'true');
 
-        const typeClass = type === 'success' ? 'bg-success' :
-                         type === 'danger' ? 'bg-danger' :
-                         type === 'warning' ? 'bg-warning' :
-                         'bg-info';
+        const bgClass = type === 'success' ? 'bg-success' :
+                        type === 'danger' ? 'bg-danger' :
+                        type === 'warning' ? 'bg-warning' :
+                        'bg-info';
 
-        toast.innerHTML = `
-            <div class="toast-header ${typeClass} text-white">
-                <strong class="me-auto">Notificación</strong>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body">
-                ${message}
-            </div>
-        `;
+        // Usar template si está disponible
+        if (this.templateManager && this.templateManager.hasTemplate('product:toast:template')) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = this.templateManager.templateManager.eta.renderString(
+                this.templateManager.templateManager.templates['product:toast:template'],
+                { message, bgClass, title: 'Notificación' }
+            );
+            toast.innerHTML = tempDiv.innerHTML;
+        } else {
+            // Fallback
+            toast.innerHTML = `
+                <div class="toast-header ${bgClass} text-white">
+                    <strong class="me-auto">Notificación</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            `;
+        }
 
         return toast;
     }

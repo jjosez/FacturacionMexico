@@ -60,6 +60,7 @@ class CfdiSupplierInvoiceImporter
         $invoice->setSubject($supplier);
         $invoice->numproveedor = $cfdi->invoiceNumber();
         $invoice->codpago = $this->formaPagoFromCfdi($cfdi);
+        $invoice->setDate($cfdi->emissionDate(), $cfdi->emissionTime());
         $invoice->save();
 
         return $invoice;
