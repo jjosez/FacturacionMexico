@@ -76,14 +76,6 @@ class CfdiCliente extends ModelClass
         return self::all($where);
     }
 
-    public function test(): bool
-    {
-        $this->last_nick = Session::user()->nick;
-        $this->updated_at = Tools::dateTime();
-
-        return parent::test();
-    }
-
     public function isStampedSuccessfully(): bool
     {
         return $this->estatus === 'timbrada';

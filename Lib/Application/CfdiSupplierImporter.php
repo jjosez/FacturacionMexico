@@ -5,6 +5,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application;
 use Exception;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\UploadedFile;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\Proveedor;
@@ -19,8 +20,12 @@ class CfdiSupplierImporter
     protected Proveedor $supplier;
     protected Empresa $company;
 
-    public function processUpload($uploadFile, Empresa $company): ?CfdiProveedor
+    public function processUpload(?UploadedFile $uploadFile, Empresa $company): ?CfdiProveedor
     {
+        if (null === $uploadFile) {
+            throw new Exception('No se pudo obtener el archivo. ' . $uploadFile->getClientOriginalName());
+        }
+
         if (!$this->saveUploadedFile($uploadFile)) {
             throw new Exception('Error al guardar el archivo.');
         }
@@ -30,13 +35,13 @@ class CfdiSupplierImporter
         $this->company = $company;
 
         if ($this->cfdiExists()) {
-            throw new Exception('El CFDI ya fue registrado previamente.');
+            throw new Exception('El CFDI ya fue registrado previamente. ' . $this->reader->uuid());
         }
 
         return $this->saveCfdi();
     }
 
-    protected function saveUploadedFile($uploadFile): bool
+    protected function saveUploadedFile(UploadedFile $uploadFile): bool
     {
         Tools::folderCheckOrCreate(self::DESTINATION_FOLDER);
 

@@ -52,6 +52,10 @@ class ListCfdiProveedor extends ExtendedController\ListController
             $this->importCfdiAction();
         }
 
+        if ($action === 'batch-import-cfdi-file') {
+            $this->batchImportCfdiAction();
+        }
+
         return parent::execPreviousAction($action);
     }
 
@@ -66,13 +70,13 @@ class ListCfdiProveedor extends ExtendedController\ListController
     protected function createMainView($viewName = 'ListCfdiProveedor'): void
     {
         $this->addView($viewName, 'CfdiProveedor', 'CFDI Proveedores', 'fas fa-file-invoice');
-        $this->addSearchFields($viewName, ['receptor_razon', 'emisor_razon', 'uuid']);
+        $this->addSearchFields($viewName, ['emisor_razon', 'receptor_razon', 'uuid']);
         $this->addOrderBy($viewName, ['fecha_emision'], 'Fecha emision', 2);
         $this->addOrderBy($viewName, ['fecha_timbrado'], 'Fecha timbrado', 2);
 
-        $this->addFilterAutocomplete($viewName, 'codcliente', 'customer', 'codcliente', 'clientes', 'codcliente', 'razonsocial');
+        $this->addFilterAutocomplete($viewName, 'supplier', 'supplier', 'codproveedor', 'proveedores', 'codproveedor', 'razonsocial');
         $this->addFilterPeriod($viewName, 'date', 'period', 'fecha');
-        $this->addFilterSelect($viewName, 'tipo', 'type', 'tipocfdi', CfdiCatalogo::tipoCfdi());
+        $this->addFilterSelect($viewName, 'tipo', 'type', 'tipo_cfdi', CfdiCatalogo::tipoCfdi());
         $this->addFilterSelect($viewName, 'estado', 'state', 'estado', CfdiCatalogo::estadoCfdi());
 
         $this->setSettings($viewName, 'btnNew', false);
@@ -91,6 +95,38 @@ class ListCfdiProveedor extends ExtendedController\ListController
             $this->redirect($cfdi->url());
         } catch (Exception $e) {
             Tools::log()->warning($e->getMessage());
+        }
+    }
+
+    private function batchImportCfdiAction()
+    {
+        $importer = new CfdiSupplierImporter();
+        $uploadedFile = $this->request->files->getArray('cfdifile');
+
+        $successCount = 0;
+        $errorCount = 0;
+
+        foreach ($uploadedFile as $file) {
+            try {
+                $cfdi = $importer->processUpload($file, $this->empresa);
+                Tools::log()->info('CFDI importado correctamente: ' . $cfdi->uuid);
+                $successCount++;
+            } catch (Exception $e) {
+                Tools::log()->warning($e->getMessage());
+                $errorCount++;
+            }
+        }
+
+        if ($successCount > 0) {
+            Tools::log()->notice('batch-import-summary', [
+                '%success%' => $successCount,
+                '%errors%' => $errorCount,
+                '%total%' => count($uploadedFile)
+            ]);
+        }
+
+        if ($errorCount > 0 && $successCount === 0) {
+            Tools::log()->error('batch-import-all-failed');
         }
     }
 }

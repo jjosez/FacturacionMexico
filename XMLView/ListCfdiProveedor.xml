@@ -27,22 +27,30 @@
             <widget type="date" fieldname="fecha_timbrado"/>
         </column>
     </columns>
-     <modals>
+    <modals>
         <group name="import-cfdi-file" title="Importar CFDI" icon="fas fa-file-import fa-fw">
             <column name="file" numcolumns="12" order="100">
                 <widget type="file" fieldname="cfdifile" accept=".xml"/>
             </column>
         </group>
+        <group name="batch-import-cfdi-file" title="Importar Lote CFDI" icon="fas fa-file-import fa-fw">
+            <column name="file" numcolumns="12" order="100">
+                <widget type="file" fieldname="cfdifile" accept=".xml" multiple="true"/>
+            </column>
+        </group>
     </modals>
     <rows>
         <row type="status">
-            <option color="danger" title="Cancelado"  fieldname="estado">Cancelado</option>
+            <option color="danger" title="Cancelado" fieldname="estado">Cancelado</option>
             <option color="warning" title="Factura Egreso" fieldname="tipocfdi">E</option>
-            <option color="info" title="Factura Global" fieldname="cfdiglobal">true</option>
+            <option color="info" title="Conceptos Vinculados" fieldname="estado">Vinculado</option>
+            <option color="success" title="Factura Generada" fieldname="estado">Facturado</option>
         </row>
-         <row type="actions">
+        <row type="actions">
             <button type="modal" icon="fas fa-file-import fa-fw" label="import" color="info"
                     action="import-cfdi-file"/>
+            <button type="modal" icon="fas fa-file-import fa-fw" label="batch-import" color="warning"
+                action="batch-import-cfdi-file"/>
         </row>
     </rows>
 </view>

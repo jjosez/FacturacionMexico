@@ -7,7 +7,7 @@
 {% import 'Macro/Form.html.twig' as form %}
 {% set cfdi = fsc.getModel() %}
 
-<div class="container-fluid">
+<div class="container-fluid p-0">
     {% if 'Cancelado' == cfdi.estado %}
         <div class="alert alert-danger d-flex align-items-center" role="alert">
             <i class="fas fa-ban me-2"></i>
@@ -15,77 +15,39 @@
         </div>
     {% endif %}
 
-    {{ _self.blockCfdiRelacionados(fsc.reader.relacionados(), fsc) }}
-    {{ _self.blockCfdiConceptos(fsc.reader.conceptosNormalized(), fsc) }}
-
-    <div class="card mb-3">
-        <div class="card-header bg-dark text-white">
-            <i class="fa-solid fa-calculator me-2"></i>Totales
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                    <tr>
-                        <th scope="col">Subtotal:</th>
-                        <th scope="col">Descuento:</th>
-                        <th scope="col">Impuesto:</th>
-                        <th scope="col">Total:</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td class="text-center">{{ fsc.reader.subTotal }}</td>
-                        <td class="text-center">{{ fsc.reader.totalDescuentos }}</td>
-                        <td class="text-center">{{ fsc.reader.totalImpuestosTrasladados }}</td>
-                        <td class="text-center fw-bold">{{ fsc.reader.total }}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header bg-dark text-white">SAT</div>
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-lg-3 d-none d-lg-block text-center border-end">
-                    {# {% set qrUrl = myFilesUrl('MyFiles/CFDI/qrcode.png') %} #}
-                    {% if qrUrl %}
-                        <img src="{{ qrUrl }}" alt="QRCode" class="img-fluid w-100 d-block mx-auto">
-                    {% else %}
-                        <i class="fas fa-certificate fa-3x text-light"></i>
-                    {% endif %}
-                </div>
-                <div class="col-lg-9">
-                    <div class="row">
-                        <div class="col-md-4 mb-2">
-                            <span class="d-block fw-bold small text-muted">NoCertificadoSAT:</span>
-                            <span class="small">{{ fsc.reader.certificadoSAT() }}</span>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <span class="d-block fw-bold small text-muted">RfcProvCertif:</span>
-                            <span class="small">{{ fsc.reader.proveedorCertificacion() }}</span>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <span class="d-block fw-bold small text-muted">FechaTimbrado:</span>
-                            <span class="small">{{ fsc.reader.fechaTimbrado() }}</span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <span><strong>Sello CFD</strong></span>
-                        <p>{{ fsc.reader.selloCfd() }}</p>
-                        <span><strong>Sello SAT</strong></span>
-                        <p>{{ fsc.reader.selloSat() }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    {{ _self.blockCfdiConceptos(fsc.getConceptosProductMap(), fsc) }}
 
     {# Modal de búsqueda de productos #}
-    {% include 'Modal/CFDI/ProductSearch.html.twig' %}
+    <div class="modal fade" id="product-link-modal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="product-link-modal-title">
+                        <i class="fas fa-link"></i> Vincular Producto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="product-search-input" class="form-control mb-3"
+                           placeholder="Buscar por referencia o descripción...">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="product-table">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Referencia</th>
+                                <th>Descripción</th>
+                                <th>Fabricante</th>
+                                <th>Precio</th>
+                                <th>Acción</th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% macro blockCfdiRelacionados(relacionados, fsc) %}
@@ -121,80 +83,80 @@
 {% endmacro %}
 
 {% macro blockCfdiConceptos(conceptos, fsc) %}
-    <div class="card mb-3">
-        <div class="card-header bg-dark text-white"><i class="fas fa-list-ol me-2"></i>Conceptos</div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                    <tr>
-                        <th>Cantidad</th>
-                        <th>Codigo Proveedor</th>
-                        <th>Descripción</th>
-                        <th class="text-end">Valor Unitario</th>
-                        <th class="text-end">Descuento</th>
-                        <th class="text-end">Importe</th>
-                        <th class="text-center">Acción</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for concepto in conceptos %}
-                        <tr>
-                            <td>{{ concepto.Cantidad }}</td>
-                            <td>
-                                {{ concepto.NoIdentificacion }}
-                                <div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+                <th>Cantidad</th>
+                <th>Codigo Proveedor</th>
+                <th>Descripción</th>
+                <th class="text-end">Valor Unitario</th>
+                <th class="text-end">Descuento</th>
+                <th class="text-end">Importe</th>
+                <th class="text-center">Acción</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for concepto in conceptos %}
+                <tr data-concepto-index="{{ loop.index0 }}"
+                    data-concepto='{
+                            "refproveedor":"{{ concepto.NoIdentificacion }}",
+                            "precio":"{{ concepto.ValorUnitario }}",
+                            "cantidad":"{{ concepto.Cantidad }}",
+                            "codproveedor":"{{ fsc.getModel.codproveedor }}"
+                            }'>
+                    <td>{{ concepto.Cantidad }}</td>
+                    <td>
+                        {{ concepto.NoIdentificacion }}
+                        {# <div>
                                     <span class="badge bg-light text-dark">SAT: {{ concepto.ClaveProdServ }}</span>
                                     <span class="badge bg-light text-dark">{{ concepto.ClaveUnidad }}</span>
-                                </div>
-                            </td>
-                            <td>{{ concepto.Descripcion }}</td>
-                            <td class="text-end">{{ concepto.ValorUnitario }}</td>
-                            <td class="text-end">{{ concepto.Descuento }}</td>
-                            <td class="text-end fw-bold">
-                                {{ concepto.Importe }}
+                                </div> #}
+                    </td>
+                    <td>
+                        {{ concepto.Descripcion }}
+                        <div class="producto-vinculado mt-1">
+                            {% if concepto.referencia_vinculada %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check"></i> {{ concepto.referencia_vinculada }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="text-end">{{ concepto.ValorUnitario }}</td>
+                    <td class="text-end">{{ concepto.Descuento }}</td>
+                    <td class="text-end fw-bold">
+                        {{ concepto.Importe }}
 
-                                {% for traslado in concepto.Traslados %}
-                                    <div class="small text-muted">
-                                        <span class="badge bg-light text-dark font-monospace">Impuestos</span>
-                                        Base: {{ traslado.Base }}
-                                        Importe: {{ traslado.Importe }}
-                                    </div>
-                                {% endfor %}
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-primary"
-                                        data-action="product:link:open"
-                                        data-index="{{ loop.index0 }}"
-                                        data-clave="{{ concepto.ClaveProdServ }}"
-                                        data-descripcion="{{ concepto.Descripcion }}">
-                                    <i class="fas fa-link"></i> Vincular
-                                </button>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                        {% for traslado in concepto.Traslados %}
+                            <div class="small text-muted">
+                                <span class="badge bg-light text-dark font-monospace">Impuestos</span>
+                                Base: {{ traslado.Base }}
+                                Importe: {{ traslado.Importe }}
+                            </div>
+                        {% endfor %}
+                    </td>
+                    <td class="text-center">
+                        <button type="button"
+                                class="btn btn-sm {{ concepto.referencia_vinculada ? 'btn-outline-secondary' : 'btn-primary' }}"
+                                data-action="product-link"
+                                data-index="{{ loop.index0 }}"
+                                data-codigo="{{ concepto.NoIdentificacion }}">
+                            <i class="fas fa-link"></i> {{ concepto.referencia_vinculada ? 'Cambiar' : 'Vincular' }}
+                        </button>
+
+                        {% if not concepto.referencia_vinculada %}
+                            {% set newProductUrl = fsc.buildNewProductUrl(concepto.NoIdentificacion, concepto.Descripcion) %}
+                            <a href="{{ newProductUrl }}" class="btn btn-sm btn-warning" target="_blank">
+                                <i class="fas fa-plus"></i> Registrar
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 {% endmacro %}
 
-<script type="module">
-    import { ProductLinkController } from './Plugins/FacturacionMexico/Assets/JS/Supplier/controllers/ProductLinkController.js';
-    import eventDispatcher from './Plugins/FacturacionMexico/Assets/JS/Wizard/core/EventDispatcher.js';
-    import supplierTemplateManager from './Plugins/FacturacionMexico/Assets/JS/Supplier/views/SupplierTemplateManager.js';
-
-    // Inicializar el controlador cuando el DOM esté listo
-    document.addEventListener('DOMContentLoaded', async () => {
-        // Inicializar el template manager
-        await supplierTemplateManager.init();
-
-        // Inicializar el event dispatcher
-        eventDispatcher.listen();
-
-        // Inicializar el controlador
-        const controller = new ProductLinkController();
-        controller.connect();
-    });
-</script>
+<script src="{{ asset('Plugins/FacturacionMexico/Assets/JS/CfdiSupplier.js') }}"></script>

@@ -21,6 +21,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Model\Base;
 
 use DateTime;
 use FacturaScripts\Core\Model\Base\CompanyRelationTrait;
+use FacturaScripts\Core\Session;
 use FacturaScripts\Core\Tools;
 
 trait CfdiTrait
@@ -160,7 +161,7 @@ trait CfdiTrait
 
     public function emissionDate(): string
     {
-         $date = new DateTime($this->fecha_emision);
+        $date = new DateTime($this->fecha_emision);
 
         return $date->format('Y-m-d');
     }
@@ -210,5 +211,14 @@ trait CfdiTrait
     public function updateMailDate(): void
     {
         $this->mail_at = Tools::dateTime();
+    }
+
+    public function test(): bool
+    {
+        $this->last_nick = Session::user()->nick;
+        $this->updated_at = Tools::dateTime();
+        $this->uuid = strtoupper($this->uuid);
+
+        return parent::test();
     }
 }

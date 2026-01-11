@@ -74,6 +74,12 @@ class CfdiSupplierInvoiceImporter
     }
 
     /**
+     * Crea las líneas de factura desde los conceptos del CFDI
+     *
+     * IMPORTANTE: Solo establecemos cantidad, pvpunitario y descuentos.
+     * El Calculator se encarga de calcular pvpsindto y pvptotal automáticamente
+     * para evitar errores de redondeo.
+     *
      * @throws Exception
      */
     protected function createInvoiceLines(FacturaProveedor $invoice, array $conceptos, Proveedor $supplier): array
@@ -85,11 +91,12 @@ class CfdiSupplierInvoiceImporter
                 ? $invoice->getNewProductLine($concepto['referencia'])
                 : $invoice->getNewLine($concepto);
 
-            $line->cantidad = $concepto['cantidad'];
-            $line->descripcion = $concepto['descripcion'];
-            $line->pvpunitario = $concepto['valorunitario'];
-            $line->pvpsindto = $concepto['importe'];
+            // Establecer datos básicos de la línea
+            $line->cantidad = (float)$concepto['Cantidad'];
+            $line->descripcion = $concepto['Descripcion'];
+            $line->pvpunitario = (float)$concepto['ValorUnitario'];
 
+            // Calcular descuentos e impuestos
             $this->setLineDiscount($line, $concepto);
             $this->setLineTax($line, $concepto);
             $this->linkSupplierProduct($concepto, $supplier);
@@ -104,22 +111,52 @@ class CfdiSupplierInvoiceImporter
         return $lines;
     }
 
+    /**
+     * Calcula el descuento porcentual desde el descuento neto del CFDI
+     *
+     * Según el estándar CFDI 4.0:
+     * - Importe = Cantidad × ValorUnitario (antes de descuento)
+     * - Descuento = monto del descuento aplicado
+     * - ImporteNeto = Importe - Descuento
+     *
+     * Calculamos el porcentaje con alta precisión (6 decimales) para minimizar
+     * errores de redondeo cuando el Calculator recalcule los totales.
+     *
+     * @param LineaFacturaProveedor $linea
+     * @param array $concepto
+     */
     protected function setLineDiscount(LineaFacturaProveedor $linea, array $concepto): void
     {
-        $importeBruto = (float)$concepto['importe'];
-        $descuentoNeto = isset($concepto['descuento']) ? (float)$concepto['descuento'] : 0.0;
+        $descuentoNeto = isset($concepto['Descuento']) ? (float)$concepto['Descuento'] : 0.0;
 
-        $linea->dtopor = ($importeBruto > 0)
-            ? round(($descuentoNeto / $importeBruto) * 100, 2)
-            : 0.0;
+        // Si no hay descuento, salir
+        if ($descuentoNeto <= 0) {
+            $linea->dtopor = 0.0;
+            return;
+        }
+
+        // Calcular el importe bruto real: cantidad × pvpunitario
+        $importeBruto = $linea->cantidad * $linea->pvpunitario;
+
+        // Evitar división por cero
+        if ($importeBruto <= 0) {
+            $linea->dtopor = 0.0;
+            return;
+        }
+
+        // Calcular porcentaje de descuento con alta precisión
+        $dtopor = ($descuentoNeto / $importeBruto) * 100;
+
+        // Redondear a 6 decimales para mantener precisión
+        $linea->dtopor = round($dtopor, 6);
     }
 
     protected function setLineTax(LineaFacturaProveedor $linea, array $concepto): void
     {
         $iva = 0.0;
-        foreach ($concepto['traslados'] as $traslado) {
-            if ('002' === $traslado['impuesto']) {
-                $iva = (float)$traslado['tasa'] * 100;
+        foreach ($concepto['Traslados'] as $traslado) {
+            if ('002' === $traslado['Impuesto']) {
+                $iva = (float)$traslado['TasaOCuota'] * 100;
             }
         }
         $linea->iva = $iva;

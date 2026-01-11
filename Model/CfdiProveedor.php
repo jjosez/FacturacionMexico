@@ -98,12 +98,4 @@ class CfdiProveedor extends ModelClass
 
         return parent::url($type, $list);
     }
-
-    public function test(): bool
-    {
-        $this->last_nick = Session::user()->nick;
-        $this->updated_at = Tools::dateTime();
-
-        return parent::test();
-    }
 }

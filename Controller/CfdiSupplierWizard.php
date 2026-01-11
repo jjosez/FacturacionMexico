@@ -123,7 +123,7 @@ class CfdiSupplierWizard extends Controller
     protected function importCfdiAction(): void
     {
         try {
-            $conceptos = $this->request()->request->getArray('conceptos');
+            $conceptos = $this->reader->conceptosNormalized();
 
             $importer = new CfdiSupplierInvoiceImporter();
             $invoice = $importer->import(
