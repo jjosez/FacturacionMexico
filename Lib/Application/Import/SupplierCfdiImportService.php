@@ -6,6 +6,7 @@ use Exception;
 use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\Calculator;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
@@ -152,8 +153,8 @@ class SupplierCfdiImportService
     ): FacturaProveedor {
         $invoice = new FacturaProveedor();
         $where = [
-            new DataBaseWhere('numproveedor', $cfdi->invoiceNumber()),
-            new DataBaseWhere('codproveedor', $supplier->codproveedor)
+            Where::eq('numproveedor', $cfdi->invoiceNumber()),
+            Where::eq('codproveedor', $supplier->codproveedor)
         ];
 
         if ($invoice->loadWhere($where)) {
@@ -163,7 +164,7 @@ class SupplierCfdiImportService
         $invoice->setSubject($supplier);
         $invoice->numproveedor = $cfdi->invoiceNumber();
         $invoice->codpago = $this->getFormaPagoFromCfdi($cfdi);
-        $invoice->setDate($cfdi->fecha_emision, $cfdi->getTime() ?? '12:00:00');
+        $invoice->setDate($cfdi->fecha_emision, $cfdi->getFechaEmision() ?? '12:00:00');
 
         if (!$invoice->save()) {
             throw new Exception('Error al crear la factura del proveedor');

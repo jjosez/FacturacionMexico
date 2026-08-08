@@ -66,8 +66,8 @@ export class ProductLinkController {
         const row = el.closest('tr');
         const conceptoData = {
             code: row?.dataset?.index || this.currentConceptoIndex,
-            ref: row?.dataset?.cfdiReference || '',
-            descripcion: row?.querySelector('td:nth-child(6)')?.textContent?.trim() || ''
+            ref: el.dataset.refproveedor || row?.dataset?.cfdiReference || '',
+            descripcion: row?.dataset?.conceptDescription || ''
         };
 
         // Limpiar búsqueda anterior
@@ -96,6 +96,7 @@ export class ProductLinkController {
         // Actualizar UI
         this.linkView.clearReferenceCell(index);
         this.linkView.clearHiddenInput(index);
+        this.linkView.updateLinkStatus(index, false);
         this.linkView.updateButtonsState(index, false);
         this.linkView.showSuccessFeedback(index);
 
@@ -120,6 +121,7 @@ export class ProductLinkController {
         // Actualizar UI
         this.linkView.updateReferenceCell(this.currentConceptoIndex, referencia);
         this.linkView.updateHiddenInput(this.currentConceptoIndex, referencia);
+        this.linkView.updateLinkStatus(this.currentConceptoIndex, true);
         this.linkView.updateButtonsState(this.currentConceptoIndex, true);
         this.linkView.showSuccessFeedback(this.currentConceptoIndex);
 

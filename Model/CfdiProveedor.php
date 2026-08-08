@@ -19,6 +19,7 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 
+use CfdiUtils\Validate\Cfdi33\RecepcionPagos\Pagos\Fecha;
 use FacturaScripts\Core\Session;
 use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
@@ -28,15 +29,20 @@ use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
 class CfdiProveedor extends ModelClass
 {
-    public const string SUPPLIER_CFDI_BASEPATH = FS_FOLDER . '/MyFiles/CFDI/supplier/';
-
     use ModelTrait;
     use CfdiTrait;
+
+    public const string SUPPLIER_CFDI_BASEPATH = FS_FOLDER . '/MyFiles/CFDI/supplier/';
 
     /**
      * @var string
      */
     public $filename;
+
+    /**
+     * @var string
+    */
+    public $fecha_emision;
 
     /**
      * @var string
@@ -62,6 +68,14 @@ class CfdiProveedor extends ModelClass
     public function invoiceNumber(): string
     {
         return $this->serie . $this->folio;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFechaEmision(): string
+    {
+        return $this->fecha_emision;
     }
 
     public function validateFile(): string

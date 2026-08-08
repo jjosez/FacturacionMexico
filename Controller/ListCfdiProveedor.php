@@ -153,9 +153,9 @@ class ListCfdiProveedor extends ExtendedController\ListController
         $options = ImportOptions::fromArray([
             'product_action' => $this->request->get('product_action', 'auto'),
             'tax_mode' => $this->request->get('tax_mode', 'preserve'),
-            'update_supplier_prices' => $this->request->bool('update_supplier_prices'),
-            'auto_match_products' => $this->request->bool('auto_match_products'),
-            'price_multiplier' => $this->request->float('price_multiplier', 1.0),
+            'update_supplier_prices' => $this->requestBoolean('update_supplier_prices'),
+            'auto_match_products' => $this->requestBoolean('auto_match_products'),
+            'price_multiplier' => (float)$this->request->input('price_multiplier', 1.0),
         ]);
 
         $result = new BatchImportResult();
@@ -173,7 +173,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
             }
         }
 
-        $createInvoices = $this->request->bool('create_invoices');
+        $createInvoices = $this->requestBoolean('create_invoices');
 
         if ($createInvoices && !empty($importedCfdis)) {
             $invoiceResult = $service->importBatch($importedCfdis, $options);
@@ -288,5 +288,16 @@ class ListCfdiProveedor extends ExtendedController\ListController
             'success' => true,
             'processed' => $processed
         ]));
+    }
+
+    protected function requestBoolean(string $field, bool $default = false): bool
+    {
+        $value = $this->request->input($field);
+
+        if ($value === null || $value === '') {
+            return $default;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 }

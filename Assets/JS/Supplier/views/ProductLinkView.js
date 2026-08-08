@@ -57,6 +57,20 @@ export class ProductLinkView {
         }
     }
 
+    updateLinkStatus(conceptoIndex, linked) {
+        const status = document.getElementById(`estado-${conceptoIndex}`);
+        if (!status) return;
+
+        status.classList.remove('text-bg-success', 'text-bg-light', 'border', 'text-dark');
+        if (linked) {
+            status.classList.add('text-bg-success');
+            status.textContent = 'Vinculado';
+        } else {
+            status.classList.add('text-bg-light', 'border', 'text-dark');
+            status.textContent = 'Línea libre';
+        }
+    }
+
     /**
      * Actualiza visual feedback de éxito
      * @param {string|number} conceptoIndex - Índice del concepto

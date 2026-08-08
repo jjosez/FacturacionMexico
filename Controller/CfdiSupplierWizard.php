@@ -249,7 +249,7 @@ class CfdiSupplierWizard extends Controller
     {
         try {
             $options = $this->getImportOptions();
-            $createInvoice = $this->request->bool('create_invoice', true);
+            $createInvoice = $this->requestBoolean('create_invoice', true);
 
             if ($createInvoice) {
                 $service = new SupplierCfdiImportService();
@@ -287,17 +287,28 @@ class CfdiSupplierWizard extends Controller
         return ImportOptions::fromArray([
             'product_action' => $this->request->get('product_action', 'auto'),
             'tax_mode' => $this->request->get('tax_mode', 'preserve'),
-            'update_supplier_prices' => $this->request->bool('update_supplier_prices'),
-            'auto_match_products' => $this->request->bool('auto_match_products'),
-            'price_multiplier' => $this->request->float('price_multiplier', 1.0),
+            'update_supplier_prices' => $this->requestBoolean('update_supplier_prices'),
+            'auto_match_products' => true,
+            'price_multiplier' => (float)$this->request->input('price_multiplier', 1.0),
             'codserie' => $this->request->get('codserie'),
         ]);
+    }
+
+    protected function requestBoolean(string $field, bool $default = false): bool
+    {
+        $value = $this->request->input($field);
+
+        if ($value === null || $value === '') {
+            return $default;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     protected function getImportConcepts(): array
     {
         $conceptos = $this->reader->getConceptos();
-        $submitted = $this->request->input('conceptos', []);
+        $submitted = $this->request->getArray('conceptos');
 
         foreach ($conceptos as $index => &$concepto) {
             $referencia = $submitted[$index]['referencia'] ?? '';
