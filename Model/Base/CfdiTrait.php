@@ -143,6 +143,12 @@ trait CfdiTrait
 
     /**
      * @var string
+     * Usuario que generó el CFDI
+     */
+    public $nick;
+
+    /**
+     * @var string
      * Fecha de creación del registro en el sistema
      */
     public $created_at;
@@ -153,10 +159,10 @@ trait CfdiTrait
      */
     public $updated_at;
 
-    /** @var string Usuario que generó el CFDI */
-    public $nick;
-
-    /** @var string Último usuario que modificó el CFDI */
+    /** @var
+     * string
+     * Último usuario que modificó el CFDI
+     */
     public $last_nick;
 
     public function emissionDate(): string

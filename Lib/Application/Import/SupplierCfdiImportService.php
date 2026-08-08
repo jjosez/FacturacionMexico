@@ -6,6 +6,7 @@ use Exception;
 use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\Calculator;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Empresa;
@@ -38,6 +39,12 @@ class SupplierCfdiImportService
         ?array $submittedConceptos = null
     ): ImportResult {
         $options = $options ?? new ImportOptions();
+
+        if (!empty($cfdi->idfactura)) {
+            return ImportResult::alreadyImported(
+                'Este CFDI ya está asociado a la factura #' . $cfdi->idfactura . '.'
+            );
+        }
 
         try {
             $db = new DataBase();
@@ -74,10 +81,19 @@ class SupplierCfdiImportService
             $invoice->save();
 
             $cfdi->idfactura = $invoice->idfactura;
-            $cfdi->save();
+            if (!$cfdi->save()) {
+                throw new Exception('No se pudo actualizar el CFDI con la factura generada');
+            }
             $this->saveCfdiRelations($cfdi, $reader);
 
             $db->commit();
+
+            Tools::log('audit')->notice('supplier-cfdi-invoice-created', [
+                '%uuid%' => $cfdi->uuid,
+                '%invoice%' => $invoice->idfactura,
+                '%type%' => $cfdi->tipo,
+                '%supplier%' => $supplier->codproveedor,
+            ]);
 
             return ImportResult::success(
                 $invoice,
@@ -169,7 +185,7 @@ class SupplierCfdiImportService
         $invoice->setSubject($supplier);
         $invoice->numproveedor = $cfdi->invoiceNumber();
         $invoice->codpago = $this->getFormaPagoFromCfdi($cfdi);
-        $invoice->setDate($cfdi->fecha_emision, $cfdi->getFechaEmision() ?? '12:00:00');
+        $invoice->setDate($cfdi->emissionDate(), $cfdi->emissionTime());
 
         if (strtoupper($cfdi->tipo) === 'E') {
             $invoice->codserie = $this->getEgresoSerie($options);

@@ -9,6 +9,7 @@ class ImportResult
     public bool $success;
     public ?FacturaProveedor $invoice = null;
     public ?string $error = null;
+    public bool $alreadyImported = false;
     public array $warnings = [];
     public array $appliedMappings = [];
     public array $createdProducts = [];
@@ -45,6 +46,13 @@ class ImportResult
         return $result;
     }
 
+    public static function alreadyImported(string $message): self
+    {
+        $result = self::failure($message);
+        $result->alreadyImported = true;
+        return $result;
+    }
+
     public function addWarning(string $warning): void
     {
         $this->warnings[] = $warning;
@@ -66,6 +74,7 @@ class ImportResult
             'invoice_id' => $this->invoice?->idfactura,
             'invoice_url' => $this->invoice?->url(),
             'error' => $this->error,
+            'already_imported' => $this->alreadyImported,
             'warnings' => $this->warnings,
             'applied_mappings' => $this->appliedMappings,
             'created_products' => $this->createdProducts,

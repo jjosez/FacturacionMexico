@@ -44,6 +44,8 @@ class CfdiSupplierWizard extends Controller
     public Proveedor $supplier;
     public array $conceptMatchResults = [];
     public MatchingStats $matchStats;
+    public string $importError = '';
+    public string $wizardError = '';
 
     public function getPageData(): array
     {
@@ -67,7 +69,10 @@ class CfdiSupplierWizard extends Controller
             return;
         }
 
-        $this->initWizard();
+        if (!$this->initWizard()) {
+            $this->setTemplate('CfdiSupplierWizardError');
+            return;
+        }
 
         $this->execAction($action);
         $this->setTemplate('CfdiSupplierWizard');
@@ -96,16 +101,34 @@ class CfdiSupplierWizard extends Controller
         }
     }
 
-    protected function initWizard(): void
+    protected function initWizard(): bool
     {
         $code = $this->request->inputOrQuery('code');
 
+        if (empty($code)) {
+            $this->wizardError = 'No se recibió el identificador del CFDI. Abra el wizard desde un CFDI de proveedor.';
+            return false;
+        }
+
         $this->cfdi = new CfdiProveedor();
-        $this->cfdi->load($code);
+        if (!$this->cfdi->load($code)) {
+            $this->wizardError = 'El CFDI solicitado no existe o ya no está disponible.';
+            return false;
+        }
 
         $this->loadSupplier();
-        $this->loadCfdiReader();
+        if (empty($this->supplier->codproveedor)) {
+            $this->wizardError = 'No se pudo identificar el proveedor del CFDI.';
+            return false;
+        }
+
+        if (!$this->loadCfdiReader()) {
+            $this->wizardError = 'No se pudo leer el XML asociado al CFDI.';
+            return false;
+        }
+
         $this->loadMatchResults();
+        return true;
     }
 
     protected function loadMatchResults(): void
@@ -297,7 +320,11 @@ class CfdiSupplierWizard extends Controller
                     $this->redirect($result->invoice->url());
                 }
 
-                Tools::log()->warning($result->error ?? 'Error al importar CFDI');
+                $this->importError = $result->error ?? 'Error al importar CFDI';
+                Tools::log('audit')->warning('supplier-cfdi-import-failed', [
+                    '%uuid%' => $this->cfdi->uuid,
+                    '%error%' => $this->importError,
+                ]);
             } else {
                 $conceptos = $this->reader->getConceptos();
 
@@ -311,7 +338,11 @@ class CfdiSupplierWizard extends Controller
                 $this->redirect($invoice->url());
             }
         } catch (Exception $e) {
-            Tools::log()->warning('Error al importar: ' . $e->getMessage());
+            $this->importError = 'Error al importar: ' . $e->getMessage();
+            Tools::log('audit')->error('supplier-cfdi-import-exception', [
+                '%uuid%' => $this->cfdi->uuid ?? '',
+                '%error%' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -358,13 +389,19 @@ class CfdiSupplierWizard extends Controller
         $this->supplier = $this->cfdi->getSupplier();
     }
 
-    protected function loadCfdiReader(): void
+    protected function loadCfdiReader(): bool
     {
         try {
             $fileContent = $this->cfdi->localFileContent();
+            if (empty($fileContent)) {
+                return false;
+            }
+
             $this->reader = new CfdiQuickReader($fileContent);
+            return true;
         } catch (Exception $e) {
             Tools::log()->error($e->getMessage());
+            return false;
         }
     }
 

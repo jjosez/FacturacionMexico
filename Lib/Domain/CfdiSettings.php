@@ -24,7 +24,11 @@ class CfdiSettings
 
     public static function serieEgresoProveedor(): string
     {
-        return Tools::settings('default', 'codserierec', '');
+        return Tools::settings(
+            'cfdi',
+            'supplier-rectifying-series',
+            Tools::settings('default', 'codserierec', '')
+        );
     }
 
     public static function satCredentials(Empresa $company): array

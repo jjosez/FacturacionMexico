@@ -37,17 +37,8 @@ class CfdiProveedor extends ModelClass
     /**
      * @var string
      */
-    public $filename;
-
-    /**
-     * @var string
-    */
-    public $fecha_emision;
-
-    /**
-     * @var string
-     */
     public $codproveedor;
+
 
     public function clear(): void
     {

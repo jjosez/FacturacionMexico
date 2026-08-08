@@ -8,7 +8,7 @@
         <div class="row align-items-center">
             <div class="col">
                 <div class="btn-group">
-                    <a class="btn btn-sm btn-dark" href="{{ fsc.url() }}" title="Recargar">
+                    <a class="btn btn-sm btn-dark" href="{{ fsc.cfdi.url('wizard') }}" title="Recargar">
                         <i class="fas fa-redo" aria-hidden="true"></i>
                     </a>
                     <a class="btn btn-sm btn-info" href="{{ fsc.cfdi.url() }}" title="Volver al CFDI">
@@ -29,6 +29,12 @@
 {% block body %}
     <div class="container-fluid pb-4 wizard-container">
         <div class="wizard-alerts"></div>
+        {% if fsc.importError %}
+            <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
+                <i class="fas fa-circle-exclamation mt-1" aria-hidden="true"></i>
+                <div>{{ fsc.importError }}</div>
+            </div>
+        {% endif %}
         <form id="formCfdiWizard" name="formCfdiWizard" action="{{ fsc.url() }}" method="post">
             <input type="hidden" value="import-supplier-cfdi" name="action">
             <input type="hidden" value="{{ fsc.cfdi.primaryColumnValue() }}" name="code">
@@ -50,13 +56,7 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link text-start" id="step3-tab" data-bs-toggle="tab"
                             data-bs-target="#step3" type="button" role="tab" aria-controls="step3" aria-selected="false">
-                        <span class="badge rounded-pill text-bg-secondary me-2">3</span> Revisión
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link text-start" id="step4-tab" data-bs-toggle="tab"
-                            data-bs-target="#step4" type="button" role="tab" aria-controls="step4" aria-selected="false">
-                        <span class="badge rounded-pill text-bg-secondary me-2">4</span> Configuración
+                        <span class="badge rounded-pill text-bg-secondary me-2">3</span> Revisión y configuración
                     </button>
                 </li>
             </ul>
@@ -70,8 +70,6 @@
                 </div>
                 <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
                     {{ include('Block/CfdiSupplierWizard-3.html.twig') }}
-                </div>
-                <div class="tab-pane fade" id="step4" role="tabpanel" aria-labelledby="step4-tab">
                     {{ include('Block/CfdiSupplierWizard-4.html.twig') }}
                 </div>
             </div>
