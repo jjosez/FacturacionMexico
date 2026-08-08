@@ -64,7 +64,11 @@ class CfdiSupplierProductImporter
 
         // Verificar que la referencia del proveedor no esté vacía
         if (empty($refproveedor)) {
-            $refproveedor = $referencia;
+            return [
+                'ok' => false,
+                'message' => 'La referencia del proveedor no puede estar vacía',
+                'data' => null
+            ];
         }
 
         // Buscar si ya existe la vinculación

@@ -4,6 +4,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching;
 
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\MatcherInterface;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\Matchers\ReferenceMatcher;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\Matchers\SupplierLinkMatcher;
 
 class ProductMatchingService
@@ -103,6 +104,7 @@ class ProductMatchingService
     private function registerDefaultMatchers(): void
     {
         $this->matchers[] = new SupplierLinkMatcher();
+        $this->matchers[] = new ReferenceMatcher();
 
         $this->autoRegisterDefaultMatchers = false;
     }

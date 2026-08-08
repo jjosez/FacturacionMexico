@@ -227,8 +227,14 @@ class EditCfdiProveedor extends EditController
     {
         $referencia = $this->request->input('referencia');
         $refproveedor = $this->request->input('refproveedor');
+        $index = (int)$this->request->input('index', -1);
         $precio = (float)$this->request->input('precio', 0);
         $codproveedor = $this->request->input('codproveedor', '');
+
+        if (empty($refproveedor) && $index >= 0 && isset($this->reader)) {
+            $conceptos = $this->reader->conceptosNormalized();
+            $refproveedor = $conceptos[$index]['NoIdentificacion'] ?? '';
+        }
 
         $service = new CfdiSupplierProductImporter();
         $result = $service->vincular(

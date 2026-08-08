@@ -17,6 +17,7 @@ use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Dinamic\Model\Serie;
+use FacturaScripts\Core\Plugins;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\ProductMatchingService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
@@ -41,11 +42,16 @@ class SupplierCfdiImportService
         $options = $options ?? new ImportOptions();
 
         if (!empty($cfdi->idfactura)) {
-            return ImportResult::alreadyImported(
-                'Este CFDI ya está asociado a la factura #' . $cfdi->idfactura . '.'
-            );
+            $existing = new FacturaProveedor();
+            if ($existing->load($cfdi->idfactura) && !$existing->editable) {
+                return ImportResult::alreadyImported(Tools::lang()->trans(
+                    'supplier-cfdi-invoice-not-editable',
+                    ['%id%' => $cfdi->idfactura]
+                ));
+            }
         }
 
+        $db = null;
         try {
             $db = new DataBase();
             $db->beginTransaction();
@@ -103,8 +109,14 @@ class SupplierCfdiImportService
                 $linkedProducts
             );
         } catch (Exception $e) {
-            $db->rollBack();
-            return ImportResult::failure($e->getMessage());
+            if ($db !== null) {
+                $db->rollBack();
+            }
+
+            $error = trim($e->getMessage());
+            return ImportResult::failure($error !== '' ? $error : Tools::lang()->trans(
+                'supplier-cfdi-import-failed'
+            ));
         }
     }
 
@@ -179,6 +191,12 @@ class SupplierCfdiImportService
         ];
 
         if ($invoice->loadWhere($where)) {
+            if (!$invoice->editable) {
+                throw new Exception(Tools::lang()->trans(
+                    'supplier-cfdi-invoice-not-editable',
+                    ['%id%' => $invoice->idfactura]
+                ));
+            }
             return $invoice;
         }
 
@@ -345,6 +363,10 @@ class SupplierCfdiImportService
         $product = new Producto();
         $product->descripcion = $concepto['Descripcion'];
 
+        if (Plugins::isEnabled('SKU') && !empty($concepto['NoIdentificacion'])) {
+            $product->referencia_fabricante = $concepto['NoIdentificacion'];
+        }
+
         if (!empty($concepto['NoIdentificacion'])) {
             $product->referencia = $this->generateUniqueReference($concepto['NoIdentificacion']);
         } else {
@@ -424,7 +446,7 @@ class SupplierCfdiImportService
             return $series[0]->codserie;
         }
 
-        throw new Exception('No existe una serie rectificativa configurada para CFDI de egreso de proveedores');
+        throw new Exception(Tools::lang()->trans('supplier-cfdi-rectifying-series-missing'));
     }
 
     private function saveCfdiRelations(CfdiProveedor $cfdi, CfdiQuickReader $reader): void

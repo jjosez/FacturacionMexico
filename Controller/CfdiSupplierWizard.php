@@ -318,9 +318,10 @@ class CfdiSupplierWizard extends Controller
 
                 if ($result->success && $result->invoice) {
                     $this->redirect($result->invoice->url());
+                    return;
                 }
 
-                $this->importError = $result->error ?? 'Error al importar CFDI';
+                $this->importError = $result->error ?: Tools::lang()->trans('supplier-cfdi-import-failed');
                 Tools::log('audit')->warning('supplier-cfdi-import-failed', [
                     '%uuid%' => $this->cfdi->uuid,
                     '%error%' => $this->importError,
@@ -336,6 +337,7 @@ class CfdiSupplierWizard extends Controller
                 );
 
                 $this->redirect($invoice->url());
+                return;
             }
         } catch (Exception $e) {
             $this->importError = 'Error al importar: ' . $e->getMessage();

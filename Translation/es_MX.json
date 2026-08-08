@@ -8,5 +8,11 @@
   "invoice-date": "Fecha de la factura",
   "invoice-serie": "Serie de la factura",
   "mark-as-global-invoice-cfdi": "Marcar como CFDI de Factura Global",
-  "selected-delivery-notes": "Remisiones seleccionadas"
+  "selected-delivery-notes": "Remisiones seleccionadas",
+  "supplier-cfdi-invoice-not-editable": "La factura de proveedor #%id% ya no está en un estado editable.",
+  "supplier-cfdi-rectifying-series-missing": "No existe una serie rectificativa configurada para CFDI de egreso de proveedores.",
+  "supplier-cfdi-import-failed": "No se pudo importar el CFDI de proveedor.",
+  "supplier-cfdi-invoice-generated": "Factura de proveedor generada correctamente.",
+  "supplier-cfdi-invoice-updated": "Factura de proveedor actualizada correctamente.",
+  "supplier-cfdi-status-invoiced": "Factura Generada"
 }

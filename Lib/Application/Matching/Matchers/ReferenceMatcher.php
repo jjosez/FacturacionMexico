@@ -31,7 +31,7 @@ class ReferenceMatcher implements MatcherInterface
 
         $product = new Producto();
 
-        if (Plugins::isEnabled('SKU') && method_exists($product, 'referencia_fabricante')) {
+        if (Plugins::isEnabled('SKU')) {
             $where = [
                 new DataBaseWhere('referencia_fabricante', $noIdentificacion)
             ];
