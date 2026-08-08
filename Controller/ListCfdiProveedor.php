@@ -20,8 +20,10 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Controller;
 
 use Exception;
+use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
 
@@ -70,13 +72,13 @@ class ListCfdiProveedor extends ExtendedController\ListController
     protected function createMainView($viewName = 'ListCfdiProveedor'): void
     {
         $this->addView($viewName, 'CfdiProveedor', 'CFDI Proveedores', 'fas fa-file-invoice');
-        $this->addSearchFields($viewName, ['emisor_razon', 'receptor_razon', 'uuid']);
+        $this->addSearchFields($viewName, ['emisor_nombre', 'emisor_rfc', 'uuid']);
         $this->addOrderBy($viewName, ['fecha_emision'], 'Fecha emision', 2);
         $this->addOrderBy($viewName, ['fecha_timbrado'], 'Fecha timbrado', 2);
 
         $this->addFilterAutocomplete($viewName, 'supplier', 'supplier', 'codproveedor', 'proveedores', 'codproveedor', 'razonsocial');
         $this->addFilterPeriod($viewName, 'date', 'period', 'fecha');
-        $this->addFilterSelect($viewName, 'tipo', 'type', 'tipo_cfdi', CfdiCatalogo::tipoCfdi());
+        $this->addFilterSelect($viewName, 'tipo', 'type', 'tipo', CfdiCatalogo::tipoCfdi());
         $this->addFilterSelect($viewName, 'estado', 'state', 'estado', CfdiCatalogo::estadoCfdi());
 
         $this->setSettings($viewName, 'btnNew', false);
@@ -128,5 +130,16 @@ class ListCfdiProveedor extends ExtendedController\ListController
         if ($errorCount > 0 && $successCount === 0) {
             Tools::log()->error('batch-import-all-failed');
         }
+    }
+
+    protected function loadData($viewName, $view): void
+    {
+        if ($viewName === 'ListCfdiProveedor') {
+            $where = [new DataBaseWhere('tipo', 'P', '!=')];
+
+            $view->loadData('', $where);
+        }
+
+        parent::loadData($viewName, $view);
     }
 }

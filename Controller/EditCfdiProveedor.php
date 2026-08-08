@@ -54,7 +54,7 @@ class EditCfdiProveedor extends EditController
     {
         $data = parent::getPageData();
         $data['menu'] = 'CFDI';
-        $data['title'] = 'EditCfdiProveedor';
+        $data['title'] = 'CFDI Proveedor';
         $data['icon'] = 'fa-solid fa-file-import';
         return $data;
     }
