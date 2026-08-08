@@ -1,74 +1,56 @@
-{#
-/**
- *  This file is part of FacturacionMexico plugin for FacturaScripts
- *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
- */
-#}
-{% import 'Macro/Form.html.twig' as form %}
-<div class="row row-cols-1 row-cols-md-2 g-4">
-    <div class="col">
-        <div class="card">
-            <div class="card-header">Forma de pago CFDI</div>
-            <div class="card-body">
-                <div class="form-group">
-                    {{ form.inputtext('formapago', 'Forma de pago', fsc.reader.formaPago(), 'disabled') }}
-                </div>
-                <div class="form-group">
-                    {{ form.inputtext('metodopago', 'Método de pago', fsc.reader.metodoPago(), 'disabled') }}
+<div class="vstack gap-3">
+    <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
+        <i class="fas fa-circle-info mt-1" aria-hidden="true"></i>
+        <div>Confirma la forma de pago que se utilizará en la factura interna.</div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-body fw-semibold">Datos del CFDI</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6 text-muted">Forma de pago</dt>
+                        <dd class="col-sm-6">{{ fsc.reader.formaPago() }}</dd>
+                        <dt class="col-sm-6 text-muted">Método de pago</dt>
+                        <dd class="col-sm-6 mb-0">{{ fsc.reader.metodoPago() }}</dd>
+                    </dl>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col">
-        <div class="card">
-            <div class="card-header">Forma de pago EMPRESA</div>
-            <div class="card-body">
-                <div class="form-group">
-                    <label for="invoice_payment_method">{{ label }}</label>
-                    <select id="invoice_payment_method" name="invoice-payment-method" class="form-control" required>
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-body fw-semibold">Datos de la empresa</div>
+                <div class="card-body">
+                    <label for="invoice_payment_method" class="form-label">Forma de pago interna</label>
+                    <select id="invoice_payment_method" name="invoice-payment-method" class="form-select" required>
                         {% for item in fsc.cfdiToInvoicePaymentMethods() %}
-                            <option value="{{ item.id() }}" {% if fsc.reader.formaPago() == item.clavesat %} selected {% endif %}>
-                                {{ item.clavesat }} - {{ item.descripcion }}</option>
+                            <option value="{{ item.id() }}" {% if fsc.reader.formaPago() == item.clavesat %}selected{% endif %}>
+                                {{ item.clavesat }} - {{ item.descripcion }}
+                            </option>
                         {% endfor %}
                     </select>
-                </div>
-                <div class="form-group">
-                    {{ form.inputtext('metodopago', 'Método de pago', fsc.reader.metodoPago(), 'disabled') }}
+                    <div class="form-text">Puedes cambiarla si el catálogo interno usa una clave distinta.</div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="card">
-    <div class="card-header">Confirmar información</div>
-    <div class="card-body">
-        <div class="form-group">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="saveCfdiData" name="save-cfdi-data">
-                <label class="form-check-label" for="saveCfdiData">
-                    Actualizar / Registrar CFDI
-                </label>
+    <div class="card">
+        <div class="card-header bg-body fw-semibold">Opciones de registro</div>
+        <div class="card-body">
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="saveCfdiData" name="save-cfdi-data" checked>
+                <label class="form-check-label" for="saveCfdiData">Conservar y actualizar los datos del CFDI</label>
             </div>
-        </div>
-        <div class="form-group">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="saveInvoiceData" name="save-product-data">
-                <label class="form-check-label" for="saveInvoiceData">
-                    Actualizar / Registrar Factura
-                </label>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="saveInvoiceData" name="save-invoice-data" checked>
+                <label class="form-check-label" for="saveInvoiceData">Generar y actualizar la factura de proveedor</label>
             </div>
-        </div>
-        <div class="form-group">
-            <div class="form-check">
+            <div class="form-check form-switch mb-0">
                 <input class="form-check-input" type="checkbox" id="saveProductsData" name="save-product-data">
-                <label class="form-check-label" for="saveProductsData">
-                    Actualizar / Registrar Productos
-                </label>
+                <label class="form-check-label" for="saveProductsData">Actualizar datos de productos y vínculos</label>
             </div>
         </div>
-    </div>
-    <div class="card-footer text-white text-right">
-        <button type="submit" class="btn btn-primary">Confirmar</button>
     </div>
 </div>

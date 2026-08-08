@@ -29,6 +29,10 @@ use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierInvoiceImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierCfdiImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\ProductMatchingService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\MatchingStats;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 
 class CfdiSupplierWizard extends Controller
@@ -36,6 +40,8 @@ class CfdiSupplierWizard extends Controller
     public CfdiProveedor $cfdi;
     public CfdiQuickReader $reader;
     public Proveedor $supplier;
+    public array $conceptMatchResults = [];
+    public MatchingStats $matchStats;
 
     public function getPageData(): array
     {
@@ -97,12 +103,75 @@ class CfdiSupplierWizard extends Controller
 
         $this->loadSupplier();
         $this->loadCfdiReader();
+        $this->loadMatchResults();
+    }
+
+    protected function loadMatchResults(): void
+    {
+        $matchingService = new ProductMatchingService();
+        $conceptos = $this->reader->getConceptos();
+
+        $this->conceptMatchResults = $matchingService->matchAll($conceptos, $this->supplier);
+        $this->matchStats = $matchingService->getStats($this->conceptMatchResults);
     }
 
     protected function searchProduct(): void
     {
         $query = $this->request->input('query');
 
+        if (empty($query) || mb_strlen($query, 'UTF-8') < 2) {
+            $this->response->setContent(json_encode([]));
+            return;
+        }
+
+        $query = mb_substr($query, 0, 100);
+
+        $codproveedor = '';
+        if (isset($this->supplier) && !empty($this->supplier->codproveedor)) {
+            $codproveedor = $this->supplier->codproveedor;
+        }
+
+        $result = !empty($codproveedor)
+            ? $this->searchProductsWithSupplierPriority($query, $codproveedor)
+            : $this->searchProductsStandard($query);
+
+        $this->response->setContent(json_encode($result));
+    }
+
+    protected function searchProductsWithSupplierPriority(string $query, string $codproveedor): array
+    {
+        $db = new \FacturaScripts\Core\Base\DataBase();
+
+        $sql = "SELECT
+                    p.referencia,
+                    p.descripcion,
+                    p.tipoventa,
+                    p.codfamilia,
+                    p.preciocoste,
+                    p.pvp,
+                    p.stockfis,
+                    p.controlstock,
+                    p.referencia_fabricante,
+                    pp.refproveedor,
+                    pp.precio AS precio_proveedor,
+                    CASE WHEN pp.refproveedor IS NOT NULL THEN 1 ELSE 0 END AS is_linked
+                FROM productos p
+                LEFT JOIN productos_proveedores pp ON p.referencia = pp.referencia AND pp.codproveedor = ?
+                WHERE p.referencia LIKE ?
+                   OR p.descripcion LIKE ?
+                   OR p.referencia_fabricante LIKE ?
+                   OR pp.refproveedor LIKE ?
+                ORDER BY is_linked DESC, p.descripcion ASC
+                LIMIT 50";
+
+        $likeQuery = '%' . $db->escapeString($query) . '%';
+        $result = $db->select($sql, [$codproveedor, $likeQuery, $likeQuery, $likeQuery, $likeQuery]);
+
+        return $this->formatProductSearchResults($result, $query);
+    }
+
+    protected function searchProductsStandard(string $query): array
+    {
         $where = [
             Where::orLike('referencia', $query),
             Where::orLike('descripcion', $query),
@@ -112,30 +181,132 @@ class CfdiSupplierWizard extends Controller
             array_unshift($where, Where::orLike('referencia_fabricante', $query));
         }
 
-        $result = [];
+        $results = [];
         foreach (Producto::all($where, [], 0, 50) as $product) {
-            $result[] = $product->toArray(true);
+            $results[] = $product->toArray(true);
         }
-        $result = json_encode($result);
-        $this->response->setContent($result);
+
+        return $results;
+    }
+
+    protected function formatProductSearchResults(array $dbResults, string $query): array
+    {
+        $results = [];
+
+        foreach ($dbResults as $row) {
+            $item = [
+                'referencia' => $row['referencia'],
+                'descripcion' => $row['descripcion'],
+                'tipoventa' => $row['tipoventa'],
+                'codfamilia' => $row['codfamilia'],
+                'preciocoste' => $row['preciocoste'],
+                'pvp' => $row['pvp'],
+                'stockfis' => $row['stockfis'],
+                'controlstock' => $row['controlstock'],
+                'referencia_fabricante' => $row['referencia_fabricante'],
+                'refproveedor' => $row['refproveedor'],
+                'precio_proveedor' => $row['precio_proveedor'],
+                'is_linked' => (int)$row['is_linked'] === 1,
+            ];
+
+            if (!empty($row['refproveedor'])) {
+                $item['match_field'] = 'refproveedor';
+                $item['match_value'] = $row['refproveedor'];
+            } elseif (!empty($row['referencia_fabricante']) && stripos($row['referencia_fabricante'], $query) !== false) {
+                $item['match_field'] = 'referencia_fabricante';
+                $item['match_value'] = $row['referencia_fabricante'];
+            } elseif (stripos($row['referencia'], $query) !== false) {
+                $item['match_field'] = 'referencia';
+                $item['match_value'] = $row['referencia'];
+            } else {
+                $item['match_field'] = 'descripcion';
+                $item['match_value'] = $row['descripcion'];
+            }
+
+            $results[] = $item;
+        }
+
+        return $results;
+    }
+
+    protected function formatSingleProduct(Producto $product): array
+    {
+        return [
+            'referencia' => $product->referencia,
+            'descripcion' => $product->descripcion,
+            'tipoventa' => $product->tipoventa,
+            'codfamilia' => $product->codfamilia,
+            'preciocoste' => $product->preciocoste,
+            'pvp' => $product->pvp,
+            'stockfis' => $product->stockfis,
+            'controlstock' => $product->controlstock,
+            'referencia_fabricante' => $product->referencia_fabricante ?? null,
+            'is_linked' => false,
+        ];
     }
 
     protected function importCfdiAction(): void
     {
         try {
-            $conceptos = $this->reader->conceptosNormalized();
+            $options = $this->getImportOptions();
+            $createInvoice = $this->request->bool('create_invoice', true);
 
-            $importer = new CfdiSupplierInvoiceImporter();
-            $invoice = $importer->import(
-                $this->cfdi,
-                $this->supplier,
-                $conceptos
-            );
+            if ($createInvoice) {
+                $service = new SupplierCfdiImportService();
+                $result = $service->importSingle(
+                    $this->cfdi,
+                    $this->supplier,
+                    $options,
+                    $this->getImportConcepts()
+                );
 
-            $this->redirect($invoice->url());
+                if ($result->success && $result->invoice) {
+                    $this->redirect($result->invoice->url());
+                }
+
+                Tools::log()->warning($result->error ?? 'Error al importar CFDI');
+            } else {
+                $conceptos = $this->reader->getConceptos();
+
+                $importer = new CfdiSupplierInvoiceImporter();
+                $invoice = $importer->import(
+                    $this->cfdi,
+                    $this->supplier,
+                    $conceptos
+                );
+
+                $this->redirect($invoice->url());
+            }
         } catch (Exception $e) {
-            Tools::log()->warning('Error al cargar los conceptos.');
+            Tools::log()->warning('Error al importar: ' . $e->getMessage());
         }
+    }
+
+    protected function getImportOptions(): ImportOptions
+    {
+        return ImportOptions::fromArray([
+            'product_action' => $this->request->get('product_action', 'auto'),
+            'tax_mode' => $this->request->get('tax_mode', 'preserve'),
+            'update_supplier_prices' => $this->request->bool('update_supplier_prices'),
+            'auto_match_products' => $this->request->bool('auto_match_products'),
+            'price_multiplier' => $this->request->float('price_multiplier', 1.0),
+            'codserie' => $this->request->get('codserie'),
+        ]);
+    }
+
+    protected function getImportConcepts(): array
+    {
+        $conceptos = $this->reader->getConceptos();
+        $submitted = $this->request->input('conceptos', []);
+
+        foreach ($conceptos as $index => &$concepto) {
+            $referencia = $submitted[$index]['referencia'] ?? '';
+            $concepto['referencia'] = is_string($referencia) ? trim($referencia) : '';
+        }
+
+        unset($concepto);
+
+        return $conceptos;
     }
 
     protected function loadSupplier(): void
@@ -180,5 +351,17 @@ class CfdiSupplierWizard extends Controller
         ];
 
         return FormaPago::all($where);
+    }
+
+    public function getMatchedConcept(int $index): ?array
+    {
+        return isset($this->conceptMatchResults[$index])
+            ? $this->conceptMatchResults[$index]->toArray()
+            : null;
+    }
+
+    public function getMatchStatsArray(): array
+    {
+        return $this->matchStats->toArray();
     }
 }

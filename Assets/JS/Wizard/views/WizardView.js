@@ -60,6 +60,11 @@ class WizardView {
      */
     updateSubmitButtonLabel(label) {
         if (this.submitBtn) {
+            const labelElement = this.submitBtn.querySelector('[data-button-label]');
+            if (labelElement) {
+                labelElement.textContent = label;
+                return;
+            }
             this.submitBtn.textContent = label;
         }
     }

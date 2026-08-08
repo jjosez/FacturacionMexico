@@ -21,16 +21,35 @@ export class ProductSearchView {
         this.dom = {
             modal: document.getElementById(modalId),
             searchInput: document.getElementById(searchInputId),
-            tableBody: document.querySelector(tableBodySelector)
+            tableBody: document.querySelector(tableBodySelector),
+            clearButton: document.getElementById('clearProductSearch'),
+            status: document.getElementById('productSearchStatus')
         };
+
+        this.onClearSearch = this.onClearSearch.bind(this);
+        this.dom.clearButton?.addEventListener('click', this.onClearSearch);
     }
 
     /**
      * Abre el modal de búsqueda
+     * @param {Object} options - Opciones adicionales
+     * @param {string} options.code - Código del concepto (folio)
+     * @param {string} options.ref - Referencia del proveedor
      */
-    openModal() {
+    openModal(options = {}) {
         if (this.dom.modal && typeof bootstrap !== 'undefined') {
+            // Actualizar título con información del concepto
+            const codeEl = document.getElementById('product:link:modal:code');
+            const refEl = document.getElementById('product:link:modal:ref');
+            if (codeEl) {
+                codeEl.textContent = options.code ? ': #' + options.code : '';
+            }
+            if (refEl) {
+                refEl.textContent = options.ref ? ' | Referencia CFDI: ' + options.ref : '';
+            }
+
             const bsModal = new bootstrap.Modal(this.dom.modal);
+            this.dom.modal.addEventListener('shown.bs.modal', () => this.dom.searchInput?.focus(), {once: true});
             bsModal.show();
         }
     }
@@ -54,6 +73,19 @@ export class ProductSearchView {
         if (this.dom.searchInput) {
             this.dom.searchInput.value = '';
         }
+        this.updateStatus('');
+    }
+
+    onClearSearch() {
+        this.clearSearch();
+        this.renderEmptyState('Escribe al menos 2 caracteres para buscar.');
+        this.dom.searchInput?.focus();
+    }
+
+    updateStatus(message) {
+        if (this.dom.status) {
+            this.dom.status.textContent = message;
+        }
     }
 
     /**
@@ -67,6 +99,8 @@ export class ProductSearchView {
             this.renderEmptyState();
             return;
         }
+
+        this.updateStatus(`${productos.length} producto${productos.length === 1 ? '' : 's'} encontrado${productos.length === 1 ? '' : 's'}`);
 
         // Renderizar usando template
         this.templateManager.renderToTbody(
@@ -83,6 +117,8 @@ export class ProductSearchView {
     renderEmptyState(message = null) {
         if (!this.dom.tableBody) return;
 
+        this.updateStatus('');
+
         this.templateManager.renderSingleToTbody(
             'product:search:empty:template',
             { message },
@@ -97,6 +133,8 @@ export class ProductSearchView {
     renderLoadingState(message = null) {
         if (!this.dom.tableBody) return;
 
+        this.updateStatus('Buscando...');
+
         this.templateManager.renderSingleToTbody(
             'product:search:loading:template',
             { message },
@@ -110,6 +148,8 @@ export class ProductSearchView {
      */
     renderErrorState(message = null) {
         if (!this.dom.tableBody) return;
+
+        this.updateStatus('No se pudo completar la búsqueda');
 
         this.templateManager.renderSingleToTbody(
             'product:search:error:template',

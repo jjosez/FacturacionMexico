@@ -96,6 +96,14 @@ class EditCfdiProveedor extends EditController
                     'type' => 'action'
                 ]);
 
+                $this->addButton($viewName, [
+                    'action' => 'open-wizard',
+                    'color' => 'success',
+                    'icon' => 'fa-solid fa-magic',
+                    'label' => 'Wizard Importación',
+                    'type' => 'action'
+                ]);
+
                 $this->fileName = $this->getModel()->filename;
                 $this->loadReader();
                 $this->loadSupplier();
@@ -123,6 +131,11 @@ class EditCfdiProveedor extends EditController
 
         if ($action === 'link-product') {
             $this->linkProductAction();
+            return;
+        }
+
+        if ($action === 'open-wizard') {
+            $this->openWizardAction();
             return;
         }
 
@@ -227,6 +240,30 @@ class EditCfdiProveedor extends EditController
 
         $this->response()->json($result);
         $this->response()->send();
+    }
+
+    protected function openWizardAction(): void
+    {
+        $code = $this->request->get('code');
+
+        if (empty($code)) {
+            Tools::log()->warning('No se ha seleccionado un CFDI');
+            $this->redirect($this->getModel()->url());
+            return;
+        }
+
+        $cfdi = new CfdiProveedor();
+        $cfdi->load($code);
+
+        if (empty($cfdi->primaryColumnValue())) {
+            Tools::log()->warning('No se pudo cargar el CFDI');
+            return;
+        }
+
+        $wizardUrl = 'CfdiSupplierWizard?type=' . rawurlencode($cfdi->tipo)
+            . '&code=' . rawurlencode($cfdi->primaryColumnValue());
+
+        $this->redirect($wizardUrl);
     }
 
     public function getReader(): ?CfdiQuickReader

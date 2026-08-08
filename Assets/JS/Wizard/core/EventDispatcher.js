@@ -44,9 +44,11 @@ class EventDispatcher {
         this._listening = true;
 
         document.addEventListener('click', (event) => {
-            const action = event.target.dataset.action;
+            const target = event.target instanceof Element ? event.target : event.target.parentElement;
+            const actionElement = target?.closest('[data-action]');
+            const action = actionElement?.dataset.action;
             if (action) {
-                this.dispatch(action, event.target);
+                this.dispatch(action, actionElement);
             }
         });
     }

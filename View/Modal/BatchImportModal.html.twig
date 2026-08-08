@@ -1,0 +1,265 @@
+{#
+/**
+ * Batch Import Modal for CFDI supplier imports
+ */
+#}
+<div class="modal fade" id="batchImportModal" tabindex="-1" aria-labelledby="batchImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="batchImportForm" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="batchImportModalLabel">
+                        <i class="fas fa-file-import me-2"></i>Importación Masiva de CFDIs
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Puede seleccionar múltiples archivos XML o un archivo ZIP conteniendo CFDIs.
+                        Máximo 50 archivos o 10MB.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Archivos CFDI</label>
+                        <input type="file" name="xmlfiles[]" multiple accept=".xml,.zip" class="form-control"
+                               id="batchImportFiles" required>
+                        <small class="text-muted">Archivos XML individuales o ZIP con múltiples CFDIs</small>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="mb-3"><i class="fas fa-cog me-2"></i>Opciones de Importación</h6>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Acción con productos</label>
+                                <select name="product_action" class="form-select" id="batchProductAction">
+                                    <option value="skip">Solo vincular productos existentes</option>
+                                    <option value="auto" selected>Vincular automáticamente</option>
+                                    <option value="create">Crear productos no encontrados</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Modo de impuestos</label>
+                                <select name="tax_mode" class="form-select" id="batchTaxMode">
+                                    <option value="preserve" selected>Mantener del CFDI</option>
+                                    <option value="company">Usar configuración de empresa</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="create_invoices" id="batchCreateInvoices" value="1"
+                                           class="form-check-input" checked>
+                                    <label class="form-check-label" for="batchCreateInvoices">
+                                        Generar facturas automáticamente
+                                    </label>
+                                </div>
+
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="update_supplier_prices" id="batchUpdatePrices"
+                                           value="1" class="form-check-input">
+                                    <label class="form-check-label" for="batchUpdatePrices">
+                                        Actualizar precios de proveedor
+                                    </label>
+                                </div>
+
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="auto_match_products" id="batchAutoMatch" value="1"
+                                           class="form-check-input" checked>
+                                    <label class="form-check-label" for="batchAutoMatch">
+                                        Matching automático de productos
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Multiplicador de precios</label>
+                                <div class="input-group">
+                                    <input type="number" name="price_multiplier" id="batchPriceMultiplier"
+                                           value="1.00" step="0.01" min="0.01" class="form-control">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="text-muted">Ej: 1.12 para agregar 12%</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress d-none" id="batchProgressContainer">
+                        <div class="progress-bar" id="batchProgressBar" role="progressbar" style="width: 0%">
+                            <span id="batchProgressText">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="d-none" id="batchResults">
+                        <hr>
+                        <h6><i class="fas fa-list me-2"></i>Resultados</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped" id="batchResultsTable">
+                                <thead>
+                                <tr>
+                                    <th>UUID</th>
+                                    <th>Estado</th>
+                                    <th>Mensaje</th>
+                                </tr>
+                                </thead>
+                                <tbody id="batchResultsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="batchCancelBtn">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="batchSubmitBtn">
+                        <i class="fas fa-upload me-2"></i>Importar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const batchModal = document.getElementById('batchImportModal');
+    const batchForm = document.getElementById('batchImportForm');
+    const batchProgressContainer = document.getElementById('batchProgressContainer');
+    const batchProgressBar = document.getElementById('batchProgressBar');
+    const batchProgressText = document.getElementById('batchProgressText');
+    const batchResults = document.getElementById('batchResults');
+    const batchResultsBody = document.getElementById('batchResultsBody');
+    const batchSubmitBtn = document.getElementById('batchSubmitBtn');
+    const batchCancelBtn = document.getElementById('batchCancelBtn');
+
+    let isProcessing = false;
+
+    batchForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (isProcessing) return;
+
+        const formData = new FormData(batchForm);
+        const files = formData.getAll('xmlfiles[]');
+
+        if (files.length === 0 || (files.length === 1 && files[0].size === 0)) {
+            showToast('Seleccione al menos un archivo', 'danger');
+            return;
+        }
+
+        if (files.length > 50) {
+            showToast('Máximo 50 archivos a la vez', 'danger');
+            return;
+        }
+
+        isProcessing = true;
+        batchSubmitBtn.disabled = true;
+        batchCancelBtn.disabled = false;
+        batchProgressContainer.classList.remove('d-none');
+        batchResults.classList.add('d-none');
+        batchResultsBody.innerHTML = '';
+
+        updateProgress(0);
+
+        try {
+            const response = await fetch(batchForm.action || window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                updateProgress(100);
+                displayResults(data.results);
+
+                if (data.results.failed > 0) {
+                    showToast(`Importación completada: ${data.results.success} exitosos, ${data.results.failed} fallidos`, 'warning');
+                } else {
+                    showToast(`Importación completada: ${data.results.success} CFDIs`, 'success');
+                }
+            } else {
+                showToast(data.error || 'Error en la importación', 'danger');
+            }
+        } catch (error) {
+            console.error('Batch import error:', error);
+            showToast('Error de conexión durante la importación', 'danger');
+        } finally {
+            isProcessing = false;
+            batchSubmitBtn.disabled = false;
+            batchCancelBtn.disabled = true;
+        }
+    });
+
+    function updateProgress(percent) {
+        batchProgressBar.style.width = percent + '%';
+        batchProgressText.textContent = percent + '%';
+
+        if (percent >= 100) {
+            batchProgressBar.classList.add('bg-success');
+        }
+    }
+
+    function displayResults(results) {
+        batchResults.classList.remove('d-none');
+
+        results.imported.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><code>${item.uuid.substring(0, 8)}...</code></td>
+                <td><span class="badge bg-success"><i class="fas fa-check"></i> OK</span></td>
+                <td>Factura #${item.invoice_id || 'N/A'}</td>
+            `;
+            batchResultsBody.appendChild(row);
+        });
+
+        results.errors.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><code>${item.uuid ? item.uuid.substring(0, 8) : 'N/A'}...</code></td>
+                <td><span class="badge bg-danger"><i class="fas fa-times"></i> Error</span></td>
+                <td>${item.error}</td>
+            `;
+            batchResultsBody.appendChild(row);
+        });
+    }
+
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} position-fixed top-0 end-0 m-3`;
+        toast.style.zIndex = '9999';
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        toast.addEventListener('hidden.bs.toast', function() {
+            toast.remove();
+        });
+    }
+
+    // Open modal handler
+    document.querySelectorAll('[data-action="batch-import-cfdi-file"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = new bootstrap.Modal(batchModal);
+            modal.show();
+        });
+    });
+});
+</script>

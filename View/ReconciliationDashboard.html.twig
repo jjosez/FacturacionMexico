@@ -1,0 +1,392 @@
+{#
+/**
+ * Reconciliation Dashboard
+ */
+#}
+{% extends 'Master/MenuBgTemplate.html.twig' %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>
+                <i class="fas fa-balance-scale me-2"></i>Conciliación de CFDIs
+            </h1>
+        </div>
+    </div>
+
+    {# Filters #}
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="reconciliationForm" method="post" class="row g-3">
+                <input type="hidden" name="action" value="generate-report">
+
+                <div class="col-md-2">
+                    <label for="yearSelect" class="form-label">Año</label>
+                    <select name="year" id="yearSelect" class="form-select" required>
+                        {% for year in fsc.getAvailableYears() %}
+                            <option value="{{ year }}" {{ year == fsc.selectedYear ? 'selected' : '' }}>
+                                {{ year }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label for="monthSelect" class="form-label">Mes</label>
+                    <select name="month" id="monthSelect" class="form-select" required>
+                        {% for month in fsc.getAvailableMonths() %}
+                            <option value="{{ month.value }}" {{ month.value == fsc.selectedMonth ? 'selected' : '' }}>
+                                {{ month.label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="supplierSelect" class="form-label">Proveedor (opcional)</label>
+                    <select name="supplier_id" id="supplierSelect" class="form-select">
+                        <option value="">Todos los proveedores</option>
+                        {% for supplier in fsc.supplierList %}
+                            <option value="{{ supplier.codproveedor }}">{{ supplier.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2" id="generateBtn">
+                        <i class="fas fa-search me-2"></i>Generar Reporte
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="exportBtn" title="Exportar CSV">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Results #}
+    <div id="resultsContainer" class="d-none">
+        {# Stats Cards #}
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total CFDIs</h5>
+                        <h2 id="statTotalCfdis">0</h2>
+                        <small id="statTotalAmount">$0.00</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Conciliados</h5>
+                        <h2 id="statMatched">0</h2>
+                        <small id="statMatchedRate">0%</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body">
+                        <h5 class="card-title">Parciales</h5>
+                        <h2 id="statPartial">0</h2>
+                        <small id="statPartialRate">0%</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Sin Conciliar</h5>
+                        <h2 id="statUnmatched">0</h2>
+                        <small id="statUnmatchedRate">0%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Tabs #}
+        <ul class="nav nav-tabs mb-3" id="reportTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="detail-tab" data-bs-toggle="tab" data-bs-target="#detailPane"
+                        type="button" role="tab">Detalle
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="supplier-tab" data-bs-toggle="tab" data-bs-target="#supplierPane"
+                        type="button" role="tab">Por Proveedor
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthlyPane"
+                        type="button" role="tab">Por Mes
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="reportTabContent">
+            {# Detail Tab #}
+            <div class="tab-pane fade show active" id="detailPane" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="detailTable">
+                                <thead>
+                                <tr>
+                                    <th>UUID</th>
+                                    <th>Folio</th>
+                                    <th>Fecha</th>
+                                    <th>Proveedor</th>
+                                    <th>Tipo</th>
+                                    <th class="text-end">Total CFDI</th>
+                                    <th>Estado</th>
+                                    <th>Factura</th>
+                                    <th class="text-end">Total Factura</th>
+                                    <th class="text-end">Diferencia</th>
+                                </tr>
+                                </thead>
+                                <tbody id="detailTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Supplier Tab #}
+            <div class="tab-pane fade" id="supplierPane" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="supplierTable">
+                                <thead>
+                                <tr>
+                                    <th>Proveedor</th>
+                                    <th class="text-center">Total CFDIs</th>
+                                    <th class="text-center">Conciliados</th>
+                                    <th class="text-center">Parciales</th>
+                                    <th class="text-center">Sin Conciliar</th>
+                                    <th class="text-end">Monto Total</th>
+                                    <th>Acciones</th>
+                                </tr>
+                                </thead>
+                                <tbody id="supplierTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Monthly Tab #}
+            <div class="tab-pane fade" id="monthlyPane" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="monthlyTable">
+                                <thead>
+                                <tr>
+                                    <th>Mes</th>
+                                    <th class="text-center">Total CFDIs</th>
+                                    <th class="text-end">Monto Total</th>
+                                </tr>
+                                </thead>
+                                <tbody id="monthlyTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Loading #}
+    <div id="loadingContainer" class="text-center py-5 d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2">Generando reporte...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('reconciliationForm');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const loadingContainer = document.getElementById('loadingContainer');
+    const generateBtn = document.getElementById('generateBtn');
+    const exportBtn = document.getElementById('exportBtn');
+
+    let currentReport = null;
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        resultsContainer.classList.add('d-none');
+        loadingContainer.classList.remove('d-none');
+        generateBtn.disabled = true;
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                currentReport = data.report;
+                displayReport(data.report);
+                resultsContainer.classList.remove('d-none');
+            } else {
+                alert(data.error || 'Error al generar reporte');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error de conexión');
+        } finally {
+            loadingContainer.classList.add('d-none');
+            generateBtn.disabled = false;
+        }
+    });
+
+    exportBtn.addEventListener('click', function() {
+        if (!currentReport) {
+            alert('Genere un reporte primero');
+            return;
+        }
+
+        const year = document.getElementById('yearSelect').value;
+        const month = document.getElementById('monthSelect').value;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ fsc.url() }}';
+
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'export-csv';
+        form.appendChild(actionInput);
+
+        const yearInput = document.createElement('input');
+        yearInput.type = 'hidden';
+        yearInput.name = 'year';
+        yearInput.value = year;
+        form.appendChild(yearInput);
+
+        const monthInput = document.createElement('input');
+        monthInput.type = 'hidden';
+        monthInput.name = 'month';
+        monthInput.value = month;
+        form.appendChild(monthInput);
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    });
+
+    function displayReport(report) {
+        const stats = report.stats;
+
+        document.getElementById('statTotalCfdis').textContent = stats.total_cfdis;
+        document.getElementById('statTotalAmount').textContent = formatCurrency(stats.total_cfdis_amount);
+        document.getElementById('statMatched').textContent = stats.matched_count;
+        document.getElementById('statMatchedRate').textContent = stats.match_rate.toFixed(1) + '%';
+        document.getElementById('statPartial').textContent = stats.partial_count;
+        document.getElementById('statPartialRate').textContent = stats.partial_rate.toFixed(1) + '%';
+        document.getElementById('statUnmatched').textContent = stats.unmatched_count;
+        document.getElementById('statUnmatchedRate').textContent = stats.unmatched_rate.toFixed(1) + '%';
+
+        displayDetailTable(report.items);
+        displaySupplierTable(report.grouped_by_supplier);
+        displayMonthlyTable(report.grouped_by_month);
+    }
+
+    function displayDetailTable(items) {
+        const tbody = document.getElementById('detailTableBody');
+        tbody.innerHTML = '';
+
+        items.forEach(item => {
+            const row = document.createElement('tr');
+
+            const statusClass = item.estado === 'matched' ? 'bg-success' :
+                               (item.estado === 'partial' ? 'bg-warning' : 'bg-danger');
+
+            row.innerHTML = `
+                <td><code title="${item.uuid}">${item.uuid.substring(0, 8)}...</code></td>
+                <td>${item.numero_factura}</td>
+                <td>${item.fecha}</td>
+                <td>${item.proveedor_nombre}</td>
+                <td><span class="badge bg-secondary">${item.tipo}</span></td>
+                <td class="text-end">${formatCurrency(item.total)}</td>
+                <td><span class="badge ${statusClass}">${item.estado}</span></td>
+                <td>${item.invoice_number || '—'}</td>
+                <td class="text-end">${item.invoice_total ? formatCurrency(item.invoice_total) : '—'}</td>
+                <td class="text-end">${item.difference !== null ? formatCurrency(item.difference) : '—'}</td>
+            `;
+
+            tbody.appendChild(row);
+        });
+    }
+
+    function displaySupplierTable(grouped) {
+        const tbody = document.getElementById('supplierTableBody');
+        tbody.innerHTML = '';
+
+        grouped.forEach(group => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${group.proveedor_nombre}</strong></td>
+                <td class="text-center">${group.total_cfdis}</td>
+                <td class="text-center"><span class="badge bg-success">${group.matched}</span></td>
+                <td class="text-center"><span class="badge bg-warning">${group.partial}</span></td>
+                <td class="text-center"><span class="badge bg-danger">${group.unmatched}</span></td>
+                <td class="text-end">${formatCurrency(group.total_amount)}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="filterBySupplier('${group.proveedor_cod}')">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function displayMonthlyTable(grouped) {
+        const tbody = document.getElementById('monthlyTableBody');
+        tbody.innerHTML = '';
+
+        grouped.forEach(group => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${group.month}</strong></td>
+                <td class="text-center">${group.total_cfdis}</td>
+                <td class="text-end">${formatCurrency(group.total_amount)}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    window.filterBySupplier = function(supplierCod) {
+        document.getElementById('supplierSelect').value = supplierCod;
+        document.getElementById('reconciliationForm').dispatchEvent(new Event('submit'));
+    };
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN'
+        }).format(amount || 0);
+    }
+});
+</script>
+{% endblock %}

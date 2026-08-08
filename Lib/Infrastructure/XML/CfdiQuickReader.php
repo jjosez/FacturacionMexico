@@ -32,6 +32,7 @@ class CfdiQuickReader
 {
     private $cfdi;
     private $comprobante;
+    private array $cache = [];
 
     public function __construct(string $xml)
     {
@@ -41,6 +42,11 @@ class CfdiQuickReader
 
         $this->cfdi = Cfdi::newFromString($xml);
         $this->comprobante = $this->cfdi->getQuickReader();
+    }
+
+    public function clearCache(): void
+    {
+        $this->cache = [];
     }
 
     public function cadenaOrigen(): string
@@ -98,22 +104,61 @@ class CfdiQuickReader
         return $this->comprobante->addenda->observacion['Detalle'];
     }
 
-    public function conceptos()
+    public function getAddendas(): array
     {
-        $conceptos = $this->comprobante->conceptos;
+        if (isset($this->cache['addendas'])) {
+            return $this->cache['addendas'];
+        }
 
-        return $conceptos();
+        $addendas = [];
+        $addendaNode = $this->comprobante->addenda;
+
+        if ($addendaNode && count($addendaNode) > 0) {
+            foreach ($addendaNode as $addendaName => $addendaContent) {
+                $addendas[$addendaName] = $this->extractAddendaFields($addendaContent);
+            }
+        }
+
+        $this->cache['addendas'] = $addendas;
+        return $addendas;
     }
 
-    public function conceptosNormalized(): array
+    private function extractAddendaFields($node): array
     {
-        $out = [];
+        $fields = [];
+        foreach ($node as $key => $value) {
+            if (is_object($value) && count($value) > 0) {
+                $fields[$key] = $this->extractAddendaFields($value);
+            } else {
+                $fields[$key] = (string) $value;
+            }
+        }
+        return $fields;
+    }
 
-        foreach (($this->comprobante->conceptos)() as $concepto) {
-            $traslados = [];
+    public function getImpuestos(): array
+    {
+        if (isset($this->cache['impuestos'])) {
+            return $this->cache['impuestos'];
+        }
 
-            if (isset($concepto->impuestos->traslados)) {
-                foreach (($concepto->impuestos->traslados)() as $traslado) {
+        $traslados = [];
+        $retenciones = [];
+
+        if (isset($this->comprobante->impuestos)) {
+            $impuestosNode = $this->comprobante->impuestos;
+
+            if (isset($impuestosNode->retenciones)) {
+                foreach (($impuestosNode->retenciones)() as $retencion) {
+                    $retenciones[] = [
+                        'Impuesto' => $retencion['Impuesto'],
+                        'Importe' => $retencion['Importe'],
+                    ];
+                }
+            }
+
+            if (isset($impuestosNode->traslados)) {
+                foreach (($impuestosNode->traslados)() as $traslado) {
                     $traslados[] = [
                         'Impuesto' => $traslado['Impuesto'],
                         'Base' => $traslado['Base'],
@@ -121,6 +166,53 @@ class CfdiQuickReader
                         'TasaOCuota' => $traslado['TasaOCuota'],
                         'Importe' => $traslado['Importe'],
                     ];
+                }
+            }
+        }
+
+        $result = [
+            'traslados' => $traslados,
+            'retenciones' => $retenciones,
+            'totalTrasladados' => $this->comprobante->impuestos['TotalImpuestosTrasladados'] ?? '0',
+            'totalRetenidos' => $this->comprobante->impuestos['TotalImpuestosRetenidos'] ?? '0',
+        ];
+
+        $this->cache['impuestos'] = $result;
+        return $result;
+    }
+
+    public function getConceptos(): array
+    {
+        if (isset($this->cache['conceptos'])) {
+            return $this->cache['conceptos'];
+        }
+
+        $out = [];
+
+        foreach (($this->comprobante->conceptos)() as $concepto) {
+            $traslados = [];
+            $retenciones = [];
+
+            if (isset($concepto->impuestos)) {
+                if (isset($concepto->impuestos->traslados)) {
+                    foreach (($concepto->impuestos->traslados)() as $traslado) {
+                        $traslados[] = [
+                            'Impuesto' => $traslado['Impuesto'],
+                            'Base' => $traslado['Base'],
+                            'TipoFactor' => $traslado['TipoFactor'],
+                            'TasaOCuota' => $traslado['TasaOCuota'],
+                            'Importe' => $traslado['Importe'],
+                        ];
+                    }
+                }
+
+                if (isset($concepto->impuestos->retenciones)) {
+                    foreach (($concepto->impuestos->retenciones)() as $retencion) {
+                        $retenciones[] = [
+                            'Impuesto' => $retencion['Impuesto'],
+                            'Importe' => $retencion['Importe'],
+                        ];
+                    }
                 }
             }
 
@@ -134,25 +226,32 @@ class CfdiQuickReader
                 'Importe' => $concepto['Importe'],
                 'Descuento' => $concepto['Descuento'],
                 'Traslados' => $traslados,
+                'Retenciones' => $retenciones,
             ];
         }
 
+        $this->cache['conceptos'] = $out;
         return $out;
+    }
+
+    public function conceptosNormalized(): array
+    {
+        return $this->getConceptos();
     }
 
     public function conceptosData(): array
     {
         $result = [];
 
-        foreach ($this->conceptos() as $concepto) {
+        foreach ($this->getConceptos() as $concepto) {
             $result[] = [
-                'cantidad' => $concepto['cantidad'],
-                'id' => $concepto['noidentificacion'],
-                'descripcion' => $concepto['descripcion'],
-                'clavesat' => $concepto['claveprodserv'],
-                'claveum' => $concepto['claveunidad'],
-                'precio' => $concepto['valorunitario'],
-                'importe' => $concepto['importe']
+                'cantidad' => $concepto['Cantidad'],
+                'id' => $concepto['NoIdentificacion'],
+                'descripcion' => $concepto['Descripcion'],
+                'clavesat' => $concepto['ClaveProdServ'],
+                'claveum' => $concepto['ClaveUnidad'],
+                'precio' => $concepto['ValorUnitario'],
+                'importe' => $concepto['Importe']
             ];
         }
 
@@ -163,12 +262,14 @@ class CfdiQuickReader
     {
         $result = [];
 
-        foreach (($concepto->impuestos->traslados)() as $traslado) {
-            $result[] = [
-                'impuesto' => $traslado['impuesto'],
-                'tasa' => $traslado['tasaocuota'],
-                'importe' => $traslado['importe'],
-            ];
+        if (isset($concepto->impuestos) && isset($concepto->impuestos->traslados)) {
+            foreach (($concepto->impuestos->traslados)() as $traslado) {
+                $result[] = [
+                    'impuesto' => $traslado['Impuesto'],
+                    'tasa' => $traslado['TasaOCuota'],
+                    'importe' => $traslado['Importe'],
+                ];
+            }
         }
 
         return $result;

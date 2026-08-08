@@ -33,9 +33,10 @@
                 <widget type="file" fieldname="cfdifile" accept=".xml"/>
             </column>
         </group>
-        <group name="batch-import-cfdi-file" title="Importar Lote CFDI" icon="fas fa-file-import fa-fw">
-            <column name="file" numcolumns="12" order="100">
-                <widget type="file" fieldname="cfdifile" accept=".xml" multiple="true"/>
+        <group name="batch_import_modal" title="Importar Lote CFDI" icon="fas fa-file-import fa-fw">
+            <column name="batch_options" numcolumns="12" order="100">
+                <widget type="text" fieldname="batch_import_info" readonly="true"
+                        value="Use el botón de abajo para abrir el asistente de importación masiva"/>
             </column>
         </group>
     </modals>
@@ -49,8 +50,8 @@
         <row type="actions">
             <button type="modal" icon="fas fa-file-import fa-fw" label="import" color="info"
                     action="import-cfdi-file"/>
-            <button type="modal" icon="fas fa-file-import fa-fw" label="batch-import" color="warning"
-                action="batch-import-cfdi-file"/>
+            <button type="action" icon="fas fa-upload fa-fw" label="batch-import" color="warning"
+                    action="batch-import-cfdi-file" class="batch-import-trigger"/>
         </row>
     </rows>
 </view>

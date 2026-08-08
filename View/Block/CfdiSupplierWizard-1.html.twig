@@ -1,72 +1,66 @@
-{#
-/**
- *  This file is part of FacturacionMexico plugin for FacturaScripts
- *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
- */
-#}
-{% import 'Macro/Form.html.twig' as form %}
-<div class="row row-cols-1 row-cols-md-2 g-4">
-    <div class="col">
-        <div class="card">
-            <div class="card-header">Cliente</div>
-            <div class="card-body">
-                <div class="form-group">
-                    {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptorNombre(), 'disabled') }}
-                </div>
-                <div class="form-group">
-                    {{ form.inputtext('rfc', 'RFC', fsc.reader.receptorRfc(), 'disabled') }}
-                </div>
-                <div class="form-group">
-                    {{ form.inputtext('usocfdi', 'Uso CFDI', fsc.reader.receptorUsoCfdi(), 'disabled') }}
-                </div>
-            </div>
-        </div>
+<div class="vstack gap-3">
+    <div class="alert alert-primary d-flex align-items-start gap-2" role="alert">
+        <i class="fas fa-circle-info mt-1" aria-hidden="true"></i>
+        <div><strong>Revisa los datos fiscales.</strong> Esta información proviene directamente del XML timbrado.</div>
     </div>
-    <div class="col">
-        <div class="card">
-            <div class="card-header">Proveedor</div>
-            <div class="card-body">
-                <div class="form-group">
-                    {{ form.inputtext('emisorazonsocial', 'Razón social', fsc.reader.emisorNombre(), 'readonly') }}
-                </div>
-                <div class="form-group">
-                    {{ form.inputtext('emisorrfc', 'RFC', fsc.reader.emisorRfc(), 'readonly') }}
-                </div>
-                <div class="form-group">
-                    {{ form.inputtext('fechaemision', 'Fecha de emisión', fsc.reader.fechaExpedicion(), 'readonly') }}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="card">
-    <div class="card-header">Documento</div>
-    <div class="card-body">
-        <div class="row">
-            <div class="form-group col-2">
-                {{ form.inputtext('codserie', 'Serie', fsc.reader.serie(), 'disabled') }}
-            </div>
-            <div class="form-group col-2">
-                {{ form.inputtext('folio', 'Folio', fsc.reader.folio(), 'disabled') }}
-            </div>
-            <div class="form-group col">
-                {{ form.inputtext('uuid', 'UUID', fsc.reader.uuid(), 'disabled') }}
-            </div>
-        </div>
-        <div class="row">
-            <div class="form-group col">
-                {{ form.inputtext('subtotal', 'Subtotal', fsc.reader.subTotal(), 'disabled') }}
-            </div>
-            <div class="form-group col">
-                {{ form.inputtext('descuento', 'Descuento', fsc.reader.totalDescuentos(), 'disabled') }}
-            </div>
-            <div class="form-group col">
-                {{ form.inputtext('totalimpuestos', 'Impuestos', fsc.reader.totalImpuestosTrasladados(), 'disabled') }}
-            </div>
-            <div class="form-group col">
-                {{ form.inputtext('total', 'Total', fsc.reader.total(), 'disabled') }}
-            </div>
-        </div>
 
+    <div class="row g-3">
+        <div class="col-12 col-xl-6">
+            <div class="card h-100">
+                <div class="card-header bg-body d-flex align-items-center gap-2">
+                    <i class="fas fa-building text-primary" aria-hidden="true"></i>
+                    <span class="fw-semibold">Receptor</span>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Razón social</dt>
+                        <dd class="col-sm-8 mb-3">{{ fsc.reader.receptorNombre() }}</dd>
+                        <dt class="col-sm-4 text-muted">RFC</dt>
+                        <dd class="col-sm-8 mb-3"><span class="badge text-bg-light border">{{ fsc.reader.receptorRfc() }}</span></dd>
+                        <dt class="col-sm-4 text-muted">Uso CFDI</dt>
+                        <dd class="col-sm-8 mb-0">{{ fsc.reader.receptorUsoCfdi() }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-6">
+            <div class="card h-100">
+                <div class="card-header bg-body d-flex align-items-center gap-2">
+                    <i class="fas fa-truck text-primary" aria-hidden="true"></i>
+                    <span class="fw-semibold">Proveedor</span>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Razón social</dt>
+                        <dd class="col-sm-8 mb-3">{{ fsc.reader.emisorNombre() }}</dd>
+                        <dt class="col-sm-4 text-muted">RFC</dt>
+                        <dd class="col-sm-8 mb-3"><span class="badge text-bg-light border">{{ fsc.reader.emisorRfc() }}</span></dd>
+                        <dt class="col-sm-4 text-muted">Emisión</dt>
+                        <dd class="col-sm-8 mb-0">{{ fsc.reader.fechaExpedicion() }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-body d-flex align-items-center gap-2">
+            <i class="fas fa-file-invoice text-primary" aria-hidden="true"></i>
+            <span class="fw-semibold">Documento fiscal</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-6 col-md-2"><div class="text-muted small">Serie</div><div class="fw-semibold">{{ fsc.reader.serie() ?: '—' }}</div></div>
+                <div class="col-6 col-md-2"><div class="text-muted small">Folio</div><div class="fw-semibold">{{ fsc.reader.folio() ?: '—' }}</div></div>
+                <div class="col-12 col-md-8"><div class="text-muted small">UUID</div><code class="user-select-all">{{ fsc.reader.uuid() }}</code></div>
+            </div>
+            <hr>
+            <div class="row g-3">
+                <div class="col-6 col-lg-3"><div class="text-muted small">Subtotal</div><div>{{ fsc.reader.subTotal() }}</div></div>
+                <div class="col-6 col-lg-3"><div class="text-muted small">Descuento</div><div>{{ fsc.reader.totalDescuentos() ?: '0.00' }}</div></div>
+                <div class="col-6 col-lg-3"><div class="text-muted small">Impuestos</div><div>{{ fsc.reader.totalImpuestosTrasladados() ?: '0.00' }}</div></div>
+                <div class="col-6 col-lg-3"><div class="text-muted small">Total</div><div class="fs-5 fw-bold text-primary">{{ fsc.reader.total() }}</div></div>
+            </div>
+        </div>
     </div>
 </div>

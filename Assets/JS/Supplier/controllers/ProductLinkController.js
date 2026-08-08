@@ -62,15 +62,24 @@ export class ProductLinkController {
     onProductLinkOpen(el) {
         this.currentConceptoIndex = el.dataset.index;
 
+        // Obtener datos del concepto desde la fila
+        const row = el.closest('tr');
+        const conceptoData = {
+            code: row?.dataset?.index || this.currentConceptoIndex,
+            ref: row?.dataset?.cfdiReference || '',
+            descripcion: row?.querySelector('td:nth-child(6)')?.textContent?.trim() || ''
+        };
+
         // Limpiar búsqueda anterior
         this.searchView.clearSearch();
-        this.searchView.renderEmptyState();
+        this.searchView.renderEmptyState('Escribe al menos 2 caracteres para buscar.');
 
-        // Abrir modal
-        this.searchView.openModal();
+        // Abrir modal con info del concepto
+        this.searchView.openModal(conceptoData);
 
         eventManager.emit('product:link:modal:opened', {
-            index: this.currentConceptoIndex
+            index: this.currentConceptoIndex,
+            ...conceptoData
         });
     }
 
@@ -100,7 +109,7 @@ export class ProductLinkController {
     onProductSelect(el) {
         const referencia = el.dataset.referencia;
 
-        if (!this.currentConceptoIndex) {
+        if (this.currentConceptoIndex === null || this.currentConceptoIndex === undefined) {
             console.warn('No hay concepto seleccionado');
             return;
         }
@@ -140,7 +149,7 @@ export class ProductLinkController {
         const query = event.target.value.trim();
 
         if (query.length < 2) {
-            this.searchView.renderEmptyState();
+            this.searchView.renderEmptyState('Escribe al menos 2 caracteres para buscar.');
             return;
         }
 
@@ -156,7 +165,7 @@ export class ProductLinkController {
         const query = this.searchView.getSearchValue();
 
         if (query.length < 2) {
-            this.searchView.renderEmptyState();
+            this.searchView.renderEmptyState('Escribe al menos 2 caracteres para buscar.');
             return;
         }
 

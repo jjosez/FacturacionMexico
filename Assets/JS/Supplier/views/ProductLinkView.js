@@ -108,13 +108,13 @@ export class ProductLinkView {
 
         if (vincularBtn && desvincularBtn) {
             if (hasLink) {
-                vincularBtn.classList.remove('btn-info');
-                vincularBtn.classList.add('btn-outline-info');
+                vincularBtn.classList.remove('btn-outline-primary');
+                vincularBtn.classList.add('btn-primary');
                 vincularBtn.textContent = 'Cambiar';
                 desvincularBtn.classList.remove('d-none');
             } else {
-                vincularBtn.classList.remove('btn-outline-info');
-                vincularBtn.classList.add('btn-info');
+                vincularBtn.classList.remove('btn-primary');
+                vincularBtn.classList.add('btn-outline-primary');
                 vincularBtn.textContent = 'Vincular';
                 desvincularBtn.classList.add('d-none');
             }

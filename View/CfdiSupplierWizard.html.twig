@@ -1,46 +1,25 @@
 {#
-/**
- *  This file is part of FacturacionMexico plugin for FacturaScripts
- *  Copyright (C) 2020 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
- */
-#}
+ * Wizard para importar un CFDI de proveedor y generar su factura.
+ #}
 {% extends 'Master/MenuBgTemplate.html.twig' %}
-{% import 'Macro/Form.html.twig' as form %}
-{% block css %}
-    {{ parent() }}
-    <style>
-        .wizard-pills .nav-link {
-            background-color: #e9ecef; /* light gray */
-            color: #495057;
-            margin-right: 4px; /* Pequeño gap */
-        }
 
-        .wizard-pills .nav-item:last-child .nav-link {
-            margin-right: 0;
-        }
-
-        .wizard-pills .nav-link.active {
-            background-color: #007bff;
-            color: #fff;
-            font-weight: bold;
-            position: relative;
-        }
-    </style>
-{% endblock %}
 {% block bodyHeaderOptions %}
     <div class="container-fluid mb-2">
-        <div class="row">
+        <div class="row align-items-center">
             <div class="col">
                 <div class="btn-group">
-                    <a class="btn btn-sm btn-dark" href="" title="Recargar">
+                    <a class="btn btn-sm btn-dark" href="{{ fsc.url() }}" title="Recargar">
                         <i class="fas fa-redo" aria-hidden="true"></i>
+                    </a>
+                    <a class="btn btn-sm btn-info" href="{{ fsc.cfdi.url() }}" title="Volver al CFDI">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;CFDI
                     </a>
                 </div>
             </div>
             <div class="col text-end">
-                <h1 class="h3">
-                    Importar CFDI
-                    <i class="fas fa-file-invoice fa-fw" aria-hidden="true"></i>
+                <h1 class="h4 mb-0 d-none d-md-inline-block">
+                    Importar CFDI de Proveedor
+                    <i class="fas fa-file-import fa-fw" aria-hidden="true"></i>
                 </h1>
             </div>
         </div>
@@ -48,47 +27,36 @@
 {% endblock %}
 
 {% block body %}
-    <div class="container-fluid">
+    <div class="container-fluid pb-4 wizard-container">
+        <div class="wizard-alerts"></div>
         <form id="formCfdiWizard" name="formCfdiWizard" action="{{ fsc.url() }}" method="post">
             <input type="hidden" value="import-supplier-cfdi" name="action">
             <input type="hidden" value="{{ fsc.cfdi.primaryColumnValue() }}" name="code">
             <input type="hidden" value="{{ fsc.cfdi.tipo }}" name="type">
 
-            <ul class="nav nav-pills nav-justified mb-3 wizard-pills" id="wizardTabs" role="tablist">
+            <ul class="nav nav-pills nav-fill gap-2 mb-4" id="wizardTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active rounded-end-0"
-                            id="step1-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#step1"
-                            type="button"
-                            role="tab"
-                            aria-controls="step1"
-                            aria-selected="true">
-                        1. Generales
+                    <button class="nav-link active text-start" id="step1-tab" data-bs-toggle="tab"
+                            data-bs-target="#step1" type="button" role="tab" aria-controls="step1" aria-selected="true">
+                        <span class="badge rounded-pill text-bg-primary me-2">1</span> Generales
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link rounded-0"
-                            id="step2-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#step2"
-                            type="button"
-                            role="tab"
-                            aria-controls="step2"
-                            aria-selected="false">
-                        2. Productos
+                    <button class="nav-link text-start" id="step2-tab" data-bs-toggle="tab"
+                            data-bs-target="#step2" type="button" role="tab" aria-controls="step2" aria-selected="false">
+                        <span class="badge rounded-pill text-bg-secondary me-2">2</span> Productos
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link rounded-start-0"
-                            id="step3-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#step3"
-                            type="button"
-                            role="tab"
-                            aria-controls="step3"
-                            aria-selected="false">
-                        3. Confirmación
+                    <button class="nav-link text-start" id="step3-tab" data-bs-toggle="tab"
+                            data-bs-target="#step3" type="button" role="tab" aria-controls="step3" aria-selected="false">
+                        <span class="badge rounded-pill text-bg-secondary me-2">3</span> Revisión
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-start" id="step4-tab" data-bs-toggle="tab"
+                            data-bs-target="#step4" type="button" role="tab" aria-controls="step4" aria-selected="false">
+                        <span class="badge rounded-pill text-bg-secondary me-2">4</span> Configuración
                     </button>
                 </li>
             </ul>
@@ -103,39 +71,30 @@
                 <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
                     {{ include('Block/CfdiSupplierWizard-3.html.twig') }}
                 </div>
+                <div class="tab-pane fade" id="step4" role="tabpanel" aria-labelledby="step4-tab">
+                    {{ include('Block/CfdiSupplierWizard-4.html.twig') }}
+                </div>
             </div>
 
-            <div class="mt-3 d-flex justify-content-end">
-                <button type="button" class="btn btn-secondary" id="prevBtn" data-action="wizard:step:previous">Anterior</button>
-                <button type="button" class="btn btn-primary ms-2" id="nextBtn" data-action="wizard:step:next">Siguiente</button>
-                <button type="button" class="btn btn-success ms-2 d-none" id="wizardSubmitBtn"
-                        data-action="wizard:submit" data-label="Importar">Importar
+            <div class="border-top pt-3 mt-4 d-flex flex-column flex-sm-row justify-content-between gap-2">
+                <button type="button" class="btn btn-outline-secondary" id="prevBtn" data-action="wizard:step:previous">
+                    <i class="fas fa-arrow-left me-1" aria-hidden="true"></i> Anterior
                 </button>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-primary" id="nextBtn" data-action="wizard:step:next">
+                        Siguiente <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="btn btn-success d-none" id="wizardSubmitBtn"
+                            data-action="wizard:submit"
+                            data-label="Generar factura"
+                            data-confirm-message="Se generará la factura del proveedor con la configuración seleccionada.">
+                        <i class="fas fa-file-invoice me-1" aria-hidden="true"></i><span data-button-label>Generar factura</span>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
 
     {% include 'Modal/CfdiSuppliersModals.html.twig' %}
-
-    <div class="modal fade" id="wizard:confirm:modal" tabindex="-1" aria-labelledby="wizard:confirm:modal:label" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="wizard:confirm:modal:label">Confirmar acción</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body" id="wizard:confirm:modal:message"></div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-warning" id="wizard:confirm:modal:ok">Continuar</button>
-                </div>
-            </div>
-        </div>
-    </div>
     <script type="module" src="{{ asset('Plugins/FacturacionMexico/Assets/JS/SupplierCfdiWizard.js') }}"></script>
 {% endblock %}
-
-
-
-
-
