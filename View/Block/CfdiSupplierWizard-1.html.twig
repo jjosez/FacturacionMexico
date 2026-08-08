@@ -1,8 +1,26 @@
 <div class="vstack gap-3">
-    <div class="alert alert-primary d-flex align-items-start gap-2" role="alert">
-        <i class="fas fa-circle-info mt-1" aria-hidden="true"></i>
-        <div><strong>Revisa los datos fiscales.</strong> Esta información proviene directamente del XML timbrado.</div>
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-start gap-2 m-0" role="alert">
+                <i class="fas fa-circle-info mt-1" aria-hidden="true"></i>
+                <div><strong>Revisa los datos fiscales.</strong> Esta información proviene directamente del XML timbrado.</div>
+            </div>
+        </div>
     </div>
+
+    {% if fsc.cfdi.tipo == 'E' %}
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="alert alert-warning d-flex align-items-start gap-2 m-0" role="alert">
+                    <i class="fas fa-triangle-exclamation mt-1" aria-hidden="true"></i>
+                    <div>
+                        <strong>CFDI de egreso.</strong>
+                        Se generará una factura rectificativa de proveedor. Las cantidades se registrarán en negativo y los conceptos sin producto quedarán como líneas libres.
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 
     <div class="row g-3">
         <div class="col-12 col-xl-6">
@@ -16,7 +34,8 @@
                         <dt class="col-sm-4 text-muted">Razón social</dt>
                         <dd class="col-sm-8 mb-3">{{ fsc.reader.receptorNombre() }}</dd>
                         <dt class="col-sm-4 text-muted">RFC</dt>
-                        <dd class="col-sm-8 mb-3"><span class="badge text-bg-light border">{{ fsc.reader.receptorRfc() }}</span></dd>
+                        <dd class="col-sm-8 mb-3"><span
+                                    class="badge text-bg-light border">{{ fsc.reader.receptorRfc() }}</span></dd>
                         <dt class="col-sm-4 text-muted">Uso CFDI</dt>
                         <dd class="col-sm-8 mb-0">{{ fsc.reader.receptorUsoCfdi() }}</dd>
                     </dl>
@@ -34,7 +53,8 @@
                         <dt class="col-sm-4 text-muted">Razón social</dt>
                         <dd class="col-sm-8 mb-3">{{ fsc.reader.emisorNombre() }}</dd>
                         <dt class="col-sm-4 text-muted">RFC</dt>
-                        <dd class="col-sm-8 mb-3"><span class="badge text-bg-light border">{{ fsc.reader.emisorRfc() }}</span></dd>
+                        <dd class="col-sm-8 mb-3"><span
+                                    class="badge text-bg-light border">{{ fsc.reader.emisorRfc() }}</span></dd>
                         <dt class="col-sm-4 text-muted">Emisión</dt>
                         <dd class="col-sm-8 mb-0">{{ fsc.reader.fechaExpedicion() }}</dd>
                     </dl>
@@ -50,16 +70,36 @@
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-6 col-md-2"><div class="text-muted small">Serie</div><div class="fw-semibold">{{ fsc.reader.serie() ?: '—' }}</div></div>
-                <div class="col-6 col-md-2"><div class="text-muted small">Folio</div><div class="fw-semibold">{{ fsc.reader.folio() ?: '—' }}</div></div>
-                <div class="col-12 col-md-8"><div class="text-muted small">UUID</div><code class="user-select-all">{{ fsc.reader.uuid() }}</code></div>
+                <div class="col-6 col-md-2">
+                    <div class="text-muted small">Serie</div>
+                    <div class="fw-semibold">{{ fsc.reader.serie() ?: '—' }}</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <div class="text-muted small">Folio</div>
+                    <div class="fw-semibold">{{ fsc.reader.folio() ?: '—' }}</div>
+                </div>
+                <div class="col-12 col-md-8">
+                    <div class="text-muted small">UUID</div>
+                    <code class="user-select-all">{{ fsc.reader.uuid() }}</code></div>
             </div>
             <hr>
             <div class="row g-3">
-                <div class="col-6 col-lg-3"><div class="text-muted small">Subtotal</div><div>{{ fsc.reader.subTotal() }}</div></div>
-                <div class="col-6 col-lg-3"><div class="text-muted small">Descuento</div><div>{{ fsc.reader.totalDescuentos() ?: '0.00' }}</div></div>
-                <div class="col-6 col-lg-3"><div class="text-muted small">Impuestos</div><div>{{ fsc.reader.totalImpuestosTrasladados() ?: '0.00' }}</div></div>
-                <div class="col-6 col-lg-3"><div class="text-muted small">Total</div><div class="fs-5 fw-bold text-primary">{{ fsc.reader.total() }}</div></div>
+                <div class="col-6 col-lg-3">
+                    <div class="text-muted small">Subtotal</div>
+                    <div>{{ fsc.reader.subTotal() }}</div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="text-muted small">Descuento</div>
+                    <div>{{ fsc.reader.totalDescuentos() ?: '0.00' }}</div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="text-muted small">Impuestos</div>
+                    <div>{{ fsc.reader.totalImpuestosTrasladados() ?: '0.00' }}</div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="text-muted small">Total</div>
+                    <div class="fs-5 fw-bold text-primary">{{ fsc.reader.total() }}</div>
+                </div>
             </div>
         </div>
     </div>

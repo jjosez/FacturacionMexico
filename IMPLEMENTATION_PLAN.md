@@ -200,54 +200,12 @@ class ProductMatchingService
 
 ---
 
-### 1.3 Crear ProductMappingStorage
+### 1.3 Persistencia de mappings: descartada
 
-**Archivos a crear**:
-- `Lib/Infrastructure/Persistence/ProductMappingStorage.php`
-
-**Propósito**: Persistir y cachear mappings entre productos CFDI y productos internos
-
-```php
-class ProductMappingStorage
-{
-    public const TABLE = 'cfdi_product_mappings';
-
-    public function __construct() { }
-
-    public function getMapping(int $companyId, string $emisorRfc, string $noIdentificacion): ?ProductMapping;
-    public function saveMapping(ProductMapping $mapping): bool;
-    public function deleteMapping(int $mappingId): bool;
-    public function getMappingsByCompany(int $companyId): array;
-    public function getMappingsBySupplier(string $codproveedor): array;
-
-    // Cache en memoria por request
-    public function getCachedMapping(...): ?ProductMapping;
-    public function cacheMapping(...): void;
-}
-```
-
-**Tabla SQL requerida**:
-```sql
-CREATE TABLE cfdi_product_mappings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    codproveedor VARCHAR(6) NOT NULL,
-    idempresa INTEGER NOT NULL,
-    emisor_rfc VARCHAR(13) NOT NULL,
-    cfdi_referencia VARCHAR(50) NOT NULL,  -- NoIdentificacion del CFDI
-    referencia VARCHAR(50) NOT NULL,        -- referencia del producto interno
-    match_method VARCHAR(20) NOT NULL,      -- 'exact', 'fuzzy', 'sat', 'supplier_link'
-    confidence REAL NOT NULL,
-    created_at DATETIME NOT NULL,
-    updated_at DATETIME NOT NULL,
-    UNIQUE(idempresa, emisor_rfc, cfdi_referencia)
-);
-
-CREATE INDEX idx_cfdi_mapping_supplier ON cfdi_product_mappings(codproveedor);
-CREATE INDEX idx_cfdi_mapping_reference ON cfdi_product_mappings(cfdi_referencia);
-```
-
-**Dependencias**: 1.2 (ProductMatchingService)
-**Criterio de aceptación**: Mappings se persistren y se reutilizan en futuras importaciones
+Se descartó `ProductMappingStorage` y la tabla `cfdi_product_mappings`.
+La relación `ProductoProveedor` es la única fuente de verdad para conciliar
+referencias del proveedor con productos internos. Esto evita duplicar vínculos,
+reduce consultas y simplifica las migraciones.
 
 ---
 

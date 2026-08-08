@@ -18,7 +18,7 @@ class ImportOptions
     public float $priceMultiplier = 1.0;
     public string $taxMode = self::TAX_MODE_PRESERVE;
     public ?int $codalmacen = null;
-    public ?int $codserie = null;
+    public ?string $codserie = null;
     public bool $linkOnlyExisting = true;
 
     public function __construct(array $options = [])
@@ -40,7 +40,7 @@ class ImportOptions
             'priceMultiplier' => isset($data['price_multiplier']) ? (float)$data['price_multiplier'] : (isset($data['priceMultiplier']) ? (float)$data['priceMultiplier'] : 1.0),
             'taxMode' => $data['tax_mode'] ?? $data['taxMode'] ?? self::TAX_MODE_PRESERVE,
             'codalmacen' => isset($data['codalmacen']) ? (int)$data['codalmacen'] : null,
-            'codserie' => isset($data['codserie']) ? (int)$data['codserie'] : null,
+            'codserie' => isset($data['codserie']) ? (string)$data['codserie'] : null,
         ]);
     }
 

@@ -27,10 +27,12 @@ use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\Producto;
+use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierInvoiceImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\ImportOptions;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierCfdiImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\MatchResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\ProductMatchingService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\MatchingStats;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
@@ -108,11 +110,42 @@ class CfdiSupplierWizard extends Controller
 
     protected function loadMatchResults(): void
     {
-        $matchingService = new ProductMatchingService();
         $conceptos = $this->reader->getConceptos();
+        $linkedProducts = $this->getIndexedSupplierProducts($this->supplier->codproveedor);
+        $this->conceptMatchResults = [];
 
-        $this->conceptMatchResults = $matchingService->matchAll($conceptos, $this->supplier);
+        foreach ($conceptos as $index => $concepto) {
+            $refproveedor = $concepto['NoIdentificacion'] ?? '';
+            $productSupplier = $linkedProducts[$refproveedor] ?? null;
+            $product = null;
+
+            if ($productSupplier !== null) {
+                $product = $productSupplier->getProducto();
+                if (empty($product->primaryColumnValue())) {
+                    $product = null;
+                }
+            }
+
+            $this->conceptMatchResults[$index] = $product !== null
+                ? MatchResult::exactMatch($product, 'supplier_link', true)
+                : MatchResult::noMatch();
+        }
+
+        $matchingService = new ProductMatchingService();
         $this->matchStats = $matchingService->getStats($this->conceptMatchResults);
+    }
+
+    protected function getIndexedSupplierProducts(string $codproveedor): array
+    {
+        $productSupplier = new ProductoProveedor();
+        $products = $productSupplier->all([Where::eq('codproveedor', $codproveedor)]);
+        $indexed = [];
+
+        foreach ($products as $product) {
+            $indexed[$product->refproveedor] = $product;
+        }
+
+        return $indexed;
     }
 
     protected function searchProduct(): void

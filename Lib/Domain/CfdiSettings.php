@@ -22,6 +22,11 @@ class CfdiSettings
         return Tools::settings('default', 'codserierec', '');
     }
 
+    public static function serieEgresoProveedor(): string
+    {
+        return Tools::settings('default', 'codserierec', '');
+    }
+
     public static function satCredentials(Empresa $company): array
     {
         return [

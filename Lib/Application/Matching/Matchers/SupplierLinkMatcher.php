@@ -38,8 +38,8 @@ class SupplierLinkMatcher implements MatcherInterface
             return null;
         }
 
-        $product = new Producto();
-        if (false === $product->load($productSupplier->referencia)) {
+        $product = $productSupplier->getProducto();
+        if (empty($product->primaryColumnValue())) {
             return null;
         }
 

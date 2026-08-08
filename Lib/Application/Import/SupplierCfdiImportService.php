@@ -15,22 +15,20 @@ use FacturaScripts\Dinamic\Model\LineaFacturaProveedor;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\MatchResult;
+use FacturaScripts\Dinamic\Model\Serie;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\ProductMatchingService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\ProductMappingStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Model\RelacionCfdiProveedor;
 
 class SupplierCfdiImportService
 {
     private ProductMatchingService $matchingService;
-    private ProductMappingStorage $mappingStorage;
 
     public function __construct(
-        ?ProductMatchingService $matchingService = null,
-        ?ProductMappingStorage $mappingStorage = null
+        ?ProductMatchingService $matchingService = null
     ) {
         $this->matchingService = $matchingService ?? new ProductMatchingService();
-        $this->mappingStorage = $mappingStorage ?? new ProductMappingStorage();
     }
 
     public function importSingle(
@@ -47,8 +45,9 @@ class SupplierCfdiImportService
 
             $reader = $this->getCfdiReader($cfdi);
             $conceptos = $submittedConceptos ?? $reader->getConceptos();
+            $isEgreso = strtoupper($cfdi->tipo) === 'E';
 
-            $invoice = $this->createOrUpdateInvoice($cfdi, $supplier, $reader);
+            $invoice = $this->createOrUpdateInvoice($cfdi, $supplier, $reader, $options);
             $this->clearInvoiceLines($invoice);
 
             $createdProducts = [];
@@ -59,8 +58,8 @@ class SupplierCfdiImportService
                     $concepto,
                     $invoice,
                     $supplier,
-                    $cfdi,
-                    $options
+                    $options,
+                    $isEgreso
                 );
 
                 if ($result['linked']) {
@@ -73,6 +72,10 @@ class SupplierCfdiImportService
             $lines = $invoice->getLines();
             Calculator::calculate($invoice, $lines, true);
             $invoice->save();
+
+            $cfdi->idfactura = $invoice->idfactura;
+            $cfdi->save();
+            $this->saveCfdiRelations($cfdi, $reader);
 
             $db->commit();
 
@@ -133,8 +136,9 @@ class SupplierCfdiImportService
         Proveedor $supplier,
         ?ImportOptions $options = null
     ): FacturaProveedor {
+        $options = $options ?? new ImportOptions();
         $reader = $this->getCfdiReader($cfdi);
-        return $this->createOrUpdateInvoice($cfdi, $supplier, $reader);
+        return $this->createOrUpdateInvoice($cfdi, $supplier, $reader, $options);
     }
 
     private function getCfdiReader(CfdiProveedor $cfdi): CfdiQuickReader
@@ -149,7 +153,8 @@ class SupplierCfdiImportService
     private function createOrUpdateInvoice(
         CfdiProveedor $cfdi,
         Proveedor $supplier,
-        CfdiQuickReader $reader
+        CfdiQuickReader $reader,
+        ImportOptions $options
     ): FacturaProveedor {
         $invoice = new FacturaProveedor();
         $where = [
@@ -165,6 +170,10 @@ class SupplierCfdiImportService
         $invoice->numproveedor = $cfdi->invoiceNumber();
         $invoice->codpago = $this->getFormaPagoFromCfdi($cfdi);
         $invoice->setDate($cfdi->fecha_emision, $cfdi->getFechaEmision() ?? '12:00:00');
+
+        if (strtoupper($cfdi->tipo) === 'E') {
+            $invoice->codserie = $this->getEgresoSerie($options);
+        }
 
         if (!$invoice->save()) {
             throw new Exception('Error al crear la factura del proveedor');
@@ -184,8 +193,8 @@ class SupplierCfdiImportService
         array $concepto,
         FacturaProveedor $invoice,
         Proveedor $supplier,
-        CfdiProveedor $cfdi,
-        ImportOptions $options
+        ImportOptions $options,
+        bool $isEgreso = false
     ): array {
         $result = [
             'linked' => false,
@@ -194,7 +203,6 @@ class SupplierCfdiImportService
         ];
 
         $product = null;
-        $matchResult = null;
 
         if (!empty($concepto['referencia'])) {
             $product = $this->loadManualProduct($concepto['referencia']);
@@ -202,8 +210,6 @@ class SupplierCfdiImportService
             if ($product !== null) {
                 $result['referencia'] = $product->referencia;
                 $result['linked'] = true;
-                $matchResult = MatchResult::exactMatch($product, 'manual');
-                $this->saveMapping($cfdi, $supplier, $concepto, $product, $matchResult);
             }
         }
 
@@ -214,8 +220,6 @@ class SupplierCfdiImportService
                 $product = $matchResult->product;
                 $result['referencia'] = $product->referencia;
                 $result['linked'] = true;
-
-                $this->saveMapping($cfdi, $supplier, $concepto, $product, $matchResult);
             }
         }
 
@@ -226,10 +230,10 @@ class SupplierCfdiImportService
         }
 
         if ($product !== null) {
-            $this->createInvoiceLine($invoice, $concepto, $product, $options);
+            $this->createInvoiceLine($invoice, $concepto, $product, $options, $isEgreso);
             $this->linkSupplierProduct($concepto, $supplier, $product);
         } else {
-            $this->createInvoiceLineFromConcept($invoice, $concepto, $options);
+            $this->createInvoiceLineFromConcept($invoice, $concepto, $options, $isEgreso);
         }
 
         return $result;
@@ -246,13 +250,14 @@ class SupplierCfdiImportService
         FacturaProveedor $invoice,
         array $concepto,
         Producto $product,
-        ImportOptions $options
+        ImportOptions $options,
+        bool $isEgreso = false
     ): LineaFacturaProveedor {
         $line = $invoice->getNewProductLine($product->referencia);
 
-        $line->cantidad = (float)$concepto['Cantidad'];
+        $line->cantidad = $isEgreso ? -abs((float)$concepto['Cantidad']) : (float)$concepto['Cantidad'];
         $line->descripcion = $concepto['Descripcion'];
-        $line->pvpunitario = (float)$concepto['ValorUnitario'];
+        $line->pvpunitario = $isEgreso ? abs((float)$concepto['ValorUnitario']) : (float)$concepto['ValorUnitario'];
 
         if ($options->shouldUpdatePrices()) {
             $line->pvpunitario *= $options->priceMultiplier;
@@ -269,13 +274,14 @@ class SupplierCfdiImportService
     private function createInvoiceLineFromConcept(
         FacturaProveedor $invoice,
         array $concepto,
-        ImportOptions $options
+        ImportOptions $options,
+        bool $isEgreso = false
     ): LineaFacturaProveedor {
         $line = $invoice->getNewLine($concepto);
 
-        $line->cantidad = (float)$concepto['Cantidad'];
+        $line->cantidad = $isEgreso ? -abs((float)$concepto['Cantidad']) : (float)$concepto['Cantidad'];
         $line->descripcion = $concepto['Descripcion'];
-        $line->pvpunitario = (float)$concepto['ValorUnitario'];
+        $line->pvpunitario = $isEgreso ? abs((float)$concepto['ValorUnitario']) : (float)$concepto['ValorUnitario'];
 
         $this->setLineDiscount($line, $concepto);
         $this->setLineTax($line, $concepto, $options);
@@ -287,14 +293,14 @@ class SupplierCfdiImportService
 
     private function setLineDiscount(LineaFacturaProveedor $linea, array $concepto): void
     {
-        $descuentoNeto = isset($concepto['Descuento']) ? (float)$concepto['Descuento'] : 0.0;
+        $descuentoNeto = isset($concepto['Descuento']) ? abs((float)$concepto['Descuento']) : 0.0;
 
         if ($descuentoNeto <= 0) {
             $linea->dtopor = 0.0;
             return;
         }
 
-        $importeBruto = $linea->cantidad * $linea->pvpunitario;
+        $importeBruto = abs($linea->cantidad * $linea->pvpunitario);
 
         if ($importeBruto <= 0) {
             $linea->dtopor = 0.0;
@@ -383,32 +389,60 @@ class SupplierCfdiImportService
         $productSupplier->codproveedor = $supplier->codproveedor;
         $productSupplier->refproveedor = $concepto['NoIdentificacion'];
         $productSupplier->referencia = $product->referencia;
-        $productSupplier->precio = (float)$concepto['ValorUnitario'];
+        $productSupplier->precio = abs((float)$concepto['ValorUnitario']);
 
         $productSupplier->save();
     }
 
-    private function saveMapping(
-        CfdiProveedor $cfdi,
-        Proveedor $supplier,
-        array $concepto,
-        Producto $product,
-        MatchResult $matchResult
-    ): void {
-        if (empty($concepto['NoIdentificacion'])) {
-            return;
+    private function getEgresoSerie(ImportOptions $options): string
+    {
+        $serieCode = $options->codserie ?? CfdiSettings::serieEgresoProveedor();
+        $serie = new Serie();
+
+        if (!empty($serieCode) && $serie->load($serieCode) && $serie->tipo === 'R') {
+            return $serie->codserie;
         }
 
-        $mapping = new ProductMapping();
-        $mapping->codproveedor = $supplier->codproveedor;
-        $mapping->idempresa = $cfdi->idempresa;
-        $mapping->emisor_rfc = $cfdi->emisor_rfc;
-        $mapping->cfdi_referencia = $concepto['NoIdentificacion'] ?? '';
-        $mapping->referencia = $product->referencia;
-        $mapping->match_method = $matchResult->matchMethod;
-        $mapping->confidence = $matchResult->confidence;
+        $series = Serie::all([Where::eq('tipo', 'R')], ['codserie' => 'ASC'], 0, 1);
+        if (!empty($series)) {
+            return $series[0]->codserie;
+        }
 
-        $this->mappingStorage->saveMapping($mapping);
+        throw new Exception('No existe una serie rectificativa configurada para CFDI de egreso de proveedores');
+    }
+
+    private function saveCfdiRelations(CfdiProveedor $cfdi, CfdiQuickReader $reader): void
+    {
+        foreach ($reader->relacionados() as $group) {
+            $tipoRelacion = $group['tiporelacion'] ?? '';
+            foreach ($group['relacionados'] ?? [] as $uuidRelacionado) {
+                $related = new CfdiProveedor();
+                if (!$related->loadFromUuid($uuidRelacionado)) {
+                    continue;
+                }
+
+                $relation = new RelacionCfdiProveedor();
+                $exists = $relation->loadWhere([
+                    Where::eq('cfdi_id', $cfdi->id),
+                    Where::eq('cfdi_id_relacionado', $related->id),
+                    Where::eq('tipo_relacion', $tipoRelacion),
+                ]);
+
+                if ($exists) {
+                    continue;
+                }
+
+                $relation->cfdi_id = $cfdi->id;
+                $relation->cfdi_id_relacionado = $related->id;
+                $relation->tipo_relacion = $tipoRelacion;
+                $relation->uuid = $cfdi->uuid;
+                $relation->uuid_relacionado = $uuidRelacionado;
+
+                if (!$relation->save()) {
+                    throw new Exception('No se pudo guardar la relación del CFDI de egreso');
+                }
+            }
+        }
     }
 
     private function getFormaPagoFromCfdi(CfdiProveedor $cfdi): string

@@ -1,7 +1,11 @@
 <div class="vstack gap-3">
-    <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
-        <i class="fas fa-circle-info mt-1" aria-hidden="true"></i>
-        <div>Confirma la forma de pago que se utilizará en la factura interna.</div>
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-start gap-2 m-0" role="alert">
+                <i class="fas fa-circle-info mt-1" aria-hidden="true"></i>
+                <div>Confirma la forma de pago que se utilizará en la factura interna.</div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-3">
@@ -36,21 +40,8 @@
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header bg-body fw-semibold">Opciones de registro</div>
-        <div class="card-body">
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="saveCfdiData" name="save-cfdi-data" checked>
-                <label class="form-check-label" for="saveCfdiData">Conservar y actualizar los datos del CFDI</label>
-            </div>
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="saveInvoiceData" name="save-invoice-data" checked>
-                <label class="form-check-label" for="saveInvoiceData">Generar y actualizar la factura de proveedor</label>
-            </div>
-            <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" id="saveProductsData" name="save-product-data">
-                <label class="form-check-label" for="saveProductsData">Actualizar datos de productos y vínculos</label>
-            </div>
-        </div>
+    <div class="alert alert-secondary mb-0" role="alert">
+        La factura se generará con los productos vinculados y los conceptos restantes como líneas libres.
+        Las opciones de precios, impuestos y serie se configuran en el siguiente paso.
     </div>
 </div>
