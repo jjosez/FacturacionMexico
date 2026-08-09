@@ -47,7 +47,7 @@ class CfdiFileStorage implements CfdiRepositoryInterface
         $fullPath = self::DESTINATION_FOLDER . $subFolder;
 
         if (!Tools::folderCheckOrCreate($fullPath)) {
-            Tools::log()->warning('No se pudo crear la carpeta para el CFDI: ' . $fullPath);
+            Tools::log('CFDI')->warning('No se pudo crear la carpeta para el CFDI: ' . $fullPath);
             return false;
         }
 
@@ -55,7 +55,7 @@ class CfdiFileStorage implements CfdiRepositoryInterface
         $filePath = $fullPath . $destinationName;
 
         if (false === file_put_contents($filePath, $xmlContent)) {
-            Tools::log()->warning('No se pudo guardar el archivo CFDI: ' . $filePath);
+            Tools::log('CFDI')->warning('No se pudo guardar el archivo CFDI: ' . $filePath);
             return false;
         }
 
@@ -100,7 +100,7 @@ class CfdiFileStorage implements CfdiRepositoryInterface
             return file_get_contents($filePath) ?: null;
         }
 
-        Tools::log()->warning('Archivo XML no encontrado: ' . $filePath);
+        Tools::log('CFDI')->warning('Archivo XML no encontrado: ' . $filePath);
         return null;
     }
 

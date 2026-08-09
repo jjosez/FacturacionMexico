@@ -57,7 +57,7 @@ class CfdiRelationService
                 // Buscar el CFDI relacionado por UUID
                 $cfdiRelacionado = new CfdiCliente();
                 if (!$cfdiRelacionado->loadFromUuid($uuidRelacionado)) {
-                    Tools::log()->warning("No se encontró el CFDI relacionado con UUID: $uuidRelacionado");
+                    Tools::log('CFDI')->warning("No se encontró el CFDI relacionado con UUID: $uuidRelacionado");
                     continue;
                 }
 
@@ -70,7 +70,7 @@ class CfdiRelationService
                 $relacion->uuid_relacionado = $uuidRelacionado;
 
                 if (!$relacion->save()) {
-                    Tools::log()->error("Error al guardar la relación CFDI: {$cfdi->uuid} -> {$uuidRelacionado}");
+                    Tools::log('CFDI')->error("Error al guardar la relación CFDI: {$cfdi->uuid} -> {$uuidRelacionado}");
                     $allSaved = false;
                 }
             }
@@ -93,7 +93,7 @@ class CfdiRelationService
 
         foreach ($relations as $rel) {
             if (!$rel->delete()) {
-                Tools::log()->warning("No se pudo eliminar la relación con ID: {$rel->id}");
+                Tools::log('CFDI')->warning("No se pudo eliminar la relación con ID: {$rel->id}");
                 return false;
             }
         }
@@ -121,12 +121,12 @@ class CfdiRelationService
             foreach ($relacionados as $uuid) {
                 $cfdi = new CfdiCliente();
                 if (!$cfdi->loadFromUuid($uuid)) {
-                    Tools::log()->warning("CFDI relacionado no encontrado: $uuid");
+                Tools::log('CFDI')->warning("CFDI relacionado no encontrado: $uuid");
                     return false;
                 }
 
                 if ($cfdi->codcliente !== $codcliente) {
-                    Tools::log()->warning("CFDI relacionado no pertenece al mismo cliente: $uuid");
+                Tools::log('CFDI')->warning("CFDI relacionado no pertenece al mismo cliente: $uuid");
                     return false;
                 }
             }

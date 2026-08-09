@@ -24,13 +24,17 @@ use FacturaScripts\Core\Lib\ExtendedController\EditController;
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
+use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Extension\Controller\FormaPagoControllerTrait;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierInvoiceImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierProductImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiStatusService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiUploadService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoiceStateService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierProductLinkService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
 
@@ -88,21 +92,24 @@ class EditCfdiProveedor extends EditController
 
         if ($viewName === 'EditCfdiProveedor') {
             if ($this->getModel()->primaryColumnValue()) {
-                $this->addButton($viewName, [
-                    'action' => 'import-cfdi-to-invoice',
-                    'color' => 'info',
-                    'icon' => 'fa-solid fa-file-invoice',
-                    'label' => 'Generar factura',
-                    'type' => 'action'
-                ]);
+                $this->tab($viewName)->setReadOnly(true);
 
-                $this->addButton($viewName, [
-                    'action' => 'open-wizard',
-                    'color' => 'success',
-                    'icon' => 'fa-solid fa-magic',
-                    'label' => 'Wizard Importación',
-                    'type' => 'action'
-                ]);
+                $canImport = true;
+                if (!empty($this->getModel()->idfactura)) {
+                    $invoice = new FacturaProveedor();
+                    $canImport = $invoice->load($this->getModel()->idfactura)
+                        && (new SupplierInvoiceStateService())->isEditable($invoice);
+                }
+
+                if ($canImport) {
+                    $view->addButton([
+                        'action' => 'cfdi-to-invoice-wizard',
+                        'color' => 'success',
+                        'icon' => 'fa-solid fa-magic',
+                        'label' => 'Importar Factura',
+                        'type' => 'action'
+                    ]);
+                }
 
                 $this->fileName = $this->getModel()->filename;
                 $this->loadReader();
@@ -134,7 +141,7 @@ class EditCfdiProveedor extends EditController
             return;
         }
 
-        if ($action === 'open-wizard') {
+        if ($action === 'cfdi-to-invoice-wizard') {
             $this->openWizardAction();
             return;
         }
@@ -150,16 +157,23 @@ class EditCfdiProveedor extends EditController
             try {
                 $conceptos = $this->mapConceptosToInvoice();
 
-                $importer = new CfdiSupplierInvoiceImporter();
-                $invoice = $importer->import(
+                $result = (new SupplierInvoiceImportService())->importSingle(
                     $this->getModel(),
                     $this->supplier,
+                    new SupplierInvoiceImportOptions([
+                        'productAction' => SupplierInvoiceImportOptions::PRODUCT_ACTION_SKIP,
+                        'autoMatchProducts' => true,
+                    ]),
                     $conceptos
                 );
 
-                $this->redirect($invoice->url());
+                if (!$result->success || $result->invoice === null) {
+                    throw new Exception($result->error ?? 'No se pudo generar la factura del proveedor');
+                }
+
+                $this->redirect($result->invoice->url());
             } catch (Exception $e) {
-                Tools::log()->warning('Error al generar la factura:. ' . $e->getMessage());
+                Tools::log('CFDI')->warning('Error al generar la factura:. ' . $e->getMessage());
             }
         }
     }
@@ -169,12 +183,12 @@ class EditCfdiProveedor extends EditController
         $uploadedFile = $this->request->files->get('cfdifile');
 
         try {
-            $importer = new CfdiSupplierImporter();
+            $importer = new SupplierCfdiUploadService();
             $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
 
             Tools::log()->info('CFDI importado correctamente: ' . $cfdi->uuid);
         } catch (Exception $e) {
-            Tools::log()->warning($e->getMessage());
+            Tools::log('CFDI')->warning($e->getMessage());
         }
     }
 
@@ -236,7 +250,7 @@ class EditCfdiProveedor extends EditController
             $refproveedor = $conceptos[$index]['NoIdentificacion'] ?? '';
         }
 
-        $service = new CfdiSupplierProductImporter();
+        $service = new SupplierProductLinkService();
         $result = $service->vincular(
             $referencia,
             $codproveedor,
@@ -253,7 +267,7 @@ class EditCfdiProveedor extends EditController
         $code = $this->request->get('code');
 
         if (empty($code)) {
-            Tools::log()->warning('No se ha seleccionado un CFDI');
+            Tools::log('CFDI')->warning('No se ha seleccionado un CFDI');
             $this->redirect($this->getModel()->url());
             return;
         }
@@ -262,7 +276,7 @@ class EditCfdiProveedor extends EditController
         $cfdi->load($code);
 
         if (empty($cfdi->primaryColumnValue())) {
-            Tools::log()->warning('No se pudo cargar el CFDI');
+            Tools::log('CFDI')->warning('No se pudo cargar el CFDI');
             return;
         }
 
@@ -312,10 +326,9 @@ class EditCfdiProveedor extends EditController
             /** @var CfdiProveedor $model */
             $model = $this->getModel();
 
-            if ($model->estado !== 'Vinculado') {
-                $model->estado = 'Vinculado';
-                if ($model->save()) {
-                    Tools::log()->notice('El CFDI se marcó cómo VINCULADO.');
+            if ($model->estado !== SupplierCfdiStatusService::STATUS_LINKED) {
+                if ((new SupplierCfdiStatusService())->markLinked($model)) {
+                    Tools::log('CFDI')->notice('El CFDI se marcó cómo VINCULADO.');
                 }
             }
         }
@@ -376,8 +389,8 @@ class EditCfdiProveedor extends EditController
 
             return true;
         } catch (Exception $e) {
-            Tools::log()->warning('Error al cargar el archivo ' . $this->fileName);
-            Tools::log()->warning($e->getMessage());
+            Tools::log('CFDI')->warning('Error al cargar el archivo ' . $this->fileName);
+            Tools::log('CFDI')->warning($e->getMessage());
             return false;
         }
     }

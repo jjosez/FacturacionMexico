@@ -5,7 +5,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\Queue;
 use FacturaScripts\Core\Base\DataBase;
 use ZipArchive;
 
-class CfdiImportQueue
+class SupplierCfdiImportQueue
 {
     public const TABLE = 'cfdi_import_jobs';
     public const DEFAULT_TIMEOUT = 300;
@@ -25,11 +25,12 @@ class CfdiImportQueue
             throw new \Exception('Error al crear archivo ZIP para el job');
         }
 
-        $job = new CfdiImportJob();
+        $job = new SupplierCfdiImportJob();
         $job->companyId = $companyId;
         $job->userId = $userId;
         $job->filePath = $zipPath;
-        $job->status = CfdiImportJob::STATUS_PENDING;
+        $job->status = SupplierCfdiImportJob::STATUS_PENDING;
+        $job->result = json_encode(['options' => $options]);
         $job->createdAt = new \DateTime();
 
         $this->save($job);
@@ -37,21 +38,21 @@ class CfdiImportQueue
         return (string)$job->id;
     }
 
-    public function dequeue(): ?CfdiImportJob
+    public function dequeue(): ?SupplierCfdiImportJob
     {
         $sql = "SELECT * FROM " . self::TABLE
             . " WHERE status = ? ORDER BY created_at ASC LIMIT 1";
 
-        $result = $this->db->select($sql, [CfdiImportJob::STATUS_PENDING]);
+        $result = $this->db->select($sql, [SupplierCfdiImportJob::STATUS_PENDING]);
 
         if (empty($result)) {
             return null;
         }
 
-        return CfdiImportJob::fromArray($result[0]);
+        return SupplierCfdiImportJob::fromArray($result[0]);
     }
 
-    public function get(string $jobId): ?CfdiImportJob
+    public function get(string $jobId): ?SupplierCfdiImportJob
     {
         $sql = "SELECT * FROM " . self::TABLE . " WHERE id = ?";
 
@@ -61,7 +62,7 @@ class CfdiImportQueue
             return null;
         }
 
-        return CfdiImportJob::fromArray($result[0]);
+        return SupplierCfdiImportJob::fromArray($result[0]);
     }
 
     public function getByUser(int $userId, int $limit = 10): array
@@ -71,7 +72,7 @@ class CfdiImportQueue
 
         $result = $this->db->select($sql, [$userId, $limit]);
 
-        return array_map(fn($row) => CfdiImportJob::fromArray($row), $result);
+        return array_map(fn($row) => SupplierCfdiImportJob::fromArray($row), $result);
     }
 
     public function getStatus(string $jobId): ?array
@@ -95,7 +96,7 @@ class CfdiImportQueue
         ];
     }
 
-    public function save(CfdiImportJob $job): bool
+    public function save(SupplierCfdiImportJob $job): bool
     {
         if ($job->id > 0) {
             return $this->update($job);
@@ -120,7 +121,7 @@ class CfdiImportQueue
         $sql = "UPDATE " . self::TABLE
             . " SET status = ? WHERE id = ? AND status = ?";
 
-        $this->db->exec($sql, [CfdiImportJob::STATUS_PROCESSING, (int)$jobId, CfdiImportJob::STATUS_PENDING]);
+        $this->db->exec($sql, [SupplierCfdiImportJob::STATUS_PROCESSING, (int)$jobId, SupplierCfdiImportJob::STATUS_PENDING]);
     }
 
     public function complete(string $jobId, array $result): void
@@ -130,7 +131,7 @@ class CfdiImportQueue
             . " WHERE id = ?";
 
         $this->db->exec($sql, [
-            CfdiImportJob::STATUS_COMPLETED,
+            SupplierCfdiImportJob::STATUS_COMPLETED,
             json_encode($result),
             (int)$jobId
         ]);
@@ -142,7 +143,7 @@ class CfdiImportQueue
             . " SET status = ?, error = ?, processed_at = NOW()"
             . " WHERE id = ?";
 
-        $this->db->exec($sql, [CfdiImportJob::STATUS_FAILED, $error, (int)$jobId]);
+        $this->db->exec($sql, [SupplierCfdiImportJob::STATUS_FAILED, $error, (int)$jobId]);
     }
 
     public function delete(int $jobId): bool
@@ -165,8 +166,8 @@ class CfdiImportQueue
             . " AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
 
         $this->db->exec($sql, [
-            CfdiImportJob::STATUS_COMPLETED,
-            CfdiImportJob::STATUS_FAILED,
+            SupplierCfdiImportJob::STATUS_COMPLETED,
+            SupplierCfdiImportJob::STATUS_FAILED,
             $days
         ]);
 
@@ -194,7 +195,7 @@ class CfdiImportQueue
         ];
     }
 
-    private function insert(CfdiImportJob $job): bool
+    private function insert(SupplierCfdiImportJob $job): bool
     {
         $sql = "INSERT INTO " . self::TABLE
             . " (company_id, user_id, status, file_path, progress, created_at)"
@@ -215,7 +216,7 @@ class CfdiImportQueue
         return $result;
     }
 
-    private function update(CfdiImportJob $job): bool
+    private function update(SupplierCfdiImportJob $job): bool
     {
         $sql = "UPDATE " . self::TABLE
             . " SET status = ?, result = ?, error = ?, progress = ?,"

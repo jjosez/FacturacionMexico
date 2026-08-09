@@ -23,7 +23,7 @@ class RelationValidator
             $relacionados = $group['relacionados'] ?? [];
 
             if (empty($relacionados)) {
-                Tools::log()->warning("No hay UUIDs en la relación tipo $tipoRelacion.");
+                Tools::log('CFDI')->warning("No hay UUIDs en la relación tipo $tipoRelacion.");
                 continue;
             }
 
@@ -35,12 +35,12 @@ class RelationValidator
                 $parentCfdi = new CfdiCliente();
 
                 if (!$parentCfdi->loadFromUuid($uuid)) {
-                    Tools::log()->warning("CFDI relacionado no encontrado: $uuid");
+                Tools::log('CFDI')->warning("CFDI relacionado no encontrado: $uuid");
                     continue;
                 }
 
                 if ($factura->codcliente !== $parentCfdi->codcliente) {
-                    Tools::log()->warning("CFDI relacionado no coincide receptor: $uuid");
+                Tools::log('CFDI')->warning("CFDI relacionado no coincide receptor: $uuid");
                     continue;
                 }
 
@@ -61,12 +61,12 @@ class RelationValidator
         // Si es egreso debe tener tipo 01
         if (self::isSerieEgreso($factura)) {
             if (empty($relations)) {
-                Tools::log()->warning('Un CFDI de egreso debe relacionarse al menos con un CFDI.');
+                Tools::log('CFDI')->warning('Un CFDI de egreso debe relacionarse al menos con un CFDI.');
                 return false;
             }
 
             if (!$isNotaCreditoRelation) {
-                Tools::log()->warning('Un CFDI de egreso debe tener al menos un tipo de relación 01 (nota de crédito).');
+                Tools::log('CFDI')->warning('Un CFDI de egreso debe tener al menos un tipo de relación 01 (nota de crédito).');
                 return false;
             }
         }

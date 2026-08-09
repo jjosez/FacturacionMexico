@@ -66,8 +66,13 @@
             </column>
             <column name="estado" title="status" display="left" numcolumns="2" order="225">
                 <widget type="select" fieldname="estado">
-                    <values title="Cancelado">cancelado</values>
-                    <values title="Vigente">vigente</values>
+                    <values title="Cancelado">cancelled</values>
+                    <values title="Importado">imported</values>
+                    <values title="Importado">vigente</values>
+                    <values title="Vinculado">linked</values>
+                    <values title="Factura en Borrador">draft</values>
+                    <values title="Factura Recibida">received</values>
+                    <values title="Factura Generada">invoiced</values>
                 </widget>
             </column>
             <column name="fecha-emision" title="Fecha de emisión" display="left" numcolumns="2" order="230">

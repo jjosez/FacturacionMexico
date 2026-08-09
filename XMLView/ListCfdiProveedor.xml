@@ -42,10 +42,12 @@
     </modals>
     <rows>
         <row type="status">
-            <option color="danger" title="Cancelado" fieldname="estado">Cancelado</option>
+            <option color="" title="Importado" fieldname="estado">imported</option>
+            <option color="danger" title="Cancelado" fieldname="estado">cancelled</option>
+            <option color="info" title="Conceptos Vinculados" fieldname="estado">linked</option>
+            <option color="warning" title="Factura en Borrador" fieldname="estado">draft</option>
+            <option color="success" title="Factura Recibida" fieldname="estado">received</option>
             <option color="warning" title="Factura Egreso" fieldname="tipocfdi">E</option>
-            <option color="info" title="Conceptos Vinculados" fieldname="estado">Vinculado</option>
-            <option color="success" title="Factura Generada" fieldname="estado">Factura Generada</option>
         </row>
         <row type="actions">
             <button type="modal" icon="fas fa-file-import fa-fw" label="import" color="info"

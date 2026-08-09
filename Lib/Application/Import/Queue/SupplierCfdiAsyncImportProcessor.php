@@ -3,28 +3,28 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\Queue;
 
 use Exception;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\BatchImportResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\ImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierCfdiImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiUploadService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceBatchResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportService;
 
-class AsyncImportProcessor
+class SupplierCfdiAsyncImportProcessor
 {
-    private CfdiImportQueue $queue;
-    private SupplierCfdiImportService $importService;
-    private CfdiSupplierImporter $cfdiImporter;
+    private SupplierCfdiImportQueue $queue;
+    private SupplierInvoiceImportService $importService;
+    private SupplierCfdiUploadService $cfdiImporter;
     private bool $shouldStop = false;
 
     public function __construct(
-        ?SupplierCfdiImportService $importService = null,
-        ?CfdiImportQueue $queue = null
+        ?SupplierInvoiceImportService $importService = null,
+        ?SupplierCfdiImportQueue $queue = null
     ) {
-        $this->importService = $importService ?? new SupplierCfdiImportService();
-        $this->queue = $queue ?? new CfdiImportQueue();
-        $this->cfdiImporter = new CfdiSupplierImporter();
+        $this->importService = $importService ?? new SupplierInvoiceImportService();
+        $this->queue = $queue ?? new SupplierCfdiImportQueue();
+        $this->cfdiImporter = new SupplierCfdiUploadService();
     }
 
-    public function process(string $jobId): BatchImportResult
+    public function process(string $jobId): SupplierInvoiceBatchResult
     {
         $job = $this->queue->get($jobId);
 
@@ -38,7 +38,7 @@ class AsyncImportProcessor
 
         $this->queue->markAsProcessing($jobId);
 
-        $result = new BatchImportResult();
+        $result = new SupplierInvoiceBatchResult();
 
         try {
             $xmlFiles = $this->queue->extractZip($job->filePath);
@@ -53,7 +53,10 @@ class AsyncImportProcessor
                 }
 
                 try {
-                    $this->processFile($filePath, $job->companyId, $options, $result);
+                    $importResult = $this->processFile($filePath, $job->companyId, $options, $result);
+                    if (!$importResult->success) {
+                        throw new Exception($importResult->error ?? 'No se pudo importar el CFDI');
+                    }
                     $result->addSuccess(basename($filePath), 0);
                 } catch (Exception $e) {
                     $result->addFailure(basename($filePath), $e->getMessage());
@@ -75,7 +78,7 @@ class AsyncImportProcessor
         return $result;
     }
 
-    public function processNext(): ?BatchImportResult
+    public function processNext(): ?SupplierInvoiceBatchResult
     {
         $job = $this->queue->dequeue();
 
@@ -121,9 +124,9 @@ class AsyncImportProcessor
     private function processFile(
         string $filePath,
         int $companyId,
-        ImportOptions $options,
-        BatchImportResult $result
-    ): void {
+        SupplierInvoiceImportOptions $options,
+        SupplierInvoiceBatchResult $result
+    ): \FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportResult {
         $xmlContent = file_get_contents($filePath);
 
         if ($xmlContent === false) {
@@ -141,7 +144,7 @@ class AsyncImportProcessor
 
             $cfdi = $this->cfdiImporter->processUpload($uploadedFile, $company);
 
-            $this->importService->importSingle($cfdi, $cfdi->getSupplier(), $options);
+            return $this->importService->importSingle($cfdi, $cfdi->getSupplier(), $options);
         } finally {
             if (file_exists($tempFile)) {
                 unlink($tempFile);
@@ -149,18 +152,18 @@ class AsyncImportProcessor
         }
     }
 
-    private function getOptionsFromJob(CfdiImportJob $job): ImportOptions
+    private function getOptionsFromJob(SupplierCfdiImportJob $job): SupplierInvoiceImportOptions
     {
         if (empty($job->result)) {
-            return new ImportOptions();
+            return new SupplierInvoiceImportOptions();
         }
 
         $data = json_decode($job->result, true);
 
         if (!isset($data['options'])) {
-            return new ImportOptions();
+            return new SupplierInvoiceImportOptions();
         }
 
-        return ImportOptions::fromArray($data['options']);
+        return SupplierInvoiceImportOptions::fromArray($data['options']);
     }
 }

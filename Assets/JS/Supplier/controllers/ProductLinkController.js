@@ -53,6 +53,7 @@ export class ProductLinkController {
 
         // Actualizar botones según estado inicial
         this.updateAllButtonStates();
+        this.updateSummary();
     }
 
     /**
@@ -99,6 +100,7 @@ export class ProductLinkController {
         this.linkView.updateLinkStatus(index, false);
         this.linkView.updateButtonsState(index, false);
         this.linkView.showSuccessFeedback(index);
+        this.updateSummary();
 
         eventManager.emit('product:unlinked', { index });
     }
@@ -124,6 +126,7 @@ export class ProductLinkController {
         this.linkView.updateLinkStatus(this.currentConceptoIndex, true);
         this.linkView.updateButtonsState(this.currentConceptoIndex, true);
         this.linkView.showSuccessFeedback(this.currentConceptoIndex);
+        this.updateSummary();
 
         // Cerrar modal
         this.searchView.closeModal();
@@ -220,6 +223,32 @@ export class ProductLinkController {
      */
     getStats() {
         return this.store.getStats();
+    }
+
+    updateSummary() {
+        const stats = this.getStats();
+        const linked = document.getElementById('linkedProductsCount');
+        const pending = document.getElementById('pendingProductsCount');
+        const summaryLinked = document.getElementById('summaryLinked');
+        const summaryUnmatched = document.getElementById('summaryUnmatched');
+        const summary = document.getElementById('productMatchStats');
+
+        if (linked) {
+            linked.textContent = stats.linkedCount;
+        }
+        if (pending) {
+            pending.textContent = stats.pending;
+        }
+        if (summaryLinked) {
+            summaryLinked.textContent = stats.linkedCount;
+        }
+        if (summaryUnmatched) {
+            summaryUnmatched.textContent = stats.pending;
+        }
+        if (summary) {
+            summary.classList.toggle('text-bg-success', stats.pending === 0);
+            summary.classList.toggle('text-bg-warning', stats.pending !== 0);
+        }
     }
 
     /**

@@ -4,7 +4,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\Queue;
 
 use DateTime;
 
-class CfdiImportJob
+class SupplierCfdiImportJob
 {
     public const STATUS_PENDING = 'pending';
     public const STATUS_PROCESSING = 'processing';

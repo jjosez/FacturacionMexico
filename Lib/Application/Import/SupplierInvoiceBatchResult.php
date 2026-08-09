@@ -2,7 +2,7 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import;
 
-class BatchImportResult
+class SupplierInvoiceBatchResult
 {
     public int $total = 0;
     public int $success = 0;

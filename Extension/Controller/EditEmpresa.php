@@ -82,7 +82,7 @@ class EditEmpresa
                 $view->model = $mainModel;
 
                 if ($mainModel->cfdi_pac_test) {
-                    Tools::log()->warning('CFDI: Timbrado modo prueba activo.');
+                    Tools::log('CFDI')->warning('CFDI: Timbrado modo prueba activo.');
                 }
 
                 $invoiceStatus = $this->loadInvoiceCfdiStatus($viewName);
@@ -123,7 +123,7 @@ class EditEmpresa
 
                 throw new Exception('Error al descargar los recursos del SAT.');
             } catch (Exception $exception) {
-                Tools::log()->warning($exception->getMessage());
+                    Tools::log('CFDI')->warning($exception->getMessage());
             }
         };
     }
@@ -140,7 +140,7 @@ class EditEmpresa
             $company->cfdi_canceled_status = $invoiceCanceledStatus;
 
             if (false === $company->save()) {
-                Tools::log()->warning('Error guardando los datos.');
+                    Tools::log('CFDI')->warning('Error guardando los datos.');
                 return;
             }
 
@@ -160,7 +160,7 @@ class EditEmpresa
             $company->cfdi_pac_test = $testMode;
 
             if (false === $company->save()) {
-                Tools::log()->warning('Error guardando los datos.');
+                    Tools::log('CFDI')->warning('Error guardando los datos.');
                 return;
             }
 
@@ -206,7 +206,7 @@ class EditEmpresa
 
                 throw new Exception('Error al guardar en la base de datos.');
             } catch (Exception $exception) {
-                Tools::log()->warning($exception->getMessage());
+                    Tools::log('CFDI')->warning($exception->getMessage());
             }
         };
     }
@@ -283,7 +283,7 @@ class EditEmpresa
                 return;
             }
 
-            Tools::log()->warning('Hubo un error al actualizar el modelo de empresa.');
+            Tools::log('CFDI')->warning('Hubo un error al actualizar el modelo de empresa.');
         };
     }
 
@@ -311,7 +311,7 @@ class EditEmpresa
 
                 return true;
             } else {
-                Tools::log()->error('No se pudo crear el directorio: ' . CFDI_CERT_DIR);
+                Tools::log('CFDI')->error('No se pudo crear el directorio: ' . CFDI_CERT_DIR);
                 return false;
             }
         };

@@ -29,7 +29,7 @@ use FacturaScripts\Dinamic\Model\Variante;
  *
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
-class CfdiSupplierProductImporter
+class SupplierProductLinkService
 {
     /**
      * Vincula un producto con un proveedor
@@ -50,7 +50,9 @@ class CfdiSupplierProductImporter
         float $precio,
         float $stock = 0.0,
         float $dtopor = 0.0,
-        float $dtopor2 = 0.0
+        float $dtopor2 = 0.0,
+        bool $updatePrice = true,
+        ?string $coddivisa = null
     ): array {
         // Verificar que el producto existe
         $variante = new Variante();
@@ -76,10 +78,9 @@ class CfdiSupplierProductImporter
 
         if ($productoProveedor) {
             // Actualizar vinculación existente
-            $result = $this->actualizarVinculacion($productoProveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2);
+            $result = $this->actualizarVinculacion($productoProveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $variante->idproducto, $updatePrice, $coddivisa);
         } else {
-            // Crear nueva vinculación
-            $result = $this->crearVinculacion($referencia, $codproveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $variante->idproducto);
+            $result = $this->crearVinculacion($referencia, $codproveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $variante->idproducto, $updatePrice, $coddivisa);
         }
 
         return $result;
@@ -124,16 +125,26 @@ class CfdiSupplierProductImporter
         float $precio,
         float $stock,
         float $dtopor,
-        float $dtopor2
+        float $dtopor2,
+        int $idproducto,
+        bool $updatePrice,
+        ?string $coddivisa
     ): array {
         $productoProveedor->refproveedor = $refproveedor;
-        $productoProveedor->precio = $precio;
+        if ($updatePrice) {
+            $productoProveedor->precio = $precio;
+        }
         $productoProveedor->stock = $stock;
         $productoProveedor->dtopor = $dtopor;
         $productoProveedor->dtopor2 = $dtopor2;
         $productoProveedor->actualizado = Tools::dateTime();
+        $productoProveedor->idproducto = $idproducto;
+        if ($coddivisa !== null && $coddivisa !== '') {
+            $productoProveedor->coddivisa = $coddivisa;
+        }
 
-        if ($productoProveedor->save()) {
+        $saved = $productoProveedor->save();
+        if ($saved) {
             return [
                 'ok' => true,
                 'message' => 'Vinculación actualizada correctamente',
@@ -169,19 +180,25 @@ class CfdiSupplierProductImporter
         float $stock,
         float $dtopor,
         float $dtopor2,
-        int $idproducto
+        int $idproducto,
+        bool $updatePrice,
+        ?string $coddivisa
     ): array {
         $productoProveedor = new ProductoProveedor();
         $productoProveedor->referencia = $referencia;
         $productoProveedor->codproveedor = $codproveedor;
         $productoProveedor->refproveedor = $refproveedor;
-        $productoProveedor->precio = $precio;
+        $productoProveedor->precio = $updatePrice ? $precio : 0.0;
         $productoProveedor->stock = $stock;
         $productoProveedor->dtopor = $dtopor;
         $productoProveedor->dtopor2 = $dtopor2;
         $productoProveedor->idproducto = $idproducto;
+        if ($coddivisa !== null && $coddivisa !== '') {
+            $productoProveedor->coddivisa = $coddivisa;
+        }
 
-        if ($productoProveedor->save()) {
+        $saved = $productoProveedor->save();
+        if ($saved) {
             return [
                 'ok' => true,
                 'message' => 'Producto vinculado correctamente',

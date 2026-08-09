@@ -78,8 +78,13 @@ export class ProductLinkStore {
      * @returns {Object}
      */
     getStats() {
+        const total = document.querySelectorAll('#conceptosTable tr[data-index]').length;
+        const linkedCount = this.links.size;
+
         return {
-            total: this.links.size,
+            total,
+            linkedCount,
+            pending: Math.max(0, total - linkedCount),
             linked: Array.from(this.links.keys())
         };
     }

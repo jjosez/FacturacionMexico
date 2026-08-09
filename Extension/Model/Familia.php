@@ -29,14 +29,28 @@ class Familia
     public function clear(): Closure
     {
         return function () {
-            if (empty($this->clavesat)) {
-                $madre = $this->find($this->madre);
-                $this->clavesat = $madre ? $madre->clavesat : '01010101';
-            }
-
             if (empty($this->claveunidad)) {
                 $this->claveunidad = 'H87';
             }
+        };
+    }
+
+    public function testBefore(): Closure
+    {
+        return function () {
+            if (empty($this->clavesat)) {
+                $madre = null;
+
+                if (!empty($this->madre)) {
+                    $madre = $this->find($this->madre);
+                }
+
+                $this->clavesat = $madre && !empty($madre->clavesat)
+                    ? $madre->clavesat
+                    : '01010101';
+            }
+
+            return true;
         };
     }
 }

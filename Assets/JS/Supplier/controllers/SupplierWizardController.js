@@ -163,7 +163,7 @@ export class SupplierWizardController {
         if (data.step === 2) {
             // Paso de productos: actualizar estadísticas
             const stats = this.productLinkController.getStats();
-            console.log(`📊 Productos vinculados: ${stats.total}`);
+            console.log(`Productos vinculados: ${stats.linkedCount}, pendientes: ${stats.pending}`);
         }
     }
 
@@ -174,7 +174,7 @@ export class SupplierWizardController {
     onFormSubmitted(data) {
         // Validaciones adicionales antes de enviar
         const stats = this.productLinkController.getStats();
-        console.log(`✅ Enviando con ${stats.total} productos vinculados`);
+        console.log(`Enviando con ${stats.linkedCount} productos vinculados y ${stats.pending} pendientes`);
     }
 
     /**

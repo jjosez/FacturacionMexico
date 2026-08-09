@@ -11,7 +11,7 @@ use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 
-class CfdiSupplierImporter
+class SupplierCfdiUploadService
 {
     public const DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
 
@@ -96,7 +96,7 @@ class CfdiSupplierImporter
         $cfdi = new CfdiProveedor();
         $cfdi->codproveedor = $this->supplier->codproveedor;
         $cfdi->coddivisa = "MXN";
-        $cfdi->estado = "vigente";
+        $cfdi->estado = SupplierCfdiStatusService::STATUS_IMPORTED;
         $cfdi->receptor_rfc = $this->reader->receptorRfc();
         $cfdi->receptor_nombre = $this->reader->receptorNombre();
         $cfdi->emisor_rfc = $this->reader->emisorRfc();

@@ -53,11 +53,11 @@ class EditCliente
                 $result = CustomerValidator::validateForCfdi($view->model);
 
                 if (!empty($result)) {
-                    Tools::log()->warning('Verificar Constancia de Situación Fiscal para emisión de CFDI.');
+                    Tools::log('CFDI')->warning('Verificar Constancia de Situación Fiscal para emisión de CFDI.');
                 }
 
                 foreach ($result as $message) {
-                    Tools::log()->warning($message);
+                    Tools::log('CFDI')->warning($message);
                 }
             }
         };

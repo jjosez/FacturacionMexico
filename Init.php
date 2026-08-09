@@ -31,6 +31,7 @@ class Init extends InitClass
         $this->loadExtension(new Extension\Controller\EditEmpresa());
         $this->loadExtension(new Extension\Model\Cliente());
         $this->loadExtension(new Extension\Model\FacturaCliente());
+        $this->loadExtension(new Extension\Model\FacturaProveedor());
         $this->loadExtension(new Extension\Model\Empresa());
         $this->loadExtension(new Extension\Model\Familia());
         $this->loadExtension(new Extension\Model\FormaPago());
@@ -48,7 +49,7 @@ class Init extends InitClass
 
         foreach ($directories as $dir) {
             if (!Tools::folderCheckOrCreate($dir)) {
-                Tools::log()->warning('No se pudo crear el directorio: ' . $dir);
+                Tools::log('CFDI')->warning('No se pudo crear el directorio: ' . $dir);
             }
         }
     }

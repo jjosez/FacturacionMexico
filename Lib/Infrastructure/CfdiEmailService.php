@@ -42,7 +42,7 @@ class CfdiEmailService
 
         $paths = self::generateAttachments($cfdi, $factura, $xml);
         if (!$paths) {
-            Tools::log()->error("Error al adjuntar archivos del cfdi: $cfdi->uuid");
+            Tools::log('CFDI')->error("Error al adjuntar archivos del cfdi: $cfdi->uuid");
             return false;
         }
 
@@ -57,7 +57,7 @@ class CfdiEmailService
     {
         $cliente = $factura->getSubject();
         if (empty($cliente->email)) {
-            Tools::log()->warning('No se pudo enviar el email: el cliente no tiene email asignado.');
+            Tools::log('CFDI')->warning('No se pudo enviar el email: el cliente no tiene email asignado.');
             return false;
         }
         return true;
@@ -107,13 +107,13 @@ class CfdiEmailService
 
             $sent = $mail->send();
         } catch (Exception $e) {
-            Tools::log()->error("Error al enviar el correo del CFDI: {$e->getMessage()}");
+            Tools::log('CFDI')->error("Error al enviar el correo del CFDI: {$e->getMessage()}");
         }
 
         if ($sent) {
             Tools::log()->notice("CFDI enviado por email correctamente: $cfdi->uuid");
         } else {
-            Tools::log()->error("Error enviando el CFDI: $cfdi->uuid");
+            Tools::log('CFDI')->error("Error enviando el CFDI: $cfdi->uuid");
         }
 
         return $sent;

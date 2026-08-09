@@ -119,7 +119,7 @@ class DeliveryNoteInvoiceGenerator
             return $invoice;
         } catch (Exception $e) {
             $this->dataBase->rollback();
-            Tools::log()->error($e->getMessage());
+            Tools::log('CFDI')->error($e->getMessage());
             throw $e;
         }
     }
@@ -192,7 +192,7 @@ class DeliveryNoteInvoiceGenerator
             return $invoices;
         } catch (Exception $e) {
             $this->dataBase->rollback();
-            Tools::log()->error($e->getMessage());
+            Tools::log('CFDI')->error($e->getMessage());
             throw $e;
         }
     }

@@ -200,7 +200,7 @@ class EditCfdiCliente extends Controller
     private function stamp(): void
     {
         if (!$this->factura->exists()) {
-            Tools::log()->warning('La factura no existe');
+            Tools::log('CFDI')->warning('La factura no existe');
             return;
         }
 
@@ -213,7 +213,7 @@ class EditCfdiCliente extends Controller
             $this->attachXmlReader();
             Tools::log()->notice('CFDI timbrado correctamente');
         } else {
-            Tools::log()->error($result->getMessage());
+            Tools::log('CFDI')->error($result->getMessage());
         }
     }
 
@@ -227,7 +227,7 @@ class EditCfdiCliente extends Controller
         if ($result->isSuccess()) {
             Tools::log()->notice('CFDI cancelado correctamente');
         } else {
-            Tools::log()->error($result->getMessage());
+            Tools::log('CFDI')->error($result->getMessage());
         }
     }
 
@@ -256,7 +256,7 @@ class EditCfdiCliente extends Controller
         $xmlLocataion = $this->storage->cfdiFilePath($this->cfdi);
 
         if (null === $xmlLocataion) {
-            Tools::log()->warning('Error al cargar el archivo xml.');
+            Tools::log('CFDI')->warning('Error al cargar el archivo xml.');
             return;
         }
 
@@ -287,7 +287,7 @@ class EditCfdiCliente extends Controller
         $xml = $this->storage->getXml($this->cfdi);
 
         if (!$xml) {
-            Tools::log()->error('No se pudo obtener el XML del CFDI para enviar por email');
+            Tools::log('CFDI')->error('No se pudo obtener el XML del CFDI para enviar por email');
             return;
         }
 
@@ -297,7 +297,7 @@ class EditCfdiCliente extends Controller
             $this->storage->updateMailDate($this->cfdi);
             Tools::log()->notice('CFDI enviado por email correctamente');
         } else {
-            Tools::log()->warning('No se pudo enviar el CFDI por email');
+            Tools::log('CFDI')->warning('No se pudo enviar el CFDI por email');
         }
     }
 

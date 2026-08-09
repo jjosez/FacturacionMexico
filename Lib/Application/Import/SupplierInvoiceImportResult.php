@@ -4,7 +4,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import;
 
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
 
-class ImportResult
+class SupplierInvoiceImportResult
 {
     public bool $success;
     public ?FacturaProveedor $invoice = null;

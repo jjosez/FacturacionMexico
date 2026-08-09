@@ -3,7 +3,7 @@
         <div class="col-12">
             <div class="alert alert-info d-flex align-items-start gap-2 m-0" role="alert">
                 <i class="fas fa-circle-info mt-1" aria-hidden="true"></i>
-                <div>Confirma la forma de pago que se utilizará en la factura interna.</div>
+                <div>Confirma la información y la configuración requerida para generar la factura.</div>
             </div>
         </div>
     </div>
@@ -37,6 +37,87 @@
                     <div class="form-text">Puedes cambiarla si el catálogo interno usa una clave distinta.</div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-body fw-semibold">
+                    <i class="fas fa-boxes-stacked text-primary me-2"></i>Productos
+                </div>
+                <div class="card-body">
+                    <label for="productActionSelect" class="form-label">Acción para productos</label>
+                    <select name="product_action" class="form-select mb-2" id="productActionSelect">
+                        <option value="skip" selected>Usar vínculos existentes y dejar líneas libres</option>
+                        <option value="create">Crear productos no encontrados</option>
+                    </select>
+                    <div class="form-text mb-3">
+                        Los vínculos existentes se aplican automáticamente. Los demás se seleccionan desde el botón Vincular.
+                    </div>
+                    <div class="alert alert-light border mb-0">
+                        Los vínculos existentes del proveedor se aplican automáticamente. Los demás conceptos se
+                        conservarán como líneas libres hasta que los vincules manualmente.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-body fw-semibold">
+                    <i class="fas fa-file-invoice-dollar text-primary me-2"></i>Factura, precios e impuestos
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input type="checkbox" name="update_supplier_prices" id="updateSupplierPrices" value="1"
+                               class="form-check-input">
+                        <label class="form-check-label" for="updateSupplierPrices">Actualizar precios del proveedor</label>
+                    </div>
+                    <label for="priceMultiplier" class="form-label">Multiplicador de precios</label>
+                    <div class="input-group mb-3">
+                        <input type="number" name="price_multiplier" id="priceMultiplier" value="1.00" step="0.01"
+                               min="0.01" class="form-control">
+                        <span class="input-group-text">x</span>
+                    </div>
+                    <label for="taxModeSelect" class="form-label">Modo de impuestos</label>
+                    <select name="tax_mode" class="form-select" id="taxModeSelect">
+                        <option value="preserve" selected>Mantener impuestos del CFDI</option>
+                        <option value="company">Usar configuración de empresa</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="summaryCard">
+        <div class="card-header bg-body fw-semibold">
+            <i class="fas fa-clipboard-check text-primary me-2"></i>Resumen
+        </div>
+        <div class="card-body">
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-3">
+                    <div class="fs-3 fw-bold" id="summaryTotal">{{ fsc.reader.getConceptos()|length }}</div>
+                    <div class="text-muted small">Conceptos</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="fs-3 fw-bold text-success" id="summaryLinked">{{ fsc.matchStats.exactLinked }}</div>
+                    <div class="text-muted small">Vinculados</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="fs-3 fw-bold text-danger" id="summaryUnmatched">{{ fsc.matchStats.unmatched }}</div>
+                    <div class="text-muted small">Sin vincular</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="fs-3 fw-bold text-primary" id="summaryTotalAmount">{{ fsc.cfdi.total }}</div>
+                    <div class="text-muted small">Total CFDI</div>
+                </div>
+            </div>
+            {% if fsc.matchStats.unmatched > 0 %}
+                <div class="alert alert-warning mt-3 mb-0" role="alert">
+                    <i class="fas fa-triangle-exclamation me-2" aria-hidden="true"></i>
+                    Hay {{ fsc.matchStats.unmatched }} conceptos sin vincular. Puedes regresar al paso Productos.
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>

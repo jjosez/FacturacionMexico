@@ -14,5 +14,10 @@
   "supplier-cfdi-import-failed": "No se pudo importar el CFDI de proveedor.",
   "supplier-cfdi-invoice-generated": "Factura de proveedor generada correctamente.",
   "supplier-cfdi-invoice-updated": "Factura de proveedor actualizada correctamente.",
-  "supplier-cfdi-status-invoiced": "Factura Generada"
+  "supplier-cfdi-status-invoiced": "Factura Generada",
+  "supplier-cfdi-status-draft": "Factura en Borrador",
+  "supplier-cfdi-status-received": "Factura Recibida",
+  "supplier-cfdi-status-imported": "Importado",
+  "supplier-cfdi-status-linked": "Vinculado",
+  "supplier-cfdi-status-cancelled": "Cancelado"
 }

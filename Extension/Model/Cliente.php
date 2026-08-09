@@ -78,7 +78,7 @@ class Cliente
 
             if ($customer->loadWhereEq('cifnif', $this->rfc())
                 && !CustomerValidator::isRfcGenerico($this->cifnif)) {
-                Tools::log()->warning('El RFC ya se encuentra registrado');
+                Tools::log('CFDI')->warning('El RFC ya se encuentra registrado');
 
                 return false;
             }

@@ -2,7 +2,7 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import;
 
-class ImportOptions
+class SupplierInvoiceImportOptions
 {
     public const PRODUCT_ACTION_SKIP = 'skip';
     public const PRODUCT_ACTION_AUTO = 'auto';

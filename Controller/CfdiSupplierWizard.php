@@ -29,12 +29,8 @@ use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiSupplierInvoiceImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\ImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierCfdiImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\MatchResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\ProductMatchingService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Matching\MatchingStats;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 
 class CfdiSupplierWizard extends Controller
@@ -43,7 +39,7 @@ class CfdiSupplierWizard extends Controller
     public CfdiQuickReader $reader;
     public Proveedor $supplier;
     public array $conceptMatchResults = [];
-    public MatchingStats $matchStats;
+    public array $matchStats = [];
     public string $importError = '';
     public string $wizardError = '';
 
@@ -149,13 +145,31 @@ class CfdiSupplierWizard extends Controller
                 }
             }
 
-            $this->conceptMatchResults[$index] = $product !== null
-                ? MatchResult::exactMatch($product, 'supplier_link', true)
-                : MatchResult::noMatch();
+            $this->conceptMatchResults[$index] = [
+                'confidence' => $product !== null ? 1.0 : 0.0,
+                'referencia' => $product?->referencia,
+                'matchMethod' => $product !== null ? 'supplier_link' : 'none',
+                'matchDescription' => $product !== null
+                    ? 'Producto vinculado al proveedor'
+                    : 'Sin coincidencia',
+                'isLinked' => $product !== null,
+            ];
         }
 
-        $matchingService = new ProductMatchingService();
-        $this->matchStats = $matchingService->getStats($this->conceptMatchResults);
+        $total = count($this->conceptMatchResults);
+        $linked = count(array_filter(
+            $this->conceptMatchResults,
+            static fn(array $result): bool => $result['isLinked']
+        ));
+        $this->matchStats = [
+            'total' => $total,
+            'exactLinked' => $linked,
+            'exactUnlinked' => 0,
+            'suggestions' => 0,
+            'unmatched' => $total - $linked,
+            'matchRate' => $total > 0 ? $linked / $total : 0.0,
+            'autoMatchRate' => $total > 0 ? $linked / $total : 0.0,
+        ];
     }
 
     protected function getIndexedSupplierProducts(string $codproveedor): array
@@ -305,52 +319,36 @@ class CfdiSupplierWizard extends Controller
     {
         try {
             $options = $this->getImportOptions();
-            $createInvoice = $this->requestBoolean('create_invoice', true);
+            $service = new SupplierInvoiceImportService();
+            $result = $service->importSingle(
+                $this->cfdi,
+                $this->supplier,
+                $options,
+                $this->getImportConcepts()
+            );
 
-            if ($createInvoice) {
-                $service = new SupplierCfdiImportService();
-                $result = $service->importSingle(
-                    $this->cfdi,
-                    $this->supplier,
-                    $options,
-                    $this->getImportConcepts()
-                );
-
-                if ($result->success && $result->invoice) {
-                    $this->redirect($result->invoice->url());
-                    return;
-                }
-
-                $this->importError = $result->error ?: Tools::lang()->trans('supplier-cfdi-import-failed');
-                Tools::log('audit')->warning('supplier-cfdi-import-failed', [
-                    '%uuid%' => $this->cfdi->uuid,
-                    '%error%' => $this->importError,
-                ]);
-            } else {
-                $conceptos = $this->reader->getConceptos();
-
-                $importer = new CfdiSupplierInvoiceImporter();
-                $invoice = $importer->import(
-                    $this->cfdi,
-                    $this->supplier,
-                    $conceptos
-                );
-
-                $this->redirect($invoice->url());
+            if ($result->success && $result->invoice) {
+                $this->redirect($result->invoice->url());
                 return;
             }
+
+            $this->importError = $result->error ?: Tools::lang()->trans('supplier-cfdi-import-failed');
+            Tools::log('CFDI')->warning('supplier-cfdi-import-failed', [
+                '%uuid%' => $this->cfdi->uuid,
+                '%error%' => $this->importError,
+            ]);
         } catch (Exception $e) {
             $this->importError = 'Error al importar: ' . $e->getMessage();
-            Tools::log('audit')->error('supplier-cfdi-import-exception', [
+            Tools::log('CFDI')->error('supplier-cfdi-import-exception', [
                 '%uuid%' => $this->cfdi->uuid ?? '',
                 '%error%' => $e->getMessage(),
             ]);
         }
     }
 
-    protected function getImportOptions(): ImportOptions
+    protected function getImportOptions(): SupplierInvoiceImportOptions
     {
-        return ImportOptions::fromArray([
+        return SupplierInvoiceImportOptions::fromArray([
             'product_action' => $this->request->get('product_action', 'auto'),
             'tax_mode' => $this->request->get('tax_mode', 'preserve'),
             'update_supplier_prices' => $this->requestBoolean('update_supplier_prices'),
@@ -379,6 +377,12 @@ class CfdiSupplierWizard extends Controller
         foreach ($conceptos as $index => &$concepto) {
             $referencia = $submitted[$index]['referencia'] ?? '';
             $concepto['referencia'] = is_string($referencia) ? trim($referencia) : '';
+
+            $referenciaProveedor = $submitted[$index]['referencia_proveedor'] ?? '';
+            if (is_string($referenciaProveedor) && trim($referenciaProveedor) !== '') {
+                $concepto['NoIdentificacion'] = trim($referenciaProveedor);
+            }
+
         }
 
         unset($concepto);
@@ -402,7 +406,7 @@ class CfdiSupplierWizard extends Controller
             $this->reader = new CfdiQuickReader($fileContent);
             return true;
         } catch (Exception $e) {
-            Tools::log()->error($e->getMessage());
+            Tools::log('CFDI')->error($e->getMessage());
             return false;
         }
     }
@@ -438,13 +442,11 @@ class CfdiSupplierWizard extends Controller
 
     public function getMatchedConcept(int $index): ?array
     {
-        return isset($this->conceptMatchResults[$index])
-            ? $this->conceptMatchResults[$index]->toArray()
-            : null;
+        return $this->conceptMatchResults[$index] ?? null;
     }
 
     public function getMatchStatsArray(): array
     {
-        return $this->matchStats->toArray();
+        return $this->matchStats;
     }
 }
