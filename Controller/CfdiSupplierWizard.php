@@ -26,11 +26,11 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\FormaPago;
-use FacturaScripts\Dinamic\Model\Producto;
-use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierProductLinkRepository;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierProductSearchRepository;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 
 class CfdiSupplierWizard extends Controller
@@ -42,6 +42,9 @@ class CfdiSupplierWizard extends Controller
     public array $matchStats = [];
     public string $importError = '';
     public string $wizardError = '';
+    private ?SupplierProductLinkRepository $linkRepository = null;
+    private ?SupplierProductSearchRepository $searchRepository = null;
+    private ?SupplierInvoiceImportService $importService = null;
 
     public function getPageData(): array
     {
@@ -174,8 +177,7 @@ class CfdiSupplierWizard extends Controller
 
     protected function getIndexedSupplierProducts(string $codproveedor): array
     {
-        $productSupplier = new ProductoProveedor();
-        $products = $productSupplier->all([Where::eq('codproveedor', $codproveedor)]);
+        $products = $this->getLinkRepository()->findBySupplier($codproveedor);
         $indexed = [];
 
         foreach ($products as $product) {
@@ -183,6 +185,11 @@ class CfdiSupplierWizard extends Controller
         }
 
         return $indexed;
+    }
+
+    private function getLinkRepository(): SupplierProductLinkRepository
+    {
+        return $this->linkRepository ??= new SupplierProductLinkRepository();
     }
 
     protected function searchProduct(): void
@@ -210,49 +217,20 @@ class CfdiSupplierWizard extends Controller
 
     protected function searchProductsWithSupplierPriority(string $query, string $codproveedor): array
     {
-        $db = new \FacturaScripts\Core\Base\DataBase();
-
-        $sql = "SELECT
-                    p.referencia,
-                    p.descripcion,
-                    p.tipoventa,
-                    p.codfamilia,
-                    p.preciocoste,
-                    p.pvp,
-                    p.stockfis,
-                    p.controlstock,
-                    p.referencia_fabricante,
-                    pp.refproveedor,
-                    pp.precio AS precio_proveedor,
-                    CASE WHEN pp.refproveedor IS NOT NULL THEN 1 ELSE 0 END AS is_linked
-                FROM productos p
-                LEFT JOIN productos_proveedores pp ON p.referencia = pp.referencia AND pp.codproveedor = ?
-                WHERE p.referencia LIKE ?
-                   OR p.descripcion LIKE ?
-                   OR p.referencia_fabricante LIKE ?
-                   OR pp.refproveedor LIKE ?
-                ORDER BY is_linked DESC, p.descripcion ASC
-                LIMIT 50";
-
-        $likeQuery = '%' . $db->escapeString($query) . '%';
-        $result = $db->select($sql, [$codproveedor, $likeQuery, $likeQuery, $likeQuery, $likeQuery]);
+        $result = $this->getSearchRepository()->searchWithSupplierPriority($query, $codproveedor);
 
         return $this->formatProductSearchResults($result, $query);
     }
 
+    private function getSearchRepository(): SupplierProductSearchRepository
+    {
+        return $this->searchRepository ??= new SupplierProductSearchRepository();
+    }
+
     protected function searchProductsStandard(string $query): array
     {
-        $where = [
-            Where::orLike('referencia', $query),
-            Where::orLike('descripcion', $query),
-        ];
-
-        if (Plugins::isEnabled('SKU')) {
-            array_unshift($where, Where::orLike('referencia_fabricante', $query));
-        }
-
         $results = [];
-        foreach (Producto::all($where, [], 0, 50) as $product) {
+        foreach ($this->getSearchRepository()->searchStandard($query, Plugins::isEnabled('SKU')) as $product) {
             $results[] = $product->toArray(true);
         }
 
@@ -319,8 +297,7 @@ class CfdiSupplierWizard extends Controller
     {
         try {
             $options = $this->getImportOptions();
-            $service = new SupplierInvoiceImportService();
-            $result = $service->importSingle(
+            $result = $this->getImportService()->importSingle(
                 $this->cfdi,
                 $this->supplier,
                 $options,
@@ -344,6 +321,11 @@ class CfdiSupplierWizard extends Controller
                 '%error%' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function getImportService(): SupplierInvoiceImportService
+    {
+        return $this->importService ??= new SupplierInvoiceImportService();
     }
 
     protected function getImportOptions(): SupplierInvoiceImportOptions

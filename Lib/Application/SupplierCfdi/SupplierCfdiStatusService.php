@@ -1,13 +1,21 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi;
 
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierCfdiRepository;
 
 class SupplierCfdiStatusService
 {
+    private SupplierCfdiRepository $cfdiRepository;
+
+    public function __construct(?SupplierCfdiRepository $cfdiRepository = null)
+    {
+        $this->cfdiRepository = $cfdiRepository ?? new SupplierCfdiRepository();
+    }
+
     public const STATUS_IMPORTED = 'imported';
     public const STATUS_LINKED = 'linked';
     public const STATUS_DRAFT = 'draft';
@@ -83,6 +91,6 @@ class SupplierCfdiStatusService
         }
 
         $cfdi->estado = $status;
-        return $cfdi->save();
+        return $this->cfdiRepository->save($cfdi);
     }
 }

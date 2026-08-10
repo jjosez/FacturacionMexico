@@ -1,6 +1,6 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\Queue;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\Queue;
 
 use DateTime;
 

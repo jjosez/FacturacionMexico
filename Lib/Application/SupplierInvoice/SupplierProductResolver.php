@@ -1,16 +1,20 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice;
 
-use Exception;
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Dinamic\Model\Producto;
-use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Dinamic\Model\Variante;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierProductRepository;
 
 class SupplierProductResolver
 {
+    private SupplierProductRepository $productRepository;
+
+    public function __construct(?SupplierProductRepository $productRepository = null)
+    {
+        $this->productRepository = $productRepository ?? new SupplierProductRepository();
+    }
+
     /**
      * @return array{product: ?Producto, created: bool, linked: bool}
      */
@@ -48,13 +52,7 @@ class SupplierProductResolver
             return null;
         }
 
-        $variant = new Variante();
-        if (!$variant->loadWhereEq('referencia', $reference)) {
-            return null;
-        }
-
-        $product = $variant->getProducto();
-        return $product instanceof Producto ? $product : null;
+        return $this->productRepository->findByVariantReference($reference);
     }
 
     private function loadSupplierProduct(string $supplierReference, Proveedor $supplier): ?Producto
@@ -63,21 +61,12 @@ class SupplierProductResolver
             return null;
         }
 
-        $link = new ProductoProveedor();
-        if (!$link->loadWhere([
-            new DataBaseWhere('refproveedor', $supplierReference),
-            new DataBaseWhere('codproveedor', $supplier->codproveedor),
-        ])) {
-            return null;
-        }
-
-        $product = $link->getProducto();
-        return $product instanceof Producto ? $product : null;
+        return $this->productRepository->findBySupplierReference($supplierReference, $supplier);
     }
 
     private function createProduct(array $concepto): Producto
     {
-        $product = new Producto();
+        $product = $this->productRepository->create();
         $product->descripcion = $concepto['Descripcion'] ?? '';
         $product->referencia = $this->generateUniqueReference(
             !empty($concepto['NoIdentificacion'])
@@ -92,9 +81,7 @@ class SupplierProductResolver
         $product->tipoventa = 'unidad';
         $product->setPrice((float)($concepto['ValorUnitario'] ?? 0));
 
-        if (!$product->save()) {
-            throw new Exception('Error al crear el producto: ' . $product->descripcion);
-        }
+        $this->productRepository->save($product);
 
         return $product;
     }
@@ -102,16 +89,14 @@ class SupplierProductResolver
     private function generateUniqueReference(string $base): string
     {
         $reference = substr(preg_replace('/[^a-zA-Z0-9]/', '', $base), 0, 20);
-        $product = new Producto();
-
-        if (!$product->load($reference)) {
+        if (!$this->productRepository->exists($reference)) {
             return $reference;
         }
 
         $counter = 1;
         do {
             $newReference = $reference . '_' . $counter;
-            if (!$product->load($newReference)) {
+            if (!$this->productRepository->exists($newReference)) {
                 return $newReference;
             }
             $counter++;

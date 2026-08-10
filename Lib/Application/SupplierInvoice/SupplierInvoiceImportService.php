@@ -1,23 +1,21 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice;
 
 use Exception;
-use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Lib\Calculator;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
-use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Dinamic\Model\Serie;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierProductLinkService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiStatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoiceStateService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiSettings;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\SupplierCfdiStatusService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceStateService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
-use FacturaScripts\Plugins\FacturacionMexico\Model\RelacionCfdiProveedor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\SupplierCfdiReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierInvoiceRepository;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierCfdiRelationRepository;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierInvoiceCatalogRepository;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierTransactionManager;
 
 class SupplierInvoiceImportService
 {
@@ -26,14 +24,35 @@ class SupplierInvoiceImportService
     private SupplierCfdiStatusService $cfdiStatusService;
     private SupplierProductResolver $productResolver;
     private SupplierInvoiceLineBuilder $lineBuilder;
+    private SupplierCfdiReader $cfdiReader;
+    private SupplierInvoiceRepository $invoiceRepository;
+    private SupplierCfdiRelationRepository $relationRepository;
+    private SupplierInvoiceCatalogRepository $catalogRepository;
+    private SupplierTransactionManager $transactionManager;
 
-    public function __construct()
+    public function __construct(
+        ?SupplierProductLinkService $productImporter = null,
+        ?SupplierProductResolver $productResolver = null,
+        ?SupplierInvoiceLineBuilder $lineBuilder = null,
+        ?SupplierInvoiceStateService $invoiceStateService = null,
+        ?SupplierCfdiStatusService $cfdiStatusService = null,
+        ?SupplierCfdiReader $cfdiReader = null,
+        ?SupplierInvoiceRepository $invoiceRepository = null,
+        ?SupplierCfdiRelationRepository $relationRepository = null,
+        ?SupplierInvoiceCatalogRepository $catalogRepository = null,
+        ?SupplierTransactionManager $transactionManager = null
+    )
     {
-        $this->productImporter = new SupplierProductLinkService();
-        $this->invoiceStateService = new SupplierInvoiceStateService();
-        $this->cfdiStatusService = new SupplierCfdiStatusService();
-        $this->productResolver = new SupplierProductResolver();
-        $this->lineBuilder = new SupplierInvoiceLineBuilder();
+        $this->productImporter = $productImporter ?? new SupplierProductLinkService();
+        $this->invoiceStateService = $invoiceStateService ?? new SupplierInvoiceStateService();
+        $this->cfdiStatusService = $cfdiStatusService ?? new SupplierCfdiStatusService();
+        $this->productResolver = $productResolver ?? new SupplierProductResolver();
+        $this->lineBuilder = $lineBuilder ?? new SupplierInvoiceLineBuilder();
+        $this->cfdiReader = $cfdiReader ?? new SupplierCfdiReader();
+        $this->invoiceRepository = $invoiceRepository ?? new SupplierInvoiceRepository();
+        $this->relationRepository = $relationRepository ?? new SupplierCfdiRelationRepository();
+        $this->catalogRepository = $catalogRepository ?? new SupplierInvoiceCatalogRepository();
+        $this->transactionManager = $transactionManager ?? new SupplierTransactionManager();
     }
 
     public function importSingle(
@@ -45,8 +64,8 @@ class SupplierInvoiceImportService
         $options = $options ?? new SupplierInvoiceImportOptions();
 
         if (!empty($cfdi->idfactura)) {
-            $existing = new FacturaProveedor();
-            if ($existing->load($cfdi->idfactura)) {
+            $existing = $this->invoiceRepository->findById((string)$cfdi->idfactura);
+            if ($existing !== null) {
                 try {
                     $this->invoiceStateService->assertImportable($existing);
                 } catch (Exception $e) {
@@ -55,17 +74,17 @@ class SupplierInvoiceImportService
             }
         }
 
-        $db = null;
+        $transactionStarted = false;
         try {
-            $db = new DataBase();
-            $db->beginTransaction();
+            $this->transactionManager->begin();
+            $transactionStarted = true;
 
-            $reader = $this->getCfdiReader($cfdi);
+            $reader = $this->cfdiReader->read($cfdi);
             $conceptos = $submittedConceptos ?? $reader->getConceptos();
             $isEgreso = strtoupper($cfdi->tipo) === 'E';
 
             $invoice = $this->createOrUpdateInvoice($cfdi, $supplier, $reader, $options);
-            $this->clearInvoiceLines($invoice);
+            $this->invoiceRepository->clearLines($invoice);
 
             $createdProducts = [];
             $linkedProducts = [];
@@ -88,17 +107,15 @@ class SupplierInvoiceImportService
 
             $lines = $invoice->getLines();
             Calculator::calculate($invoice, $lines, true);
-            $invoiceSaved = $invoice->save();
-            if (!$invoiceSaved) {
-                throw new Exception('Error al guardar la factura del proveedor');
-            }
+            $this->invoiceRepository->save($invoice);
 
             if (!$this->cfdiStatusService->markInvoiceCreated($cfdi, $invoice)) {
                 throw new Exception('No se pudo actualizar el CFDI con la factura generada');
             }
-            $this->saveCfdiRelations($cfdi, $reader);
+            $this->relationRepository->saveRelations($cfdi, $reader);
 
-            $db->commit();
+            $this->transactionManager->commit();
+            $transactionStarted = false;
 
             Tools::log('audit')->notice('supplier-cfdi-invoice-created', [
                 '%uuid%' => $cfdi->uuid,
@@ -115,8 +132,8 @@ class SupplierInvoiceImportService
                 $linkedProducts
             );
         } catch (Exception $e) {
-            if ($db !== null) {
-                $db->rollBack();
+            if ($transactionStarted) {
+                $this->transactionManager->rollback();
             }
 
             $error = trim($e->getMessage());
@@ -165,53 +182,36 @@ class SupplierInvoiceImportService
         return $result;
     }
 
-    private function getCfdiReader(CfdiProveedor $cfdi): CfdiQuickReader
-    {
-        $xml = $cfdi->localFileContent();
-        if (empty($xml)) {
-            throw new Exception('No se pudo leer el archivo XML del CFDI');
-        }
-        return new CfdiQuickReader($xml);
-    }
-
     private function createOrUpdateInvoice(
         CfdiProveedor $cfdi,
         Proveedor $supplier,
         CfdiQuickReader $reader,
         SupplierInvoiceImportOptions $options
     ): FacturaProveedor {
-        $invoice = new FacturaProveedor();
-        $where = [
-            Where::eq('numproveedor', $cfdi->invoiceNumber()),
-            Where::eq('codproveedor', $supplier->codproveedor)
-        ];
+        $invoice = $this->invoiceRepository->findByNumberAndSupplier(
+            $cfdi->invoiceNumber(),
+            $supplier->codproveedor
+        );
 
-        if ($invoice->loadWhere($where)) {
+        if ($invoice !== null) {
             $this->invoiceStateService->assertImportable($invoice);
             return $invoice;
         }
 
+        $invoice = $this->invoiceRepository->create();
+
         $invoice->setSubject($supplier);
         $invoice->numproveedor = $cfdi->invoiceNumber();
-        $invoice->codpago = $this->getFormaPagoFromCfdi($cfdi);
+        $invoice->codpago = $this->catalogRepository->findPaymentCode($cfdi->forma_pago);
         $invoice->setDate($cfdi->emissionDate(), $cfdi->emissionTime());
 
         if (strtoupper($cfdi->tipo) === 'E') {
-            $invoice->codserie = $this->getEgresoSerie($options);
+            $invoice->codserie = $this->catalogRepository->findRectifyingSeries($options->codserie);
         }
 
-        if (!$invoice->save()) {
-            throw new Exception('Error al crear la factura del proveedor');
-        }
+        $this->invoiceRepository->save($invoice, 'Error al crear la factura del proveedor');
 
         return $invoice;
-    }
-
-    private function clearInvoiceLines(FacturaProveedor $invoice): void
-    {
-        foreach ($invoice->getLines() as $line) {
-            $line->delete();
-        }
     }
 
     private function processConcept(
@@ -256,65 +256,4 @@ class SupplierInvoiceImportService
         return $result;
     }
 
-    private function getEgresoSerie(SupplierInvoiceImportOptions $options): string
-    {
-        $serieCode = $options->codserie ?? CfdiSettings::serieEgresoProveedor();
-        $serie = new Serie();
-
-        if (!empty($serieCode) && $serie->load($serieCode) && $serie->tipo === 'R') {
-            return $serie->codserie;
-        }
-
-        $series = Serie::all([Where::eq('tipo', 'R')], ['codserie' => 'ASC'], 0, 1);
-        if (!empty($series)) {
-            return $series[0]->codserie;
-        }
-
-        throw new Exception(Tools::lang()->trans('supplier-cfdi-rectifying-series-missing'));
-    }
-
-    private function saveCfdiRelations(CfdiProveedor $cfdi, CfdiQuickReader $reader): void
-    {
-        foreach ($reader->relacionados() as $group) {
-            $tipoRelacion = $group['tiporelacion'] ?? '';
-            foreach ($group['relacionados'] ?? [] as $uuidRelacionado) {
-                $related = new CfdiProveedor();
-                if (!$related->loadFromUuid($uuidRelacionado)) {
-                    continue;
-                }
-
-                $relation = new RelacionCfdiProveedor();
-                $exists = $relation->loadWhere([
-                    Where::eq('cfdi_id', $cfdi->id),
-                    Where::eq('cfdi_id_relacionado', $related->id),
-                    Where::eq('tipo_relacion', $tipoRelacion),
-                ]);
-
-                if ($exists) {
-                    continue;
-                }
-
-                $relation->cfdi_id = $cfdi->id;
-                $relation->cfdi_id_relacionado = $related->id;
-                $relation->tipo_relacion = $tipoRelacion;
-                $relation->uuid = $cfdi->uuid;
-                $relation->uuid_relacionado = $uuidRelacionado;
-
-                if (!$relation->save()) {
-                    throw new Exception('No se pudo guardar la relación del CFDI de egreso');
-                }
-            }
-        }
-    }
-
-    private function getFormaPagoFromCfdi(CfdiProveedor $cfdi): string
-    {
-        $result = FormaPago::table()->whereEq('clavesat', $cfdi->forma_pago)->first();
-
-        if ($result && !empty($result['codpago'])) {
-            return $result['codpago'];
-        }
-
-        return 'CONTADO';
-    }
 }

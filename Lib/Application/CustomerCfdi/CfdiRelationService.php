@@ -17,19 +17,24 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CustomerCfdi;
 
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
-use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Model\RelacionCfdiCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\CfdiRelationRepository;
 
 /**
  * Servicio para gestionar las relaciones entre CFDIs
  */
 class CfdiRelationService
 {
+    private CfdiRelationRepository $relationRepository;
+
+    public function __construct(?CfdiRelationRepository $relationRepository = null)
+    {
+        $this->relationRepository = $relationRepository ?? new CfdiRelationRepository();
+    }
+
     /**
      * Guarda las relaciones definitivas entre CFDIs después de un timbrado exitoso
      *
@@ -55,21 +60,21 @@ class CfdiRelationService
 
             foreach ($relacionados as $uuidRelacionado) {
                 // Buscar el CFDI relacionado por UUID
-                $cfdiRelacionado = new CfdiCliente();
-                if (!$cfdiRelacionado->loadFromUuid($uuidRelacionado)) {
+                $cfdiRelacionado = $this->relationRepository->findCfdiByUuid($uuidRelacionado);
+                if ($cfdiRelacionado === null) {
                     Tools::log('CFDI')->warning("No se encontró el CFDI relacionado con UUID: $uuidRelacionado");
                     continue;
                 }
 
                 // Crear la relación
-                $relacion = new RelacionCfdiCliente();
+                $relacion = $this->relationRepository->create();
                 $relacion->cfdi_id = $cfdi->id;
                 $relacion->cfdi_id_relacionado = $cfdiRelacionado->id;
                 $relacion->tipo_relacion = $tipoRelacion;
                 $relacion->uuid = $cfdi->uuid;
                 $relacion->uuid_relacionado = $uuidRelacionado;
 
-                if (!$relacion->save()) {
+                if (!$this->relationRepository->save($relacion)) {
                     Tools::log('CFDI')->error("Error al guardar la relación CFDI: {$cfdi->uuid} -> {$uuidRelacionado}");
                     $allSaved = false;
                 }
@@ -88,11 +93,10 @@ class CfdiRelationService
      */
     public function deleteCfdiRelations(int $cfdiId): bool
     {
-        $relation = new RelacionCfdiCliente();
-        $relations = $relation->all([['cfdi_id', '=', $cfdiId]]);
+        $relations = $this->relationRepository->findByCfdiId($cfdiId);
 
         foreach ($relations as $rel) {
-            if (!$rel->delete()) {
+            if (!$this->relationRepository->delete($rel)) {
                 Tools::log('CFDI')->warning("No se pudo eliminar la relación con ID: {$rel->id}");
                 return false;
             }
@@ -119,8 +123,8 @@ class CfdiRelationService
             $relacionados = $group['relacionados'] ?? [];
 
             foreach ($relacionados as $uuid) {
-                $cfdi = new CfdiCliente();
-                if (!$cfdi->loadFromUuid($uuid)) {
+                $cfdi = $this->relationRepository->findCfdiByUuid($uuid);
+                if ($cfdi === null) {
                 Tools::log('CFDI')->warning("CFDI relacionado no encontrado: $uuid");
                     return false;
                 }
@@ -166,8 +170,8 @@ class CfdiRelationService
 
             foreach ($relacionados as $uuidRelacionado) {
                 // Buscar el CFDI relacionado por UUID
-                $cfdiRelacionado = new CfdiCliente();
-                if (!$cfdiRelacionado->loadFromUuid($uuidRelacionado)) {
+                $cfdiRelacionado = $this->relationRepository->findCfdiByUuid($uuidRelacionado);
+                if ($cfdiRelacionado === null) {
                     $result['success'] = false;
                     $result['errors'][] = "CFDI relacionado no encontrado: $uuidRelacionado";
                     continue;
@@ -181,14 +185,14 @@ class CfdiRelationService
                     ];
 
                     // Intentar guardar la relación faltante
-                    $relacion = new RelacionCfdiCliente();
+                    $relacion = $this->relationRepository->create();
                     $relacion->cfdi_id = $cfdi->id;
                     $relacion->cfdi_id_relacionado = $cfdiRelacionado->id;
                     $relacion->tipo_relacion = $tipoRelacion;
                     $relacion->uuid = $cfdi->uuid;
                     $relacion->uuid_relacionado = $uuidRelacionado;
 
-                    if ($relacion->save()) {
+                    if ($this->relationRepository->save($relacion)) {
                         $result['synced'][] = [
                             'tipo' => $tipoRelacion,
                             'uuid' => $uuidRelacionado
@@ -215,13 +219,6 @@ class CfdiRelationService
      */
     private function relationExists(int $cfdiId, int $cfdiIdRelacionado, string $tipoRelacion): bool
     {
-        $relacion = new RelacionCfdiCliente();
-        $where = [
-            Where::eq('cfdi_id', $cfdiId),
-            Where::eq('cfdi_id_relacionado', $cfdiIdRelacionado),
-            Where::eq('tipo_relacion', $tipoRelacion)
-        ];
-
-        return $relacion->loadWhere($where);
+        return $this->relationRepository->exists($cfdiId, $cfdiIdRelacionado, $tipoRelacion);
     }
 }

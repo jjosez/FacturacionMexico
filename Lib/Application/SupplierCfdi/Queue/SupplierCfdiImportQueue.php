@@ -1,8 +1,8 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\Queue;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\Queue;
 
-use FacturaScripts\Core\Base\DataBase;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierQueueStorage;
 use ZipArchive;
 
 class SupplierCfdiImportQueue
@@ -10,11 +10,11 @@ class SupplierCfdiImportQueue
     public const TABLE = 'cfdi_import_jobs';
     public const DEFAULT_TIMEOUT = 300;
 
-    private DataBase $db;
+    private SupplierQueueStorage $storage;
 
-    public function __construct()
+    public function __construct(?SupplierQueueStorage $storage = null)
     {
-        $this->db = new DataBase();
+        $this->storage = $storage ?? new SupplierQueueStorage();
     }
 
     public function enqueue(array $files, int $companyId, int $userId, array $options = []): string
@@ -43,7 +43,7 @@ class SupplierCfdiImportQueue
         $sql = "SELECT * FROM " . self::TABLE
             . " WHERE status = ? ORDER BY created_at ASC LIMIT 1";
 
-        $result = $this->db->select($sql, [SupplierCfdiImportJob::STATUS_PENDING]);
+        $result = $this->storage->select($sql, [SupplierCfdiImportJob::STATUS_PENDING]);
 
         if (empty($result)) {
             return null;
@@ -56,7 +56,7 @@ class SupplierCfdiImportQueue
     {
         $sql = "SELECT * FROM " . self::TABLE . " WHERE id = ?";
 
-        $result = $this->db->select($sql, [(int)$jobId]);
+        $result = $this->storage->select($sql, [(int)$jobId]);
 
         if (empty($result)) {
             return null;
@@ -70,7 +70,7 @@ class SupplierCfdiImportQueue
         $sql = "SELECT * FROM " . self::TABLE
             . " WHERE user_id = ? ORDER BY created_at DESC LIMIT ?";
 
-        $result = $this->db->select($sql, [$userId, $limit]);
+        $result = $this->storage->select($sql, [$userId, $limit]);
 
         return array_map(fn($row) => SupplierCfdiImportJob::fromArray($row), $result);
     }
@@ -113,7 +113,7 @@ class SupplierCfdiImportQueue
             . " SET progress = ?, processed_items = ?, total_items = ?"
             . " WHERE id = ?";
 
-        $this->db->exec($sql, [$progress, $processed, $total, (int)$jobId]);
+        $this->storage->execute($sql, [$progress, $processed, $total, (int)$jobId]);
     }
 
     public function markAsProcessing(string $jobId): void
@@ -121,7 +121,7 @@ class SupplierCfdiImportQueue
         $sql = "UPDATE " . self::TABLE
             . " SET status = ? WHERE id = ? AND status = ?";
 
-        $this->db->exec($sql, [SupplierCfdiImportJob::STATUS_PROCESSING, (int)$jobId, SupplierCfdiImportJob::STATUS_PENDING]);
+        $this->storage->execute($sql, [SupplierCfdiImportJob::STATUS_PROCESSING, (int)$jobId, SupplierCfdiImportJob::STATUS_PENDING]);
     }
 
     public function complete(string $jobId, array $result): void
@@ -130,7 +130,7 @@ class SupplierCfdiImportQueue
             . " SET status = ?, result = ?, progress = 100, processed_at = NOW()"
             . " WHERE id = ?";
 
-        $this->db->exec($sql, [
+        $this->storage->execute($sql, [
             SupplierCfdiImportJob::STATUS_COMPLETED,
             json_encode($result),
             (int)$jobId
@@ -143,7 +143,7 @@ class SupplierCfdiImportQueue
             . " SET status = ?, error = ?, processed_at = NOW()"
             . " WHERE id = ?";
 
-        $this->db->exec($sql, [SupplierCfdiImportJob::STATUS_FAILED, $error, (int)$jobId]);
+        $this->storage->execute($sql, [SupplierCfdiImportJob::STATUS_FAILED, $error, (int)$jobId]);
     }
 
     public function delete(int $jobId): bool
@@ -156,7 +156,7 @@ class SupplierCfdiImportQueue
 
         $sql = "DELETE FROM " . self::TABLE . " WHERE id = ?";
 
-        return $this->db->exec($sql, [(int)$jobId]);
+        return $this->storage->execute($sql, [(int)$jobId]);
     }
 
     public function cleanupOld(int $days = 7): int
@@ -165,13 +165,13 @@ class SupplierCfdiImportQueue
             . " WHERE status IN (?, ?)"
             . " AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
 
-        $this->db->exec($sql, [
+        $this->storage->execute($sql, [
             SupplierCfdiImportJob::STATUS_COMPLETED,
             SupplierCfdiImportJob::STATUS_FAILED,
             $days
         ]);
 
-        return $this->db->getAffectedRows();
+        return $this->storage->affectedRows();
     }
 
     public function getStats(): array
@@ -184,7 +184,7 @@ class SupplierCfdiImportQueue
                     SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
                 FROM " . self::TABLE;
 
-        $result = $this->db->select($sql);
+        $result = $this->storage->select($sql);
 
         return $result[0] ?? [
             'total' => 0,
@@ -201,7 +201,7 @@ class SupplierCfdiImportQueue
             . " (company_id, user_id, status, file_path, progress, created_at)"
             . " VALUES (?, ?, ?, ?, ?, NOW())";
 
-        $result = $this->db->exec($sql, [
+        $result = $this->storage->execute($sql, [
             $job->companyId,
             $job->userId,
             $job->status,
@@ -210,7 +210,7 @@ class SupplierCfdiImportQueue
         ]);
 
         if ($result) {
-            $job->id = $this->db->getLastIdentity();
+            $job->id = $this->storage->lastIdentity();
         }
 
         return $result;
@@ -223,7 +223,7 @@ class SupplierCfdiImportQueue
             . " total_items = ?, processed_items = ?, processed_at = ?"
             . " WHERE id = ?";
 
-        return $this->db->exec($sql, [
+        return $this->storage->execute($sql, [
             $job->status,
             $job->result,
             $job->error,

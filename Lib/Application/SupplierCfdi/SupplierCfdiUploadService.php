@@ -1,24 +1,37 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi;
 
 use Exception;
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
-use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\UploadedFile;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\Proveedor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierCfdiRepository;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierRepository;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Filesystem\SupplierCfdiFileStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
 
 class SupplierCfdiUploadService
 {
-    public const DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
-
     protected string $fileName;
     protected CfdiQuickReader $reader;
     protected Proveedor $supplier;
     protected Empresa $company;
+    private SupplierCfdiRepository $cfdiRepository;
+    private SupplierRepository $supplierRepository;
+    private SupplierCfdiFileStorage $fileStorage;
+
+    public function __construct(
+        ?SupplierCfdiRepository $cfdiRepository = null,
+        ?SupplierRepository $supplierRepository = null,
+        ?SupplierCfdiFileStorage $fileStorage = null
+    )
+    {
+        $this->cfdiRepository = $cfdiRepository ?? new SupplierCfdiRepository();
+        $this->supplierRepository = $supplierRepository ?? new SupplierRepository();
+        $this->fileStorage = $fileStorage ?? new SupplierCfdiFileStorage();
+    }
 
     public function processUpload(?UploadedFile $uploadFile, Empresa $company): ?CfdiProveedor
     {
@@ -26,7 +39,8 @@ class SupplierCfdiUploadService
             throw new Exception('No se pudo obtener el archivo. ' . $uploadFile->getClientOriginalName());
         }
 
-        if (!$this->saveUploadedFile($uploadFile)) {
+        $this->fileName = $this->fileStorage->store($uploadFile) ?? '';
+        if ($this->fileName === '') {
             throw new Exception('Error al guardar el archivo.');
         }
 
@@ -41,45 +55,21 @@ class SupplierCfdiUploadService
         return $this->saveCfdi();
     }
 
-    protected function saveUploadedFile(UploadedFile $uploadFile): bool
-    {
-        Tools::folderCheckOrCreate(self::DESTINATION_FOLDER);
-
-        if (!$uploadFile || false === $uploadFile->isValid()) {
-            return false;
-        }
-
-        $destinationName = $uploadFile->getClientOriginalName();
-
-        if (file_exists(self::DESTINATION_FOLDER . $destinationName)) {
-            $destinationName = date('Ymd_His') . '_' . $destinationName;
-        }
-
-        $moveFile = $uploadFile->move(self::DESTINATION_FOLDER, $destinationName);
-        if ($moveFile) {
-            $this->fileName = $destinationName;
-            return true;
-        }
-
-        return false;
-    }
-
     protected function loadReader(): void
     {
-        $fileContent = file_get_contents(self::DESTINATION_FOLDER . $this->fileName);
-        $this->reader = new CfdiQuickReader($fileContent);
+        $this->reader = new CfdiQuickReader($this->fileStorage->read($this->fileName));
     }
 
     protected function loadOrCreateSupplier(): void
     {
-        $this->supplier = new Proveedor();
-        $where = [new DataBaseWhere('cifnif', $this->reader->emisorRfc())];
+        $this->supplier = $this->supplierRepository->findByRfc($this->reader->emisorRfc())
+            ?? $this->supplierRepository->create();
 
-        if (!$this->supplier->loadFromCode('', $where)) {
+        if (empty($this->supplier->codproveedor)) {
             $this->supplier->cifnif = $this->reader->emisorRfc();
             $this->supplier->nombre = $this->reader->emisorNombre();
 
-            if (!$this->supplier->save()) {
+            if (!$this->supplierRepository->save($this->supplier)) {
                 throw new Exception('Error al guardar el proveedor.');
             }
         }
@@ -87,13 +77,12 @@ class SupplierCfdiUploadService
 
     protected function cfdiExists(): bool
     {
-        $cfdi = new CfdiProveedor();
-        return $cfdi->loadFromUuid($this->reader->uuid());
+        return $this->cfdiRepository->existsByUuid($this->reader->uuid());
     }
 
     protected function saveCfdi(): CfdiProveedor
     {
-        $cfdi = new CfdiProveedor();
+        $cfdi = $this->cfdiRepository->create();
         $cfdi->codproveedor = $this->supplier->codproveedor;
         $cfdi->coddivisa = "MXN";
         $cfdi->estado = SupplierCfdiStatusService::STATUS_IMPORTED;
@@ -114,7 +103,7 @@ class SupplierCfdiUploadService
         $cfdi->version = $this->reader->version();
         $cfdi->filename = $this->fileName;
 
-        if (!$cfdi->save()) {
+        if (!$this->cfdiRepository->save($cfdi)) {
             throw new Exception('Error al guardar el CFDI.');
         }
 

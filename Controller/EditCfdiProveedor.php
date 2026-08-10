@@ -23,31 +23,50 @@ use Exception;
 use FacturaScripts\Core\Lib\ExtendedController\EditController;
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
-use FacturaScripts\Dinamic\Model\Producto;
-use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Extension\Controller\FormaPagoControllerTrait;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiStatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiUploadService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoiceStateService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierProductLinkService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\SupplierCfdiStatusService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\SupplierCfdiUploadService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceStateService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierProductLinkService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Filesystem\SupplierCfdiFileStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierProductLinkRepository;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierProductSearchRepository;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
 
 class EditCfdiProveedor extends EditController
 {
     use FormaPagoControllerTrait;
 
-    const string DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
-
     protected string $fileName;
     protected CfdiQuickReader $reader;
     protected Proveedor $supplier;
     protected array $conceptosProductMap = [];
+    private SupplierCfdiFileStorage $fileStorage;
+    private SupplierProductLinkRepository $linkRepository;
+    private SupplierProductSearchRepository $searchRepository;
+    private SupplierInvoiceImportService $importService;
+    private SupplierCfdiUploadService $uploadService;
+    private SupplierProductLinkService $productLinkService;
+    private SupplierCfdiStatusService $statusService;
+    private SupplierInvoiceStateService $invoiceStateService;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->fileStorage = new SupplierCfdiFileStorage();
+        $this->linkRepository = new SupplierProductLinkRepository();
+        $this->searchRepository = new SupplierProductSearchRepository();
+        $this->importService = new SupplierInvoiceImportService();
+        $this->uploadService = new SupplierCfdiUploadService();
+        $this->productLinkService = new SupplierProductLinkService();
+        $this->statusService = new SupplierCfdiStatusService();
+        $this->invoiceStateService = new SupplierInvoiceStateService();
+    }
 
     public function getModelClassName(): string
     {
@@ -98,7 +117,7 @@ class EditCfdiProveedor extends EditController
                 if (!empty($this->getModel()->idfactura)) {
                     $invoice = new FacturaProveedor();
                     $canImport = $invoice->load($this->getModel()->idfactura)
-                        && (new SupplierInvoiceStateService())->isEditable($invoice);
+                        && $this->invoiceStateService->isEditable($invoice);
                 }
 
                 if ($canImport) {
@@ -157,7 +176,7 @@ class EditCfdiProveedor extends EditController
             try {
                 $conceptos = $this->mapConceptosToInvoice();
 
-                $result = (new SupplierInvoiceImportService())->importSingle(
+                $result = $this->importService->importSingle(
                     $this->getModel(),
                     $this->supplier,
                     new SupplierInvoiceImportOptions([
@@ -183,8 +202,7 @@ class EditCfdiProveedor extends EditController
         $uploadedFile = $this->request->files->get('cfdifile');
 
         try {
-            $importer = new SupplierCfdiUploadService();
-            $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
+            $cfdi = $this->uploadService->processUpload($uploadedFile, $this->empresa);
 
             Tools::log()->info('CFDI importado correctamente: ' . $cfdi->uuid);
         } catch (Exception $e) {
@@ -194,42 +212,22 @@ class EditCfdiProveedor extends EditController
 
     protected function processFile(): bool
     {
-        Tools::folderCheckOrCreate(self::DESTINATION_FOLDER);
         $uploadFile = $this->request->files->get('cfdifile');
 
         if (!$uploadFile || false === $uploadFile->isValid()) {
             return false;
         }
 
-        $destinationName = $uploadFile->getClientOriginalName();
-        if (file_exists(self::DESTINATION_FOLDER . $destinationName)) {
-            $destinationName = mt_rand(1, 999999) . '_' . $destinationName;
-        }
-
-        $moveFile = $uploadFile->move(self::DESTINATION_FOLDER, $destinationName);
-        if ($moveFile) {
-            $this->fileName = $destinationName;
-            return true;
-        }
-
-        return false;
+        $this->fileName = $this->fileStorage->store($uploadFile) ?? '';
+        return $this->fileName !== '';
     }
 
     protected function searchProductsAction(): void
     {
         $query = $this->request->input('query');
 
-        $where = [
-            Where::orLike('referencia', $query),
-            Where::orLike('descripcion', $query),
-        ];
-
-        if (Plugins::isEnabled('SKU')) {
-            array_unshift($where, Where::orLike('referencia_fabricante', $query));
-        }
-
         $result = [];
-        foreach (Producto::all($where, [], 0, 20) as $product) {
+        foreach ($this->searchRepository->searchStandard($query, Plugins::isEnabled('SKU')) as $product) {
             $result[] = $product->toArray(true);
         }
 
@@ -250,8 +248,7 @@ class EditCfdiProveedor extends EditController
             $refproveedor = $conceptos[$index]['NoIdentificacion'] ?? '';
         }
 
-        $service = new SupplierProductLinkService();
-        $result = $service->vincular(
+        $result = $this->productLinkService->vincular(
             $referencia,
             $codproveedor,
             $refproveedor,
@@ -327,7 +324,7 @@ class EditCfdiProveedor extends EditController
             $model = $this->getModel();
 
             if ($model->estado !== SupplierCfdiStatusService::STATUS_LINKED) {
-                if ((new SupplierCfdiStatusService())->markLinked($model)) {
+                if ($this->statusService->markLinked($model)) {
                     Tools::log('CFDI')->notice('El CFDI se marcó cómo VINCULADO.');
                 }
             }
@@ -369,9 +366,7 @@ class EditCfdiProveedor extends EditController
      */
     protected function getIndexedSupplierProducts(string $codproveedor): array
     {
-        $productoProveedor = new ProductoProveedor();
-        $where = [Where::eq('codproveedor', $codproveedor)];
-        $productosProveedor = $productoProveedor->all($where);
+        $productosProveedor = $this->linkRepository->findBySupplier($codproveedor);
 
         $indexados = [];
         foreach ($productosProveedor as $pp) {
@@ -384,8 +379,7 @@ class EditCfdiProveedor extends EditController
     protected function loadReader(): bool
     {
         try {
-            $fileContent = file_get_contents(self::DESTINATION_FOLDER . $this->fileName);
-            $this->reader = new CfdiQuickReader($fileContent);
+            $this->reader = new CfdiQuickReader($this->fileStorage->read($this->fileName));
 
             return true;
         } catch (Exception $e) {

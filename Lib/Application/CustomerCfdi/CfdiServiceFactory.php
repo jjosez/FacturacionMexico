@@ -4,7 +4,7 @@
  * Copyright (C) 2019-2025 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CustomerCfdi;
 
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiSettings;

@@ -17,12 +17,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice;
 
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
-use FacturaScripts\Dinamic\Model\Variante;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierProductLinkRepository;
 
 /**
  * Servicio para gestionar la vinculación de productos con proveedores
@@ -31,6 +30,13 @@ use FacturaScripts\Dinamic\Model\Variante;
  */
 class SupplierProductLinkService
 {
+    private SupplierProductLinkRepository $linkRepository;
+
+    public function __construct(?SupplierProductLinkRepository $linkRepository = null)
+    {
+        $this->linkRepository = $linkRepository ?? new SupplierProductLinkRepository();
+    }
+
     /**
      * Vincula un producto con un proveedor
      *
@@ -55,8 +61,8 @@ class SupplierProductLinkService
         ?string $coddivisa = null
     ): array {
         // Verificar que el producto existe
-        $variante = new Variante();
-        if (!$variante->loadWhereEq('referencia', $referencia)) {
+        $idProducto = $this->linkRepository->findProductIdByReference($referencia);
+        if ($idProducto === null) {
             return [
                 'ok' => false,
                 'message' => 'Producto no encontrado: ' . $referencia,
@@ -78,9 +84,9 @@ class SupplierProductLinkService
 
         if ($productoProveedor) {
             // Actualizar vinculación existente
-            $result = $this->actualizarVinculacion($productoProveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $variante->idproducto, $updatePrice, $coddivisa);
+            $result = $this->actualizarVinculacion($productoProveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $idProducto, $updatePrice, $coddivisa);
         } else {
-            $result = $this->crearVinculacion($referencia, $codproveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $variante->idproducto, $updatePrice, $coddivisa);
+            $result = $this->crearVinculacion($referencia, $codproveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $idProducto, $updatePrice, $coddivisa);
         }
 
         return $result;
@@ -95,17 +101,7 @@ class SupplierProductLinkService
      */
     protected function buscarVinculacion(string $referencia, string $codproveedor): ?ProductoProveedor
     {
-        $productoProveedor = new ProductoProveedor();
-        $where = [
-            Where::eq('referencia', $referencia),
-            Where::eq('codproveedor', $codproveedor),
-        ];
-
-        if ($productoProveedor->loadWhere($where)) {
-            return $productoProveedor;
-        }
-
-        return null;
+        return $this->linkRepository->find($referencia, $codproveedor);
     }
 
     /**
@@ -143,7 +139,7 @@ class SupplierProductLinkService
             $productoProveedor->coddivisa = $coddivisa;
         }
 
-        $saved = $productoProveedor->save();
+        $saved = $this->linkRepository->save($productoProveedor);
         if ($saved) {
             return [
                 'ok' => true,
@@ -184,7 +180,7 @@ class SupplierProductLinkService
         bool $updatePrice,
         ?string $coddivisa
     ): array {
-        $productoProveedor = new ProductoProveedor();
+        $productoProveedor = $this->linkRepository->create();
         $productoProveedor->referencia = $referencia;
         $productoProveedor->codproveedor = $codproveedor;
         $productoProveedor->refproveedor = $refproveedor;
@@ -197,7 +193,7 @@ class SupplierProductLinkService
             $productoProveedor->coddivisa = $coddivisa;
         }
 
-        $saved = $productoProveedor->save();
+        $saved = $this->linkRepository->save($productoProveedor);
         if ($saved) {
             return [
                 'ok' => true,
@@ -221,9 +217,7 @@ class SupplierProductLinkService
      */
     public function obtenerVinculacionesProveedor(string $codproveedor): array
     {
-        return ProductoProveedor::all(
-            [ Where::eq('codproveedor', $codproveedor)]
-        );
+        return $this->linkRepository->findBySupplier($codproveedor);
     }
 
     /**
@@ -234,9 +228,7 @@ class SupplierProductLinkService
      */
     public function obtenerVinculacionesProducto(string $referencia): array
     {
-        return ProductoProveedor::all(
-            [Where::eq('referencia', $referencia)]
-        );
+        return $this->linkRepository->findByProduct($referencia);
     }
 
     /**
@@ -258,7 +250,7 @@ class SupplierProductLinkService
             ];
         }
 
-        if ($productoProveedor->delete()) {
+        if ($this->linkRepository->delete($productoProveedor)) {
             return [
                 'ok' => true,
                 'message' => 'Vinculación eliminada correctamente',

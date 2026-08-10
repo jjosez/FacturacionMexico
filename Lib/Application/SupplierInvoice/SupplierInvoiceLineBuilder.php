@@ -1,14 +1,22 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice;
 
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\LineaFacturaProveedor;
 use FacturaScripts\Dinamic\Model\Producto;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\SupplierInvoiceLineRepository;
 
 class SupplierInvoiceLineBuilder
 {
+    private SupplierInvoiceLineRepository $lineRepository;
+
+    public function __construct(?SupplierInvoiceLineRepository $lineRepository = null)
+    {
+        $this->lineRepository = $lineRepository ?? new SupplierInvoiceLineRepository();
+    }
+
     public function buildProductLine(
         FacturaProveedor $invoice,
         array $concepto,
@@ -16,7 +24,7 @@ class SupplierInvoiceLineBuilder
         SupplierInvoiceImportOptions $options,
         bool $isEgreso = false
     ): LineaFacturaProveedor {
-        $line = $invoice->getNewProductLine($product->referencia);
+        $line = $this->lineRepository->createProductLine($invoice, $product->referencia);
 
         if (Plugins::isEnabled('SKU') && !empty($concepto['NoIdentificacion'])) {
             $line->referencia_proveedor = trim((string)$concepto['NoIdentificacion']);
@@ -31,7 +39,7 @@ class SupplierInvoiceLineBuilder
             : (float)$concepto['ValorUnitario'];
 
         $this->applyCommonValues($line, $concepto, $options);
-        $line->save();
+        $this->lineRepository->save($line);
 
         return $line;
     }
@@ -42,7 +50,7 @@ class SupplierInvoiceLineBuilder
         SupplierInvoiceImportOptions $options,
         bool $isEgreso = false
     ): LineaFacturaProveedor {
-        $line = $invoice->getNewLine($concepto);
+        $line = $this->lineRepository->createFreeLine($invoice, $concepto);
         $line->cantidad = $isEgreso
             ? -abs((float)$concepto['Cantidad'])
             : (float)$concepto['Cantidad'];
@@ -52,7 +60,7 @@ class SupplierInvoiceLineBuilder
             : (float)$concepto['ValorUnitario'];
 
         $this->applyCommonValues($line, $concepto, $options);
-        $line->save();
+        $this->lineRepository->save($line);
 
         return $line;
     }

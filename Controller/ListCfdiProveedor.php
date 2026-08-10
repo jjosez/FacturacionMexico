@@ -24,13 +24,13 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiUploadService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiStatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceBatchResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\Queue\SupplierCfdiImportQueue;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\Queue\SupplierCfdiAsyncImportProcessor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\SupplierCfdiUploadService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\SupplierCfdiStatusService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceBatchResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\Queue\SupplierCfdiImportQueue;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\Queue\SupplierCfdiAsyncImportProcessor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
 
 /**
@@ -38,6 +38,10 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
  */
 class ListCfdiProveedor extends ExtendedController\ListController
 {
+    private ?SupplierCfdiUploadService $uploadService = null;
+    private ?SupplierInvoiceImportService $importService = null;
+    private ?SupplierCfdiImportQueue $queue = null;
+    private ?SupplierCfdiAsyncImportProcessor $processor = null;
 
     /**
      * Returns basic page attributes
@@ -116,7 +120,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
     protected function importCfdiAction(): void
     {
         try {
-            $importer = new SupplierCfdiUploadService();
+            $importer = $this->getUploadService();
             $uploadedFile = $this->request->files->get('cfdifile');
             $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
 
@@ -148,8 +152,8 @@ class ListCfdiProveedor extends ExtendedController\ListController
 
         $files = is_array($files) ? $files : [$files];
 
-        $importer = new SupplierCfdiUploadService();
-        $service = new SupplierInvoiceImportService();
+        $importer = $this->getUploadService();
+        $service = $this->getImportService();
 
         $options = SupplierInvoiceImportOptions::fromArray([
             'product_action' => $this->request->get('product_action', 'auto'),
@@ -229,7 +233,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
         $user = $this->user;
 
         try {
-            $queue = new SupplierCfdiImportQueue();
+            $queue = $this->getQueue();
             $options = SupplierInvoiceImportOptions::fromArray([
                 'product_action' => $this->request->get('product_action', 'auto'),
                 'tax_mode' => $this->request->get('tax_mode', 'preserve'),
@@ -266,7 +270,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
             return;
         }
 
-        $queue = new SupplierCfdiImportQueue();
+        $queue = $this->getQueue();
         $status = $queue->getStatus($jobId);
 
         if ($status === null) {
@@ -287,7 +291,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
     {
         $this->setTemplate(false);
 
-        $processor = new SupplierCfdiAsyncImportProcessor();
+        $processor = $this->getProcessor();
         $processed = $processor->processAll(10);
 
         $this->response->setContent(json_encode([
@@ -305,5 +309,25 @@ class ListCfdiProveedor extends ExtendedController\ListController
         }
 
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function getUploadService(): SupplierCfdiUploadService
+    {
+        return $this->uploadService ??= new SupplierCfdiUploadService();
+    }
+
+    private function getImportService(): SupplierInvoiceImportService
+    {
+        return $this->importService ??= new SupplierInvoiceImportService();
+    }
+
+    private function getQueue(): SupplierCfdiImportQueue
+    {
+        return $this->queue ??= new SupplierCfdiImportQueue();
+    }
+
+    private function getProcessor(): SupplierCfdiAsyncImportProcessor
+    {
+        return $this->processor ??= new SupplierCfdiAsyncImportProcessor($this->getImportService(), $this->getQueue());
     }
 }

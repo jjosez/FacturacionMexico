@@ -4,7 +4,7 @@
  * Copyright (C) 2019-2025 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
  */
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CustomerCfdi;
 
 use Exception;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
@@ -17,6 +17,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Contracts\CfdiRepository
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Contracts\StampProviderInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Enums\CfdiStatus;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\RelationValidator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\Persistence\CustomerInvoiceRepository;
 use PhpCfdi\Credentials\Credential;
 
 class CfdiService
@@ -24,12 +25,19 @@ class CfdiService
     private CfdiRepositoryInterface $repository;
     private StampProviderInterface $stampProvider;
     private CfdiRelationService $relationService;
+    private CustomerInvoiceRepository $invoiceRepository;
 
-    public function __construct(StampProviderInterface $stampProvider, CfdiRepositoryInterface $storage, CfdiRelationService $relationService)
+    public function __construct(
+        StampProviderInterface $stampProvider,
+        CfdiRepositoryInterface $storage,
+        CfdiRelationService $relationService,
+        ?CustomerInvoiceRepository $invoiceRepository = null
+    )
     {
         $this->repository = $storage;
         $this->stampProvider = $stampProvider;
         $this->relationService = $relationService;
+        $this->invoiceRepository = $invoiceRepository ?? new CustomerInvoiceRepository();
     }
 
     /**
@@ -182,7 +190,7 @@ class CfdiService
                 break;
         }
 
-        $factura->save();
+        $this->invoiceRepository->save($factura);
     }
 
     /**
