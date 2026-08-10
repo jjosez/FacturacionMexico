@@ -20,6 +20,36 @@ La nueva arquitectura debe priorizar:
 - Evitar aplicar Clean Architecture, DDD o arquitectura hexagonal de manera estricta.
 - Mantener abstracciones donde sí aportan valor, especialmente almacenamiento de XML, proveedores PAC y otras integraciones externas.
 
+## Estado de ejecución
+
+Base actual:
+
+- Branch `clean-refactoring` creado desde `b44bcd9`, anterior a la refactorización previa.
+- Wizards, vistas, XMLViews, modelos, tablas y extensiones conservados.
+- Tests pospuestos hasta la fase final.
+
+Completado:
+
+- Estructura principal de `Lib` organizada en `Cfdi`, `Customer`, `Supplier`, `Document`, `Storage`, `Stamp`, `SAT`, `DTO` y `Exception`.
+- Resultados movidos de `Adapters` a `DTO`.
+- Parser existente movido a `Cfdi/CfdiParser`.
+- Builders y validadores movidos a `Document`.
+- Catálogos movidos a `SAT/Catalog`.
+- Almacenamiento XML separado mediante `CfdiStorageInterface`.
+- Creado `CfdiManager` y `CustomerCfdiRepository`.
+- Eliminados `LegacyCfdiRepositoryInterface` y sus adaptadores.
+- Compatibilidad de lectura con XML antiguos de filesystem conservada.
+
+Pendiente:
+
+- Validación funcional real de timbrado, cancelación, consulta SAT y almacenamiento.
+- Simplificar `SupplierCfdiImporter` y separar parser, validación, metadata y almacenamiento.
+- Convertir el lector XML en un parser con DTO de aplicación, sin mezclarlo con el modelo persistente `CfdiData`.
+- Revisar lógica XML residual en controladores y adelgazar sus responsabilidades.
+- Confirmar compatibilidad de datos, UUID, relaciones y facturas existentes.
+- Limpieza final de código muerto y documentación.
+- Crear y ejecutar tests unitarios e integración.
+
 ---
 
 # FASE 0 — Auditoría del plugin actual
