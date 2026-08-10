@@ -3,7 +3,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico;
 
 define('CFDI_DIR', 'MyFiles' . DIRECTORY_SEPARATOR . 'CFDI');
-define('CFDI_CATALOGS_DIR', FS_FOLDER . '/Plugins/FacturacionMexico/Lib/Domain/Catalogs/Data');
+define('CFDI_CATALOGS_DIR', FS_FOLDER . '/Plugins/FacturacionMexico/Lib/SAT/Catalog/Data');
 define('CFDI_CERT_DIR', CFDI_DIR . DIRECTORY_SEPARATOR . 'certs');
 define('CFDI_XSLT_DIR', CFDI_DIR . DIRECTORY_SEPARATOR . 'resources');
 define('CFDI_XSLT_URL', 'http://www.sat.gob.mx/sitio_internet/cfd/3/cadenaoriginal_3_3/cadenaoriginal_3_3.xslt');

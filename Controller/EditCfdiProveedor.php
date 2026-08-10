@@ -29,13 +29,13 @@ use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Extension\Controller\FormaPagoControllerTrait;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiStatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiUploadService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoiceStateService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierProductLinkService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiStatusService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiUploadService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceStateService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierProductLinkService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
 
 class EditCfdiProveedor extends EditController
@@ -45,7 +45,7 @@ class EditCfdiProveedor extends EditController
     const string DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
 
     protected string $fileName;
-    protected CfdiQuickReader $reader;
+    protected CfdiParser $reader;
     protected Proveedor $supplier;
     protected array $conceptosProductMap = [];
 
@@ -286,7 +286,7 @@ class EditCfdiProveedor extends EditController
         $this->redirect($wizardUrl);
     }
 
-    public function getReader(): ?CfdiQuickReader
+    public function getReader(): ?CfdiParser
     {
         return $this->reader;
     }
@@ -385,7 +385,7 @@ class EditCfdiProveedor extends EditController
     {
         try {
             $fileContent = file_get_contents(self::DESTINATION_FOLDER . $this->fileName);
-            $this->reader = new CfdiQuickReader($fileContent);
+            $this->reader = new CfdiParser($fileContent);
 
             return true;
         } catch (Exception $e) {

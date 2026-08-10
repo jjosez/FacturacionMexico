@@ -6,15 +6,15 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\PDF;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use FacturaScripts\Dinamic\Model\AttachedFile;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
 
 class PDFCfdi extends PDFCfdiCore
 {
-    private CfdiQuickReader $reader;
+    private CfdiParser $reader;
 
     private ?string $logoID;
 
-    public function __construct(CfdiQuickReader $reader, ?string $logoID = '')
+    public function __construct(CfdiParser $reader, ?string $logoID = '')
     {
         parent::__construct();
 

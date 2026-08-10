@@ -21,7 +21,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Controller;
 
 use Closure;
 use FacturaScripts\Dinamic\Lib\Widget\ColumnItem;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 
 /**
  * @method tab(string $string)

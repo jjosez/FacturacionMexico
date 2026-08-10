@@ -10,7 +10,7 @@ use FacturaScripts\Core\Request;
 use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 use Matrix\Exception;
 
 /**

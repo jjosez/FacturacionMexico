@@ -24,9 +24,9 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Core\Model\EstadoDocumento;
 use FacturaScripts\Core\Where;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\DeliveryNoteInvoiceGenerator;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiSettings;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\DeliveryNoteInvoiceGenerator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
 
 /**
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>

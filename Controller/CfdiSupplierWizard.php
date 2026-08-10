@@ -29,14 +29,14 @@ use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
 
 class CfdiSupplierWizard extends Controller
 {
     public CfdiProveedor $cfdi;
-    public CfdiQuickReader $reader;
+    public CfdiParser $reader;
     public Proveedor $supplier;
     public array $conceptMatchResults = [];
     public array $matchStats = [];
@@ -403,7 +403,7 @@ class CfdiSupplierWizard extends Controller
                 return false;
             }
 
-            $this->reader = new CfdiQuickReader($fileContent);
+            $this->reader = new CfdiParser($fileContent);
             return true;
         } catch (Exception $e) {
             Tools::log('CFDI')->error($e->getMessage());

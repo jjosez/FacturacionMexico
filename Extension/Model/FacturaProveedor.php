@@ -5,7 +5,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Model;
 use Closure;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\FacturaProveedor as FacturaProveedorModel;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiStatusService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiStatusService;
 
 class FacturaProveedor
 {

@@ -4,7 +4,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Model;
 
 use Closure;
 use FacturaScripts\Dinamic\Model\FacturaCliente as FacturaClienteModel;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\Validator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\Validator;
 
 /**
  * @property bool $factura_global

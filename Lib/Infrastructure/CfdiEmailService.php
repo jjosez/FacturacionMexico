@@ -24,7 +24,7 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Lib\Email\NewMail;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\PDF\PDFCfdi;
 
 class CfdiEmailService
@@ -67,7 +67,7 @@ class CfdiEmailService
     {
         Tools::folderCheckOrCreate(CFDI_DIR . '/tmp');
 
-        $reader = new CfdiQuickReader($xml);
+        $reader = new CfdiParser($xml);
         $logoID = $factura->getCompany()->idlogo;
         $pdf = new PDFCfdi($reader, $logoID)->getPdfBuffer();
 

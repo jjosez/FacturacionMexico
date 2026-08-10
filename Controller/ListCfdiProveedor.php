@@ -24,14 +24,14 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiUploadService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdiStatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceBatchResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\SupplierInvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\Queue\SupplierCfdiImportQueue;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\Import\Queue\SupplierCfdiAsyncImportProcessor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiUploadService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiStatusService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceBatchResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\Queue\SupplierCfdiImportQueue;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\Queue\SupplierCfdiAsyncImportProcessor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 
 /**
  * @author Juan José Prieto Dzul <juanjoseprieto88@gmail.com>

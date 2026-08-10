@@ -26,15 +26,14 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiRelationService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\CustomerValidator;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\XML\CfdiQuickReader;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\CfdiServiceFactory;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiCatalogo;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\CfdiSettings;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Contracts\CfdiRepositoryInterface;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Domain\Middleware\Validator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiRelationService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\CustomerValidator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiManager;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiManagerFactory;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\Validator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiConfigurationException;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\CfdiEmailService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\PDF\PDFCfdi;
@@ -43,11 +42,10 @@ class EditCfdiCliente extends Controller
 {
     public CfdiCliente $cfdi;
     public FacturaCliente $factura;
-    public ?CfdiQuickReader $reader = null;
+    public ?CfdiParser $reader = null;
     public string $xml = '';
 
-    private CfdiService $cfdiService;
-    private CfdiRepositoryInterface $storage;
+    private CfdiManager $cfdiService;
 
     public function getPageData(): array
     {
@@ -67,8 +65,7 @@ class EditCfdiCliente extends Controller
         $this->cfdi = new CfdiCliente();
         $this->factura = new FacturaCliente();
 
-        $this->cfdiService = CfdiServiceFactory::createCfdiService($this->empresa);
-        $this->storage = CfdiServiceFactory::createStorageProvider();
+        $this->cfdiService = CfdiManagerFactory::createCfdiManager($this->empresa);
 
         $action = $this->request->queryOrInput('action', '');
         $code = $this->request->queryOrInput('code', '');
@@ -136,10 +133,10 @@ class EditCfdiCliente extends Controller
      */
     private function attachXmlReader(): void
     {
-        $this->xml = $this->storage->getXml($this->cfdi) ?? '';
+        $this->xml = $this->cfdiService->getXml($this->cfdi) ?? '';
 
         if ($this->xml) {
-            $this->reader = new CfdiQuickReader($this->xml);
+            $this->reader = new CfdiParser($this->xml);
         }
     }
 
@@ -253,7 +250,7 @@ class EditCfdiCliente extends Controller
     {
         $this->setTemplate(false);
 
-        $xmlLocataion = $this->storage->cfdiFilePath($this->cfdi);
+        $xmlLocataion = $this->cfdiService->getXmlPath($this->cfdi);
 
         if (null === $xmlLocataion) {
             Tools::log('CFDI')->warning('Error al cargar el archivo xml.');
@@ -269,8 +266,8 @@ class EditCfdiCliente extends Controller
      */
     private function exportPdf(): void
     {
-        $xml = $this->storage->getXml($this->cfdi);
-        $reader = new CfdiQuickReader($xml);
+        $xml = $this->cfdiService->getXml($this->cfdi);
+        $reader = new CfdiParser($xml);
 
         $logoID = $this->factura->getCompany()->idlogo;
         $pdf = new PDFCfdi($reader, $logoID);
@@ -284,7 +281,7 @@ class EditCfdiCliente extends Controller
      */
     private function sendEmail(): void
     {
-        $xml = $this->storage->getXml($this->cfdi);
+        $xml = $this->cfdiService->getXml($this->cfdi);
 
         if (!$xml) {
             Tools::log('CFDI')->error('No se pudo obtener el XML del CFDI para enviar por email');
@@ -294,7 +291,7 @@ class EditCfdiCliente extends Controller
         $emailService = new CfdiEmailService();
 
         if ($emailService->send($this->cfdi, $this->factura, $xml)) {
-            $this->storage->updateMailDate($this->cfdi);
+            $this->cfdiService->updateMailDate($this->cfdi);
             Tools::log()->notice('CFDI enviado por email correctamente');
         } else {
             Tools::log('CFDI')->warning('No se pudo enviar el CFDI por email');
@@ -392,7 +389,7 @@ class EditCfdiCliente extends Controller
         $result = ['valid' => true, 'errors' => []];
 
         try {
-            CfdiServiceFactory::createStampProvider($this->empresa);
+            CfdiManagerFactory::createStampProvider($this->empresa);
         } catch (CfdiConfigurationException $e) {
             $result['valid'] = false;
             $result['errors'] = array_values($e->getMissingSettings());
