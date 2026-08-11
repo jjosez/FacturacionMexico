@@ -5,6 +5,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiSatStatus;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\StampResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiStampException;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\StampProviderInterface;
 use PhpCfdi\Credentials\Credential;
 use PhpCfdi\Finkok\FinkokEnvironment;
@@ -29,7 +30,11 @@ class FinkokStampProvider implements StampProviderInterface
 
     public function stamp(string $xml): StampResult
     {
-        $response = $this->quickFinkok->stamp($xml);
+        try {
+            $response = $this->quickFinkok->stamp($xml);
+        } catch (\Throwable $e) {
+            throw new CfdiStampException('No se pudo conectar con el PAC.', 0, $e);
+        }
         $hasPreviousStamp = false;
         $hasError = false;
         $uuid = '';

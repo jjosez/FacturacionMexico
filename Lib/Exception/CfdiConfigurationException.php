@@ -6,12 +6,11 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Exception;
 
-use Exception;
 
 /**
  * Excepción para errores de configuración de CFDI
  */
-class CfdiConfigurationException extends Exception
+class CfdiConfigurationException extends CfdiException
 {
     private array $missingSettings = [];
 

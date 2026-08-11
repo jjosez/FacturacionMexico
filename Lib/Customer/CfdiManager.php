@@ -7,10 +7,13 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Customer;
 
 use Exception;
+use Closure;
+use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiBuildResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\StampResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiStampException;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\CfdiFactory;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorageInterface;
@@ -18,7 +21,8 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\StampProviderInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiStatus;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\RelationValidator;
-use PhpCfdi\Credentials\Credential;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CertificateService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\SatStatusService;
 
 class CfdiManager
 {
@@ -26,18 +30,28 @@ class CfdiManager
     private CustomerCfdiRepository $cfdiRepository;
     private StampProviderInterface $stampProvider;
     private CfdiRelationService $relationService;
+    private DataBase $dataBase;
+    private ?Closure $buildCallback;
+    private CertificateService $certificates;
+    private SatStatusService $satStatus;
 
     public function __construct(
         StampProviderInterface $stampProvider,
         CfdiStorageInterface $storage,
         CfdiRelationService $relationService,
-        ?CustomerCfdiRepository $cfdiRepository = null
-    )
-    {
+        ?CustomerCfdiRepository $cfdiRepository = null,
+        ?Closure $buildCallback = null,
+        ?CertificateService $certificates = null,
+        ?SatStatusService $satStatus = null
+    ) {
         $this->storage = $storage;
         $this->stampProvider = $stampProvider;
         $this->relationService = $relationService;
         $this->cfdiRepository = $cfdiRepository ?? new CustomerCfdiRepository();
+        $this->dataBase = new DataBase();
+        $this->buildCallback = $buildCallback;
+        $this->certificates = $certificates ?? new CertificateService();
+        $this->satStatus = $satStatus ?? new SatStatusService();
     }
 
     /**
@@ -62,7 +76,11 @@ class CfdiManager
             return $this->handleBuildError($buildResult);
         }
 
-        $stampResult = $this->stampProvider->stamp($buildResult->xml());
+        try {
+            $stampResult = $this->stampProvider->stamp($buildResult->xml());
+        } catch (CfdiStampException $e) {
+            return CfdiStampResult::failed(new StampResult(true, '', '', $e->getMessage()));
+        }
 
         if ($stampResult->hasError() && $stampResult->hasPreviousStamp()) {
             $stampResult = $this->handlePreviousStamp($buildResult);
@@ -72,32 +90,44 @@ class CfdiManager
             return $this->handleStampError($stampResult);
         }
 
-        $parser = new CfdiParser($stampResult->getXml());
-        $savedCfdi = $this->cfdiRepository->createFromInvoice($factura, $parser);
-
-        if (null === $savedCfdi) {
-            return CfdiStampResult::failed($stampResult);
-        }
-
+        $storageSaved = false;
+        $savedCfdi = null;
         try {
-            $storageKey = $this->storage->save($savedCfdi->uuid, $stampResult->getXml());
-        } catch (Exception $e) {
-            return CfdiStampResult::failed($stampResult);
-        }
-
-        if (method_exists($this->storage, 'getPath')) {
-            $savedCfdi->filename = $storageKey;
-            if (!$this->cfdiRepository->save($savedCfdi)) {
-                return CfdiStampResult::failed($stampResult);
+            if (!$this->dataBase->beginTransaction()) {
+                throw new Exception('No se pudo iniciar la transacción del CFDI.');
             }
-        }
 
-        // Guardar las relaciones de CFDI después del timbrado exitoso
-        if (!empty($relations)) {
-            $this->relationService->saveCfdiRelations($savedCfdi, $relations);
-        }
+            $data = (new CfdiParser($stampResult->getXml()))->parse();
+            $savedCfdi = $this->cfdiRepository->createFromInvoice($factura, $data);
+            if ($savedCfdi === null) {
+                throw new Exception('No se pudo guardar el metadata del CFDI.');
+            }
 
-        $this->updateInvoiceStatus($factura, CfdiStatus::STAMPED);
+            $this->storage->save($savedCfdi->uuid, $stampResult->getXml());
+            $storageSaved = true;
+
+            if (!empty($relations) && !$this->relationService->saveCfdiRelations($savedCfdi, $relations)) {
+                throw new Exception('No se pudieron guardar las relaciones del CFDI.');
+            }
+
+            if (!$this->updateInvoiceStatus($factura, CfdiStatus::STAMPED)) {
+                throw new Exception('No se pudo actualizar el estado de la factura.');
+            }
+
+            if (!$this->dataBase->commit()) {
+                throw new Exception('No se pudo confirmar la transacción del CFDI.');
+            }
+        } catch (Exception $e) {
+            if ($this->dataBase->inTransaction()) {
+                $this->dataBase->rollback();
+            }
+
+            if ($storageSaved && $savedCfdi !== null) {
+                $this->storage->delete($savedCfdi->uuid);
+            }
+
+            return $this->persistenceFailure($stampResult, $e->getMessage());
+        }
 
         return CfdiStampResult::success($savedCfdi, $stampResult);
     }
@@ -111,6 +141,10 @@ class CfdiManager
      */
     private function buildCfdi(FacturaCliente $invoice, array $relations): CfdiBuildResult
     {
+        if ($this->buildCallback !== null) {
+            return ($this->buildCallback)($invoice, $relations);
+        }
+
         if (!RelationValidator::validate($invoice, $relations)) {
             return new CfdiBuildResult('', 'Relaciones de CFDI inválidas', true);
         }
@@ -137,15 +171,10 @@ class CfdiManager
     public function cancelCfdi(FacturaCliente $invoice, CfdiCliente $cfdi): CfdiStampResult
     {
         try {
-            $credentials = CfdiSettings::satCredentials($invoice->getCompany());
-
-            $credential = Credential::openFiles(
-                $credentials['certificado'],
-                $credentials['llave'],
-                $credentials['secreto']
+            $cancelResult = $this->stampProvider->cancel(
+                $cfdi->uuid,
+                $this->certificates->open($invoice->getCompany())
             );
-
-            $cancelResult = $this->stampProvider->cancel($cfdi->uuid, $credential);
 
             if (!$cancelResult->hasError()) {
                 $this->updateInvoiceStatus($invoice, CfdiStatus::CANCELLED);
@@ -170,14 +199,7 @@ class CfdiManager
      */
     public function checkSatStatus(CfdiCliente $cfdi, string $emisorRfc, string $receptorRfc): array
     {
-        $query = [
-            'emisor' => $emisorRfc,
-            'receptor' => $receptorRfc,
-            'uuid' => $cfdi->uuid,
-            'total' => $cfdi->total
-        ];
-
-        $status = $this->stampProvider->getStatus($query);
+        $status = $this->satStatus->check($this->stampProvider, $cfdi, $emisorRfc, $receptorRfc);
 
         return [
             'cfdi' => $status->cfdiStatus ?? 'desconocido',
@@ -191,15 +213,6 @@ class CfdiManager
         return $this->storage->get($cfdi->uuid);
     }
 
-    public function getXmlPath(CfdiCliente $cfdi): ?string
-    {
-        if (!method_exists($this->storage, 'getPath')) {
-            return null;
-        }
-
-        return $this->storage->getPath($cfdi->uuid);
-    }
-
     public function updateMailDate(CfdiCliente $cfdi): bool
     {
         return $this->cfdiRepository->updateMailDate($cfdi);
@@ -208,7 +221,7 @@ class CfdiManager
     /**
      * Actualiza el estado de la factura al timbrar correctamente un CFDI
      */
-    private function updateInvoiceStatus(FacturaCliente $factura, CfdiStatus $status): void
+    private function updateInvoiceStatus(FacturaCliente $factura, CfdiStatus $status): bool
     {
         switch ($status) {
             case CfdiStatus::STAMPED:
@@ -219,7 +232,7 @@ class CfdiManager
                 break;
         }
 
-        $factura->save();
+        return $factura->save();
     }
 
     /**
@@ -249,5 +262,15 @@ class CfdiManager
     private function handlePreviousStamp(CfdiBuildResult $result): StampResult
     {
         return $this->stampProvider->getStamped($result->xml());
+    }
+
+    private function persistenceFailure(StampResult $stampResult, string $reason): CfdiStampResult
+    {
+        return CfdiStampResult::failed(new StampResult(
+            true,
+            $stampResult->getUuid(),
+            $stampResult->getXml(),
+            'El CFDI fue timbrado, pero no se pudo guardar localmente: ' . $reason
+        ));
     }
 }

@@ -3,6 +3,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Storage;
 
 use FacturaScripts\Dinamic\Model\CfdiCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiStorageException;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiData;
 
 final class DatabaseCfdiStorage implements CfdiStorageInterface
@@ -11,16 +12,17 @@ final class DatabaseCfdiStorage implements CfdiStorageInterface
     {
         $cfdi = new CfdiCliente();
         if (!$cfdi->loadFromUuid($uuid)) {
-            throw new \RuntimeException('No se encontró el CFDI para guardar su XML.');
+            throw new CfdiStorageException('No se encontró el CFDI para guardar su XML.');
         }
 
         $data = new CfdiData();
+        $data->loadWhereEq('uuid', $uuid);
         $data->cfdi_id = $cfdi->id;
         $data->uuid = $uuid;
         $data->xml = $xml;
 
         if (!$data->save()) {
-            throw new \RuntimeException('No se pudo guardar el XML del CFDI.');
+            throw new CfdiStorageException('No se pudo guardar el XML del CFDI.');
         }
 
         return $uuid;

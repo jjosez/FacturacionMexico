@@ -32,9 +32,10 @@ use FacturaScripts\Plugins\FacturacionMexico\Extension\Controller\FormaPagoContr
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiStatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiUploadService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceStateService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierProductLinkService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiPreviewService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
 
@@ -42,11 +43,9 @@ class EditCfdiProveedor extends EditController
 {
     use FormaPagoControllerTrait;
 
-    const string DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
-
-    protected string $fileName;
-    protected CfdiParser $reader;
-    protected Proveedor $supplier;
+    protected string $fileName = '';
+    protected ?CfdiParser $reader = null;
+    protected ?Proveedor $supplier = null;
     protected array $conceptosProductMap = [];
 
     public function getModelClassName(): string
@@ -112,8 +111,8 @@ class EditCfdiProveedor extends EditController
                 }
 
                 $this->fileName = $this->getModel()->filename;
-                $this->loadReader();
-                $this->loadSupplier();
+                $this->reader = (new SupplierCfdiPreviewService())->reader($this->getModel());
+                $this->supplier = $this->getModel()->getSupplier();
             }
 
             return;
@@ -153,7 +152,7 @@ class EditCfdiProveedor extends EditController
     {
         parent::execAfterAction($action);
 
-        if ($action === 'import-cfdi-to-invoice' && $this->fileName !== '') {
+        if ($action === 'import-cfdi-to-invoice' && $this->fileName !== '' && $this->supplier !== null) {
             try {
                 $conceptos = $this->mapConceptosToInvoice();
 
@@ -183,36 +182,13 @@ class EditCfdiProveedor extends EditController
         $uploadedFile = $this->request->files->get('cfdifile');
 
         try {
-            $importer = new SupplierCfdiUploadService();
+            $importer = new SupplierCfdiImporter();
             $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
 
             Tools::log()->info('CFDI importado correctamente: ' . $cfdi->uuid);
         } catch (Exception $e) {
             Tools::log('CFDI')->warning($e->getMessage());
         }
-    }
-
-    protected function processFile(): bool
-    {
-        Tools::folderCheckOrCreate(self::DESTINATION_FOLDER);
-        $uploadFile = $this->request->files->get('cfdifile');
-
-        if (!$uploadFile || false === $uploadFile->isValid()) {
-            return false;
-        }
-
-        $destinationName = $uploadFile->getClientOriginalName();
-        if (file_exists(self::DESTINATION_FOLDER . $destinationName)) {
-            $destinationName = mt_rand(1, 999999) . '_' . $destinationName;
-        }
-
-        $moveFile = $uploadFile->move(self::DESTINATION_FOLDER, $destinationName);
-        if ($moveFile) {
-            $this->fileName = $destinationName;
-            return true;
-        }
-
-        return false;
     }
 
     protected function searchProductsAction(): void
@@ -284,11 +260,6 @@ class EditCfdiProveedor extends EditController
             . '&code=' . rawurlencode($cfdi->primaryColumnValue());
 
         $this->redirect($wizardUrl);
-    }
-
-    public function getReader(): ?CfdiParser
-    {
-        return $this->reader;
     }
 
     /**
@@ -379,34 +350,6 @@ class EditCfdiProveedor extends EditController
         }
 
         return $indexados;
-    }
-
-    protected function loadReader(): bool
-    {
-        try {
-            $fileContent = file_get_contents(self::DESTINATION_FOLDER . $this->fileName);
-            $this->reader = new CfdiParser($fileContent);
-
-            return true;
-        } catch (Exception $e) {
-            Tools::log('CFDI')->warning('Error al cargar el archivo ' . $this->fileName);
-            Tools::log('CFDI')->warning($e->getMessage());
-            return false;
-        }
-    }
-
-    protected function loadSupplier(): bool
-    {
-        $this->supplier = new Proveedor();
-
-        if ($this->supplier->loadWhereEq('cifnif', $this->reader->emisorRfc())) {
-            return true;
-        }
-
-        $this->supplier->cifnif = $this->reader->emisorRfc();
-        $this->supplier->nombre = $this->reader->emisorNombre();
-
-        return $this->supplier->save();
     }
 
     public function buildNewProductUrl($code, $description)

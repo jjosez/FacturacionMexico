@@ -26,7 +26,7 @@ Base actual:
 
 - Branch `clean-refactoring` creado desde `b44bcd9`, anterior a la refactorización previa.
 - Wizards, vistas, XMLViews, modelos, tablas y extensiones conservados.
-- Tests pospuestos hasta la fase final.
+- Tests unitarios e integración local creados; matriz PAC/SAT sigue pendiente.
 
 Completado:
 
@@ -39,12 +39,19 @@ Completado:
 - Creado `CfdiManager` y `CustomerCfdiRepository`.
 - Eliminados `LegacyCfdiRepositoryInterface` y sus adaptadores.
 - Compatibilidad de lectura con XML antiguos de filesystem conservada.
+- `CfdiParser` produce `CfdiParsedData` para flujos de cliente y proveedor.
+- `SupplierCfdiImporter` reemplaza el cargador anterior y persiste metadata desde el DTO.
+- Lectura XML de vistas proveedor concentrada en `SupplierCfdiPreviewService`.
+- Eliminados métodos sin consumidores internos del wizard y edición proveedor.
+- Excepciones CFDI mínimas para validación, storage, PAC y configuración.
+- Servicios SAT para certificados y consulta de estado, reutilizados por `CfdiManager`.
+- Preparación de certificados de construcción y cancelación centralizada en `CertificateService`.
+- Pruebas unitarias para parser, storage filesystem y resultados de timbrado.
+- Pruebas integración local para storage database, XML filesystem legacy, importación proveedor y caminos exitoso/error de `CfdiManager` con PAC falso.
 
 Pendiente:
 
 - Validación funcional real de timbrado, cancelación, consulta SAT y almacenamiento.
-- Simplificar `SupplierCfdiImporter` y separar parser, validación, metadata y almacenamiento.
-- Convertir el lector XML en un parser con DTO de aplicación, sin mezclarlo con el modelo persistente `CfdiData`.
 - Revisar lógica XML residual en controladores y adelgazar sus responsabilidades.
 - Confirmar compatibilidad de datos, UUID, relaciones y facturas existentes.
 - Limpieza final de código muerto y documentación.

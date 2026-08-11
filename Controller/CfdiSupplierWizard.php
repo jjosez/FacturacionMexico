@@ -31,6 +31,7 @@ use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiPreviewService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
 
 class CfdiSupplierWizard extends Controller
@@ -299,22 +300,6 @@ class CfdiSupplierWizard extends Controller
         return $results;
     }
 
-    protected function formatSingleProduct(Producto $product): array
-    {
-        return [
-            'referencia' => $product->referencia,
-            'descripcion' => $product->descripcion,
-            'tipoventa' => $product->tipoventa,
-            'codfamilia' => $product->codfamilia,
-            'preciocoste' => $product->preciocoste,
-            'pvp' => $product->pvp,
-            'stockfis' => $product->stockfis,
-            'controlstock' => $product->controlstock,
-            'referencia_fabricante' => $product->referencia_fabricante ?? null,
-            'is_linked' => false,
-        ];
-    }
-
     protected function importCfdiAction(): void
     {
         try {
@@ -398,12 +383,12 @@ class CfdiSupplierWizard extends Controller
     protected function loadCfdiReader(): bool
     {
         try {
-            $fileContent = $this->cfdi->localFileContent();
-            if (empty($fileContent)) {
+            $reader = (new SupplierCfdiPreviewService())->reader($this->cfdi);
+            if ($reader === null) {
                 return false;
             }
 
-            $this->reader = new CfdiParser($fileContent);
+            $this->reader = $reader;
             return true;
         } catch (Exception $e) {
             Tools::log('CFDI')->error($e->getMessage());

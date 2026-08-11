@@ -10,32 +10,33 @@ use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiParsedData;
 
-class SupplierCfdiUploadService
+class SupplierCfdiImporter
 {
     public const DESTINATION_FOLDER = FS_FOLDER . '/MyFiles/CFDI/supplier/';
 
     protected string $fileName;
-    protected CfdiParser $reader;
+    protected CfdiParsedData $data;
     protected Proveedor $supplier;
     protected Empresa $company;
 
-    public function processUpload(?UploadedFile $uploadFile, Empresa $company): ?CfdiProveedor
+    public function processUpload(?UploadedFile $uploadFile, Empresa $company): CfdiProveedor
     {
         if (null === $uploadFile) {
-            throw new Exception('No se pudo obtener el archivo. ' . $uploadFile->getClientOriginalName());
+            throw new Exception('No se pudo obtener el archivo.');
         }
 
         if (!$this->saveUploadedFile($uploadFile)) {
             throw new Exception('Error al guardar el archivo.');
         }
 
-        $this->loadReader();
+        $this->loadData();
         $this->loadOrCreateSupplier();
         $this->company = $company;
 
         if ($this->cfdiExists()) {
-            throw new Exception('El CFDI ya fue registrado previamente. ' . $this->reader->uuid());
+            throw new Exception('El CFDI ya fue registrado previamente. ' . $this->data->uuid);
         }
 
         return $this->saveCfdi();
@@ -64,20 +65,24 @@ class SupplierCfdiUploadService
         return false;
     }
 
-    protected function loadReader(): void
+    protected function loadData(): void
     {
         $fileContent = file_get_contents(self::DESTINATION_FOLDER . $this->fileName);
-        $this->reader = new CfdiParser($fileContent);
+        if ($fileContent === false || $fileContent === '') {
+            throw new Exception('No se pudo leer el archivo XML del CFDI.');
+        }
+
+        $this->data = (new CfdiParser($fileContent))->parse();
     }
 
     protected function loadOrCreateSupplier(): void
     {
         $this->supplier = new Proveedor();
-        $where = [new DataBaseWhere('cifnif', $this->reader->emisorRfc())];
+        $where = [new DataBaseWhere('cifnif', $this->data->issuerRfc)];
 
         if (!$this->supplier->loadFromCode('', $where)) {
-            $this->supplier->cifnif = $this->reader->emisorRfc();
-            $this->supplier->nombre = $this->reader->emisorNombre();
+            $this->supplier->cifnif = $this->data->issuerRfc;
+            $this->supplier->nombre = $this->data->issuerName;
 
             if (!$this->supplier->save()) {
                 throw new Exception('Error al guardar el proveedor.');
@@ -88,30 +93,30 @@ class SupplierCfdiUploadService
     protected function cfdiExists(): bool
     {
         $cfdi = new CfdiProveedor();
-        return $cfdi->loadFromUuid($this->reader->uuid());
+        return $cfdi->loadFromUuid($this->data->uuid);
     }
 
     protected function saveCfdi(): CfdiProveedor
     {
         $cfdi = new CfdiProveedor();
         $cfdi->codproveedor = $this->supplier->codproveedor;
-        $cfdi->coddivisa = "MXN";
+        $cfdi->coddivisa = $this->data->currency;
         $cfdi->estado = SupplierCfdiStatusService::STATUS_IMPORTED;
-        $cfdi->receptor_rfc = $this->reader->receptorRfc();
-        $cfdi->receptor_nombre = $this->reader->receptorNombre();
-        $cfdi->emisor_rfc = $this->reader->emisorRfc();
-        $cfdi->emisor_nombre = $this->reader->emisorNombre();
-        $cfdi->fecha_emision = $this->reader->fechaExpedicion();
-        $cfdi->fecha_timbrado = $this->reader->fechaTimbrado();
-        $cfdi->folio = $this->reader->folio();
-        $cfdi->forma_pago = $this->reader->formaPago();
+        $cfdi->receptor_rfc = $this->data->recipientRfc;
+        $cfdi->receptor_nombre = $this->data->recipientName;
+        $cfdi->emisor_rfc = $this->data->issuerRfc;
+        $cfdi->emisor_nombre = $this->data->issuerName;
+        $cfdi->fecha_emision = $this->data->issueDate;
+        $cfdi->fecha_timbrado = $this->data->stampedAt;
+        $cfdi->folio = $this->data->folio;
+        $cfdi->forma_pago = $this->data->paymentForm;
         $cfdi->idempresa = $this->company->idempresa;
-        $cfdi->metodo_pago = $this->reader->metodoPago();
-        $cfdi->serie = $this->reader->serie();
-        $cfdi->tipo = $this->reader->tipoComprobamte();
-        $cfdi->total = $this->reader->total();
-        $cfdi->uuid = $this->reader->uuid();
-        $cfdi->version = $this->reader->version();
+        $cfdi->metodo_pago = $this->data->paymentMethod;
+        $cfdi->serie = $this->data->series;
+        $cfdi->tipo = $this->data->type;
+        $cfdi->total = $this->data->total;
+        $cfdi->uuid = $this->data->uuid;
+        $cfdi->version = $this->data->version;
         $cfdi->filename = $this->fileName;
 
         if (!$cfdi->save()) {

@@ -250,14 +250,17 @@ class EditCfdiCliente extends Controller
     {
         $this->setTemplate(false);
 
-        $xmlLocataion = $this->cfdiService->getXmlPath($this->cfdi);
-
-        if (null === $xmlLocataion) {
+        $xml = $this->cfdiService->getXml($this->cfdi);
+        if ($xml === null) {
             Tools::log('CFDI')->warning('Error al cargar el archivo xml.');
             return;
         }
 
-        $this->response->download($xmlLocataion, $this->cfdi->filename);
+        $this->response
+            ->header('Content-Type', 'application/xml')
+            ->header('Content-Disposition', 'attachment; filename="' . $this->cfdi->uuid . '.xml"')
+            ->header('Content-Length', (string) strlen($xml))
+            ->setContent($xml);
         $this->response->send();
     }
 

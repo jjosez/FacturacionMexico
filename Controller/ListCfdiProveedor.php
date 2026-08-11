@@ -24,7 +24,7 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiUploadService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiStatusService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceBatchResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
@@ -116,7 +116,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
     protected function importCfdiAction(): void
     {
         try {
-            $importer = new SupplierCfdiUploadService();
+            $importer = new SupplierCfdiImporter();
             $uploadedFile = $this->request->files->get('cfdifile');
             $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
 
@@ -148,7 +148,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
 
         $files = is_array($files) ? $files : [$files];
 
-        $importer = new SupplierCfdiUploadService();
+        $importer = new SupplierCfdiImporter();
         $service = new SupplierInvoiceImportService();
 
         $options = SupplierInvoiceImportOptions::fromArray([

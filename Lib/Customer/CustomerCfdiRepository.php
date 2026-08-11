@@ -5,30 +5,30 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Customer;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiStatus;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiParsedData;
 
 final class CustomerCfdiRepository
 {
-    public function createFromInvoice(FacturaCliente $invoice, CfdiParser $parser): ?CfdiCliente
+    public function createFromInvoice(FacturaCliente $invoice, CfdiParsedData $data): ?CfdiCliente
     {
         $cfdi = new CfdiCliente();
         $cfdi->codcliente = $invoice->codcliente;
         $cfdi->idfactura = $invoice->idfactura;
         $cfdi->cfdiglobal = $invoice->isGlobalInvoice() ?: null;
-        $cfdi->coddivisa = $parser->moneda();
+        $cfdi->coddivisa = $data->currency;
         $cfdi->estado = 'Timbrado';
-        $cfdi->fecha_emision = $parser->fechaExpedicion();
-        $cfdi->fecha_timbrado = $parser->fechaTimbrado();
-        $cfdi->folio = $parser->folio();
-        $cfdi->forma_pago = $parser->formaPago();
-        $cfdi->metodo_pago = $parser->metodoPago();
-        $cfdi->receptor_nombre = $parser->receptorNombre();
-        $cfdi->receptor_rfc = $parser->receptorRfc();
-        $cfdi->serie = $parser->serie();
-        $cfdi->tipo = $parser->tipoComprobamte();
-        $cfdi->total = $parser->total();
-        $cfdi->uuid = $parser->uuid();
-        $cfdi->version = $parser->version();
+        $cfdi->fecha_emision = $data->issueDate;
+        $cfdi->fecha_timbrado = $data->stampedAt;
+        $cfdi->folio = $data->folio;
+        $cfdi->forma_pago = $data->paymentForm;
+        $cfdi->metodo_pago = $data->paymentMethod;
+        $cfdi->receptor_nombre = $data->recipientName;
+        $cfdi->receptor_rfc = $data->recipientRfc;
+        $cfdi->serie = $data->series;
+        $cfdi->tipo = $data->type;
+        $cfdi->total = $data->total;
+        $cfdi->uuid = $data->uuid;
+        $cfdi->version = $data->version;
 
         return $cfdi->save() ? $cfdi : null;
     }

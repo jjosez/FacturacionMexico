@@ -4,6 +4,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier;
 
 use Exception;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
@@ -64,10 +65,11 @@ class SupplierProductResolver
         }
 
         $link = new ProductoProveedor();
-        if (!$link->loadWhere([
-            new DataBaseWhere('refproveedor', $supplierReference),
-            new DataBaseWhere('codproveedor', $supplier->codproveedor),
-        ])) {
+        $where = [
+            Where::eq('refproveedor', $supplierReference),
+            Where::eq('codproveedor', $supplier->codproveedor),
+        ];
+        if (!$link->loadWhere($where)) {
             return null;
         }
 

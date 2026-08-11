@@ -3,7 +3,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib;
 
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Dinamic\Model\Empresa;
+use FacturaScripts\Core\Model\Empresa;
 
 class CfdiSettings
 {

@@ -4,6 +4,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Storage;
 
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiStorageException;
 
 final class FileCfdiStorage implements CfdiStorageInterface
 {
@@ -16,11 +17,11 @@ final class FileCfdiStorage implements CfdiStorageInterface
         $directory = dirname($fullPath);
 
         if (!Tools::folderCheckOrCreate($directory)) {
-            throw new \RuntimeException('No se pudo crear el almacenamiento de CFDI.');
+            throw new CfdiStorageException('No se pudo crear el almacenamiento de CFDI.');
         }
 
         if (file_put_contents($fullPath, $xml) === false) {
-            throw new \RuntimeException('No se pudo guardar el XML del CFDI.');
+            throw new CfdiStorageException('No se pudo guardar el XML del CFDI.');
         }
 
         return $relativePath;
@@ -46,11 +47,6 @@ final class FileCfdiStorage implements CfdiStorageInterface
     {
         $path = $this->findPath($uuid);
         return $path === null || unlink($path);
-    }
-
-    public function getPath(string $uuid): ?string
-    {
-        return $this->findPath($uuid);
     }
 
     private function findPath(string $uuid): ?string

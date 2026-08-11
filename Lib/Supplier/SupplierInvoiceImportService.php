@@ -14,6 +14,7 @@ use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Dinamic\Model\Serie;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiParsedData;
 use FacturaScripts\Plugins\FacturacionMexico\Model\RelacionCfdiProveedor;
 
 class SupplierInvoiceImportService
@@ -57,11 +58,11 @@ class SupplierInvoiceImportService
             $db = new DataBase();
             $db->beginTransaction();
 
-            $reader = $this->getCfdiReader($cfdi);
-            $conceptos = $submittedConceptos ?? $reader->getConceptos();
+            $data = $this->getCfdiData($cfdi);
+            $conceptos = $submittedConceptos ?? $data->concepts;
             $isEgreso = strtoupper($cfdi->tipo) === 'E';
 
-            $invoice = $this->createOrUpdateInvoice($cfdi, $supplier, $reader, $options);
+            $invoice = $this->createOrUpdateInvoice($cfdi, $supplier, $options);
             $this->clearInvoiceLines($invoice);
 
             $createdProducts = [];
@@ -93,7 +94,7 @@ class SupplierInvoiceImportService
             if (!$this->cfdiStatusService->markInvoiceCreated($cfdi, $invoice)) {
                 throw new Exception('No se pudo actualizar el CFDI con la factura generada');
             }
-            $this->saveCfdiRelations($cfdi, $reader);
+            $this->saveCfdiRelations($cfdi, $data->relations);
 
             $db->commit();
 
@@ -162,19 +163,18 @@ class SupplierInvoiceImportService
         return $result;
     }
 
-    private function getCfdiReader(CfdiProveedor $cfdi): CfdiParser
+    private function getCfdiData(CfdiProveedor $cfdi): CfdiParsedData
     {
         $xml = $cfdi->localFileContent();
         if (empty($xml)) {
             throw new Exception('No se pudo leer el archivo XML del CFDI');
         }
-        return new CfdiParser($xml);
+        return (new CfdiParser($xml))->parse();
     }
 
     private function createOrUpdateInvoice(
         CfdiProveedor $cfdi,
         Proveedor $supplier,
-        CfdiParser $reader,
         SupplierInvoiceImportOptions $options
     ): FacturaProveedor {
         $invoice = new FacturaProveedor();
@@ -270,9 +270,9 @@ class SupplierInvoiceImportService
         throw new Exception(Tools::lang()->trans('supplier-cfdi-rectifying-series-missing'));
     }
 
-    private function saveCfdiRelations(CfdiProveedor $cfdi, CfdiParser $reader): void
+    private function saveCfdiRelations(CfdiProveedor $cfdi, array $relations): void
     {
-        foreach ($reader->relacionados() as $group) {
+        foreach ($relations as $group) {
             $tipoRelacion = $group['tiporelacion'] ?? '';
             foreach ($group['relacionados'] ?? [] as $uuidRelacionado) {
                 $related = new CfdiProveedor();

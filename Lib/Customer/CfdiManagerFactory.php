@@ -14,6 +14,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiConfigurationExce
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\FinkokStampProvider;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\DatabaseCfdiStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\FileCfdiStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CertificateService;
 
 /**
  * Factory para crear instancias de servicios CFDI configurados
@@ -52,27 +53,11 @@ class CfdiManagerFactory
      */
     private static function validateSatCredentials(Empresa $company): array
     {
-        $missing = [];
-
         try {
-            $credentials = CfdiSettings::satCredentials($company);
-
-            if (empty($credentials['certificado']) || !file_exists($credentials['certificado'])) {
-                $missing['certificado'] = 'Certificado SAT (.cer) no configurado o no existe';
-            }
-
-            if (empty($credentials['llave']) || !file_exists($credentials['llave'])) {
-                $missing['llave'] = 'Llave privada SAT (.key) no configurada o no existe';
-            }
-
-            if (empty($credentials['secreto'])) {
-                $missing['secreto'] = 'Contraseña de la llave privada SAT';
-            }
+            return (new CertificateService())->missing($company);
         } catch (\Exception $e) {
-            $missing['sat-general'] = 'Credenciales SAT no configuradas correctamente';
+            return ['sat-general' => 'Credenciales SAT no configuradas correctamente'];
         }
-
-        return $missing;
     }
 
     /**

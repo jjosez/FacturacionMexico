@@ -3,7 +3,7 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\Queue;
 
 use Exception;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiUploadService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceBatchResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
@@ -12,7 +12,7 @@ class SupplierCfdiAsyncImportProcessor
 {
     private SupplierCfdiImportQueue $queue;
     private SupplierInvoiceImportService $importService;
-    private SupplierCfdiUploadService $cfdiImporter;
+    private SupplierCfdiImporter $cfdiImporter;
     private bool $shouldStop = false;
 
     public function __construct(
@@ -21,7 +21,7 @@ class SupplierCfdiAsyncImportProcessor
     ) {
         $this->importService = $importService ?? new SupplierInvoiceImportService();
         $this->queue = $queue ?? new SupplierCfdiImportQueue();
-        $this->cfdiImporter = new SupplierCfdiUploadService();
+        $this->cfdiImporter = new SupplierCfdiImporter();
     }
 
     public function process(string $jobId): SupplierInvoiceBatchResult

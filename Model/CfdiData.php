@@ -36,7 +36,7 @@ class CfdiData extends ModelClass
      */
     public static function getXmlFromCfdi(string $code): string
     {
-        $result = self::table()->whereEq('idcfdi', $code)->first();
+        $result = self::table()->whereEq('cfdi_id', $code)->first();
 
         return $result['xml'] ?? "";
     }

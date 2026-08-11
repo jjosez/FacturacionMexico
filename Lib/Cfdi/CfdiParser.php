@@ -23,9 +23,10 @@ use CfdiUtils\Cfdi;
 use CfdiUtils\ConsultaCfdiSat\RequestParameters;
 use CfdiUtils\Nodes\XmlNodeUtils;
 use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiParsedData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiValidationException;
 use CfdiUtils\XmlResolver\XmlResolver;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
-use InvalidArgumentException;
 use Luecano\NumeroALetras\NumeroALetras;
 
 class CfdiParser
@@ -37,16 +38,43 @@ class CfdiParser
     public function __construct(string $xml)
     {
         if (empty($xml)) {
-            throw new InvalidArgumentException('XML invalido');
+            throw new CfdiValidationException('XML invalido');
         }
 
-        $this->cfdi = Cfdi::newFromString($xml);
-        $this->comprobante = $this->cfdi->getQuickReader();
+        try {
+            $this->cfdi = Cfdi::newFromString($xml);
+            $this->comprobante = $this->cfdi->getQuickReader();
+        } catch (\Throwable $e) {
+            throw new CfdiValidationException('XML invalido.', 0, $e);
+        }
     }
 
     public function clearCache(): void
     {
         $this->cache = [];
+    }
+
+    public function parse(): CfdiParsedData
+    {
+        return new CfdiParsedData(
+            $this->moneda(),
+            $this->fechaExpedicion(),
+            $this->fechaTimbrado(),
+            $this->folio(),
+            $this->formaPago(),
+            $this->metodoPago(),
+            $this->receptorNombre(),
+            $this->receptorRfc(),
+            $this->emisorNombre(),
+            $this->emisorRfc(),
+            $this->serie(),
+            $this->tipoComprobamte(),
+            $this->total(),
+            $this->uuid(),
+            $this->version(),
+            $this->getConceptos(),
+            $this->relacionados()
+        );
     }
 
     public function cadenaOrigen(): string
