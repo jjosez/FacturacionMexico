@@ -32,12 +32,12 @@ use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiPreviewService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 
 class CfdiSupplierWizard extends Controller
 {
     public CfdiProveedor $cfdi;
-    public CfdiParser $reader;
+    public CfdiData $reader;
     public Proveedor $supplier;
     public array $conceptMatchResults = [];
     public array $matchStats = [];
@@ -130,7 +130,7 @@ class CfdiSupplierWizard extends Controller
 
     protected function loadMatchResults(): void
     {
-        $conceptos = $this->reader->getConceptos();
+        $conceptos = $this->reader->conceptos;
         $linkedProducts = $this->getIndexedSupplierProducts($this->supplier->codproveedor);
         $this->conceptMatchResults = [];
 
@@ -356,7 +356,7 @@ class CfdiSupplierWizard extends Controller
 
     protected function getImportConcepts(): array
     {
-        $conceptos = $this->reader->getConceptos();
+        $conceptos = $this->reader->conceptos;
         $submitted = $this->request->getArray('conceptos');
 
         foreach ($conceptos as $index => &$concepto) {
@@ -383,7 +383,7 @@ class CfdiSupplierWizard extends Controller
     protected function loadCfdiReader(): bool
     {
         try {
-            $reader = (new SupplierCfdiPreviewService())->reader($this->cfdi);
+            $reader = (new SupplierCfdiPreviewService())->data($this->cfdi);
             if ($reader === null) {
                 return false;
             }

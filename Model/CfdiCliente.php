@@ -24,6 +24,8 @@ use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
 class CfdiCliente extends ModelClass
@@ -55,7 +57,22 @@ class CfdiCliente extends ModelClass
             return "";
         }
 
-        return CfdiData::getXmlFromCfdi($this->id);
+        $xml = CfdiStorage::get()->get(CfdiScope::CUSTOMER, $this->uuid);
+        if ($xml !== null) {
+            return $xml;
+        }
+
+        $legacyXml = CfdiData::getXmlFromCfdi($this->id);
+        if ($legacyXml !== '') {
+            return $legacyXml;
+        }
+
+        $legacyPath = FS_FOLDER . '/MyFiles/CFDI/customer/' . $this->filename;
+        if (!empty($this->filename) && is_file($legacyPath)) {
+            return file_get_contents($legacyPath) ?: '';
+        }
+
+        return '';
     }
 
     public static function tableName(): string

@@ -2,13 +2,15 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Storage;
 
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
+
 interface CfdiStorageInterface
 {
-    public function save(string $uuid, string $xml): string;
+    public function save(CfdiScope $scope, string $uuid, string $xml): string;
 
-    public function get(string $uuid): ?string;
+    public function get(CfdiScope $scope, string $uuid): ?string;
 
-    public function exists(string $uuid): bool;
+    public function exists(CfdiScope $scope, string $uuid): bool;
 
-    public function delete(string $uuid): bool;
+    public function delete(CfdiScope $scope, string $uuid): bool;
 }

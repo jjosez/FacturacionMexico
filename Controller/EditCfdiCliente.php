@@ -29,6 +29,7 @@ use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiRelationService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\CustomerValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiManager;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiManagerFactory;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
@@ -42,7 +43,7 @@ class EditCfdiCliente extends Controller
 {
     public CfdiCliente $cfdi;
     public FacturaCliente $factura;
-    public ?CfdiParser $reader = null;
+    public ?CfdiData $reader = null;
     public string $xml = '';
 
     private CfdiManager $cfdiService;
@@ -136,7 +137,7 @@ class EditCfdiCliente extends Controller
         $this->xml = $this->cfdiService->getXml($this->cfdi) ?? '';
 
         if ($this->xml) {
-            $this->reader = new CfdiParser($this->xml);
+            $this->reader = (new CfdiParser($this->xml))->parse();
         }
     }
 
@@ -270,7 +271,7 @@ class EditCfdiCliente extends Controller
     private function exportPdf(): void
     {
         $xml = $this->cfdiService->getXml($this->cfdi);
-        $reader = new CfdiParser($xml);
+        $reader = (new CfdiParser($xml))->parse();
 
         $logoID = $this->factura->getCompany()->idlogo;
         $pdf = new PDFCfdi($reader, $logoID);
@@ -413,7 +414,9 @@ class EditCfdiCliente extends Controller
         ]);
 
         $qrcode = new QRCode($options);
-        $qrcode->render($this->reader->qrCodeUrl(), $qrFile);
+        if ($this->reader?->satQuery !== null) {
+            $qrcode->render($this->reader->satQuery, $qrFile);
+        }
     }
 
     // ========== Métodos privados auxiliares ==========

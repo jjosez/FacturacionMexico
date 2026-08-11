@@ -15,9 +15,9 @@
                 <div class="card-body">
                     <dl class="row mb-0">
                         <dt class="col-sm-6 text-muted">Forma de pago</dt>
-                        <dd class="col-sm-6">{{ fsc.reader.formaPago() }}</dd>
+                        <dd class="col-sm-6">{{ fsc.reader.formaPago }}</dd>
                         <dt class="col-sm-6 text-muted">Método de pago</dt>
-                        <dd class="col-sm-6 mb-0">{{ fsc.reader.metodoPago() }}</dd>
+                        <dd class="col-sm-6 mb-0">{{ fsc.reader.metodoPago }}</dd>
                     </dl>
                 </div>
             </div>
@@ -29,7 +29,7 @@
                     <label for="invoice_payment_method" class="form-label">Forma de pago interna</label>
                     <select id="invoice_payment_method" name="invoice-payment-method" class="form-select" required>
                         {% for item in fsc.cfdiToInvoicePaymentMethods() %}
-                            <option value="{{ item.id() }}" {% if fsc.reader.formaPago() == item.clavesat %}selected{% endif %}>
+                            <option value="{{ item.id() }}" {% if fsc.reader.formaPago == item.clavesat %}selected{% endif %}>
                                 {{ item.clavesat }} - {{ item.descripcion }}
                             </option>
                         {% endfor %}
@@ -96,7 +96,7 @@
         <div class="card-body">
             <div class="row g-3 text-center">
                 <div class="col-6 col-md-3">
-                    <div class="fs-3 fw-bold" id="summaryTotal">{{ fsc.reader.getConceptos()|length }}</div>
+                    <div class="fs-3 fw-bold" id="summaryTotal">{{ fsc.reader.conceptos|length }}</div>
                     <div class="text-muted small">Conceptos</div>
                 </div>
                 <div class="col-6 col-md-3">

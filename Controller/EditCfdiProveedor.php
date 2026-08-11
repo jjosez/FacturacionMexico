@@ -36,7 +36,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceStateService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierProductLinkService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiPreviewService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
 
 class EditCfdiProveedor extends EditController
@@ -44,7 +44,7 @@ class EditCfdiProveedor extends EditController
     use FormaPagoControllerTrait;
 
     protected string $fileName = '';
-    protected ?CfdiParser $reader = null;
+    protected ?CfdiData $reader = null;
     protected ?Proveedor $supplier = null;
     protected array $conceptosProductMap = [];
 
@@ -111,7 +111,7 @@ class EditCfdiProveedor extends EditController
                 }
 
                 $this->fileName = $this->getModel()->filename;
-                $this->reader = (new SupplierCfdiPreviewService())->reader($this->getModel());
+                $this->reader = (new SupplierCfdiPreviewService())->data($this->getModel());
                 $this->supplier = $this->getModel()->getSupplier();
             }
 
@@ -222,7 +222,7 @@ class EditCfdiProveedor extends EditController
         $codproveedor = $this->request->input('codproveedor', '');
 
         if (empty($refproveedor) && $index >= 0 && isset($this->reader)) {
-            $conceptos = $this->reader->conceptosNormalized();
+            $conceptos = $this->reader->conceptos;
             $refproveedor = $conceptos[$index]['NoIdentificacion'] ?? '';
         }
 
@@ -274,7 +274,7 @@ class EditCfdiProveedor extends EditController
             return [];
         }
 
-        $conceptos = $this->reader->conceptosNormalized();
+        $conceptos = $this->reader->conceptos;
         $codproveedor = $this->supplier->codproveedor;
 
         $productosProveedor = $this->getIndexedSupplierProducts($codproveedor);
@@ -316,7 +316,7 @@ class EditCfdiProveedor extends EditController
         $codproveedor = $this->supplier->codproveedor;
         $productosProveedor = $this->getIndexedSupplierProducts($codproveedor);
 
-        $conceptos = $this->reader->conceptosNormalized();
+        $conceptos = $this->reader->conceptos;
         foreach ($conceptos as &$concepto) {
             $refproveedor = $concepto['NoIdentificacion'] ?? '';
 

@@ -25,6 +25,8 @@ use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Proveedor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
 class CfdiProveedor extends ModelClass
@@ -69,15 +71,21 @@ class CfdiProveedor extends ModelClass
         return $this->fecha_emision;
     }
 
-    public function validateFile(): string
+    public function validateFile(): bool
     {
-        return is_file(self::SUPPLIER_CFDI_BASEPATH . $this->filename);
+        return CfdiStorage::get()->exists(CfdiScope::SUPPLIER, $this->uuid)
+            || (!empty($this->filename) && is_file(self::SUPPLIER_CFDI_BASEPATH . $this->filename));
     }
 
     public function localFileContent(): string
     {
-        if ($this->validateFile()) {
-            return file_get_contents(self::SUPPLIER_CFDI_BASEPATH . $this->filename);
+        $xml = CfdiStorage::get()->get(CfdiScope::SUPPLIER, $this->uuid);
+        if ($xml !== null) {
+            return $xml;
+        }
+
+        if (!empty($this->filename)) {
+            return file_get_contents(self::SUPPLIER_CFDI_BASEPATH . $this->filename) ?: '';
         }
 
         return '';

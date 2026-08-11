@@ -19,6 +19,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorageInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\StampProviderInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiStatus;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\RelationValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CertificateService;
@@ -98,12 +99,16 @@ class CfdiManager
             }
 
             $data = (new CfdiParser($stampResult->getXml()))->parse();
+            if ($data->uuid === null) {
+                throw new Exception('El XML timbrado no contiene UUID.');
+            }
+
             $savedCfdi = $this->cfdiRepository->createFromInvoice($factura, $data);
             if ($savedCfdi === null) {
                 throw new Exception('No se pudo guardar el metadata del CFDI.');
             }
 
-            $this->storage->save($savedCfdi->uuid, $stampResult->getXml());
+            $this->storage->save(CfdiScope::CUSTOMER, $savedCfdi->uuid, $stampResult->getXml());
             $storageSaved = true;
 
             if (!empty($relations) && !$this->relationService->saveCfdiRelations($savedCfdi, $relations)) {
@@ -123,7 +128,7 @@ class CfdiManager
             }
 
             if ($storageSaved && $savedCfdi !== null) {
-                $this->storage->delete($savedCfdi->uuid);
+                $this->storage->delete(CfdiScope::CUSTOMER, $savedCfdi->uuid);
             }
 
             return $this->persistenceFailure($stampResult, $e->getMessage());
@@ -210,7 +215,7 @@ class CfdiManager
 
     public function getXml(CfdiCliente $cfdi): ?string
     {
-        return $this->storage->get($cfdi->uuid);
+        return $this->storage->get(CfdiScope::CUSTOMER, $cfdi->uuid);
     }
 
     public function updateMailDate(CfdiCliente $cfdi): bool

@@ -29,7 +29,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for concepto in fsc.reader.getConceptos() %}
+                {% for concepto in fsc.reader.conceptos %}
                     {% set matchResult = fsc.getMatchedConcept(loop.index0) %}
                     {% set isLinked = matchResult and matchResult.isLinked %}
                     {% set matchClass = isLinked ? 'table-success' : '' %}

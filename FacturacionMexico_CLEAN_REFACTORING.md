@@ -39,7 +39,7 @@ Completado:
 - Creado `CfdiManager` y `CustomerCfdiRepository`.
 - Eliminados `LegacyCfdiRepositoryInterface` y sus adaptadores.
 - Compatibilidad de lectura con XML antiguos de filesystem conservada.
-- `CfdiParser` produce `CfdiParsedData` para flujos de cliente y proveedor.
+- `CfdiParser` produce `DTO/CfdiData`: datos normalizados, sin modelos FacturaScripts ni persistencia.
 - `SupplierCfdiImporter` reemplaza el cargador anterior y persiste metadata desde el DTO.
 - Lectura XML de vistas proveedor concentrada en `SupplierCfdiPreviewService`.
 - Eliminados métodos sin consumidores internos del wizard y edición proveedor.
@@ -196,7 +196,11 @@ Estado de la migración de Storage:
 - `Lib/Domain/` y `Lib/Application/` quedan vacíos después de la reorganización inicial.
 - `Lib/Infrastructure/` se conserva únicamente para integraciones externas, PDF y adaptadores legacy pendientes de reemplazo.
 - Los adaptadores anteriores fueron eliminados después de migrar sus consumidores a `CfdiManager`.
-- `DatabaseCfdiStorage` implementa el contrato usando `cfdis_clientes_data` y el UUID del metadata CFDI.
+- `CfdiScope` separa XML de clientes y proveedores sin confundirse con `TipoDeComprobante`.
+- `CfdiStorage` es único selector de backend según `CfdiSettings::storageType()`.
+- `DatabaseCfdiStorage` usa `cfdis_clientes_data` o `cfdis_proveedores_data` según ámbito; solo resuelve `cfdi_id` al crear el XML.
+- `FileCfdiStorage` usa `MyFiles/FacturacionMexico/cfdi/{customer|supplier}/YYYY/MM/{UUID}.xml`.
+- `filename` y `MyFiles/CFDI/{customer|supplier}/` permanecen como fallback temporal en modelos, no en storages nuevos.
 
 Después de la auditoría, presentar una propuesta antes de realizar cambios destructivos.
 
@@ -270,8 +274,8 @@ Persistida mediante modelos normales de FacturaScripts.
 Principalmente:
 
 ```text
-cfdi_customer
-cfdi_supplier
+cfdis_clientes
+cfdis_proveedores
 ```
 
 y posteriormente:
@@ -310,13 +314,13 @@ Contrato inicial:
 ```php
 interface CfdiStorageInterface
 {
-    public function save(string $uuid, string $xml): string;
+    public function save(CfdiScope $scope, string $uuid, string $xml): string;
 
-    public function get(string $uuid): ?string;
+    public function get(CfdiScope $scope, string $uuid): ?string;
 
-    public function exists(string $uuid): bool;
+    public function exists(CfdiScope $scope, string $uuid): bool;
 
-    public function delete(string $uuid): bool;
+    public function delete(CfdiScope $scope, string $uuid): bool;
 }
 ```
 
@@ -331,32 +335,24 @@ Debe encargarse internamente de convertir el UUID/storage key en una ruta físic
 Por ejemplo:
 
 ```text
-MyFiles/FacturacionMexico/cfdi/2026/08/{UUID}.xml
+MyFiles/FacturacionMexico/cfdi/customer/2026/08/{UUID}.xml
+MyFiles/FacturacionMexico/cfdi/supplier/2026/08/{UUID}.xml
 ```
 
 La estructura exacta debe adaptarse a las convenciones disponibles en FacturaScripts.
 
 ## DatabaseCfdiStorage
 
-Crear una tabla independiente si resulta necesaria:
+Usar tablas `_data` existentes, sin crear tabla global:
 
 ```text
-cfdi_xml
+CUSTOMER -> cfdis_clientes_data
+SUPPLIER -> cfdis_proveedores_data
 ```
 
-Posible estructura:
+Cada tabla conserva `uuid` como primary key y relación/index por `cfdi_id`.
 
-```text
-id
-uuid
-xml
-created_at
-updated_at
-```
-
-Revisar los tipos de datos apropiados para FacturaScripts/MySQL antes de implementarla.
-
-No almacenar innecesariamente XML grandes directamente dentro de `cfdi_customer` o `cfdi_supplier`.
+No almacenar innecesariamente XML grandes directamente dentro de `cfdis_clientes` o `cfdis_proveedores`.
 
 ---
 
@@ -488,6 +484,12 @@ No debe:
 - modificar facturas.
 
 `CfdiData` debe representar los datos relevantes encontrados en el comprobante.
+
+Implementación actual:
+
+- Un único `CfdiData` conserva arrays normalizados de emisor, receptor, conceptos e impuestos; no se crean DTO por nodo sin necesidad de comportamiento propio.
+- UUID y datos de TimbreFiscalDigital son opcionales en el DTO; importación y timbrado validan UUID antes de persistir.
+- PDF obtiene cadena original desde `timbreXml`; esa transformación XSL queda fuera del parser.
 
 Antes de definir sus propiedades definitivas, revisar qué información ya almacenan las tablas actuales.
 

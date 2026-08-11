@@ -5,20 +5,24 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\PDF;
 
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
+use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
+use CfdiUtils\XmlResolver\XmlResolver;
 use FacturaScripts\Dinamic\Model\AttachedFile;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
+use Luecano\NumeroALetras\NumeroALetras;
 
 class PDFCfdi extends PDFCfdiCore
 {
-    private CfdiParser $reader;
+    private CfdiData $cfdi;
 
     private ?string $logoID;
 
-    public function __construct(CfdiParser $reader, ?string $logoID = '')
+    public function __construct(CfdiData $cfdi, ?string $logoID = '')
     {
         parent::__construct();
 
-        $this->reader = $reader;
+        $this->cfdi = $cfdi;
         $this->logoID = $logoID;
     }
 
@@ -52,16 +56,16 @@ class PDFCfdi extends PDFCfdiCore
         $cursorPosition = $this->getCursorPosition();
         $option = ['justification' => 'right'];
 
-        $this->writeTextBold($this->reader->folio(), [], 12, 5);
+        $this->writeTextBold($this->cfdi->folio ?? '', [], 12, 5);
 
-        $text = 'Lugar de expedicion: ' . $this->reader->lugarExpedicion();
+        $text = 'Lugar de expedicion: ' . $this->cfdi->lugarExpedicion;
         $this->writeText($text, [], 8, 4);
 
         $this->setCursorPosition($cursorPosition);
-        $text = 'UUID: ' . $this->reader->uuid();
+        $text = 'UUID: ' . $this->cfdi->uuid;
         $this->writeTextBold($text, $option, 12, 5);
 
-        $text = 'Fecha de expedicion: ' . $this->reader->fechaExpedicion();
+        $text = 'Fecha de expedicion: ' . $this->cfdi->fecha;
         $this->writeText($text, $option, 8, 4);
 
         $this->drawLine();
@@ -73,16 +77,16 @@ class PDFCfdi extends PDFCfdiCore
         $this->writeTextBold('Emisor:');
         $this->moveCursorPosition(4);
 
-        $this->writeText($this->reader->emisorNombre(), [], 8);
-        $this->writeText($this->reader->emisorRfc(), [], 8);
+        $this->writeText($this->cfdi->emisor['nombre'] ?? '', [], 8);
+        $this->writeText($this->cfdi->emisor['rfc'], [], 8);
 
-        $this->writeTextWrapped(60, $this->reader->emisorRegimenFiscal(), [], 8);
+        $this->writeTextWrapped(60, $this->catalogo()->regimenFiscal()->getDescripcion($this->cfdi->emisor['regimenFiscal'] ?? ''), [], 8);
         $this->moveCursorPosition(5);
 
-        $text = 'Numero certificado: ' . $this->reader->noCertificado();
+        $text = 'Numero certificado: ' . $this->cfdi->noCertificado;
         $this->writeText($text, [], 8);
 
-        $text = 'Tipo de comprobante: ' . $this->reader->tipoComprobamte();
+        $text = 'Tipo de comprobante: ' . $this->cfdi->tipoComprobante;
         $this->writeText($text, [], 8);
     }
 
@@ -94,18 +98,18 @@ class PDFCfdi extends PDFCfdiCore
         $this->writeTextBold('Receptor:', $options);
         $this->moveCursorPosition(4);
 
-        $this->writeText($this->reader->receptorNombre(), $options, 8);
-        if ('XEXX010101000' === $this->reader->receptorRfc()) {
-            $this->writeText($this->reader->receptorIdTrib(), $options, 8);
+        $this->writeText($this->cfdi->receptor['nombre'] ?? '', $options, 8);
+        if ('XEXX010101000' === $this->cfdi->receptor['rfc']) {
+            $this->writeText($this->cfdi->receptor['numRegIdTrib'] ?? '', $options, 8);
         }
-        $this->writeText($this->reader->receptorRfc(), $options, 8);
+        $this->writeText($this->cfdi->receptor['rfc'], $options, 8);
         $this->moveCursorPosition(4);
 
-        $text = 'Uso cfdi: ' . $this->reader->receptorUsoCfdi();
+        $text = 'Uso cfdi: ' . $this->catalogo()->usoCfdi()->getDescripcion($this->cfdi->receptor['usoCfdi'] ?? '');
         $this->writeText($text, ['justification' => 'right'], 8);
         $this->moveCursorPosition(4);
 
-        $text = 'Observacion: ' . $this->reader->addendaObservaciones();
+        $text = 'Observacion: ' . $this->cfdi->addendaObservaciones;
         $this->writeText($text, ['justification' => 'right'], 8);
         $this->setCursorPosition($cursorPosition);
     }
@@ -113,8 +117,8 @@ class PDFCfdi extends PDFCfdiCore
     private function insertPagos()
     {
         $this->moveCursorPosition(10);
-        $text = 'Metodo de pago: ' . $this->reader->metodoPago()
-            . ' Forma de pago: ' . $this->reader->formaPago();
+        $text = 'Metodo de pago: ' . $this->cfdi->metodoPago
+            . ' Forma de pago: ' . $this->cfdi->formaPago;
         $this->writeText($text, [], 8);
     }
 
@@ -131,7 +135,15 @@ class PDFCfdi extends PDFCfdiCore
     private function insertTablaConceptos()
     {
         $this->setCursorPosition(640);
-        $data = $this->reader->conceptosData();
+        $data = array_map(static fn(array $concepto): array => [
+            'cantidad' => $concepto['Cantidad'],
+            'id' => $concepto['NoIdentificacion'],
+            'descripcion' => $concepto['Descripcion'],
+            'clavesat' => $concepto['ClaveProdServ'],
+            'claveum' => $concepto['ClaveUnidad'],
+            'precio' => $concepto['ValorUnitario'],
+            'importe' => $concepto['Importe'],
+        ], $this->cfdi->conceptos);
 
         $cols = [
             'cantidad' => 'Cantidad',
@@ -162,9 +174,9 @@ class PDFCfdi extends PDFCfdiCore
     {
         $data = array(
             [
-                'subtotal' => $this->reader->subTotal(),
-                'descuento' => $this->reader->totalDescuentos(),
-                'iva' => $this->reader->totalImpuestosTrasladados(),
+                'subtotal' => $this->cfdi->subtotal,
+                'descuento' => $this->cfdi->descuento,
+                'iva' => $this->cfdi->impuestos['totalTrasladados'],
                 'retenciones' => 0.00
             ]
         );
@@ -198,7 +210,7 @@ class PDFCfdi extends PDFCfdiCore
         $this->moveCursorPosition(3);
 
         $this->writeTextBold('Total:');
-        $this->writeText(strtoupper($this->reader->totalLetra()));
+        $this->writeText(strtoupper((new NumeroALetras())->toInvoice($this->cfdi->total, 2, $this->cfdi->moneda)));
         $this->moveCursorPosition(5);
     }
 
@@ -210,15 +222,15 @@ class PDFCfdi extends PDFCfdiCore
         ];
 
         $this->writeTextBold('Cadena Original del complemento de certificacion digital del SAT:');
-        $this->writeText($this->reader->cadenaOrigen(), [], 8);
+        $this->writeText($this->cadenaOrigen(), [], 8);
         $this->moveCursorPosition(5);
 
         $this->writeTextBold('Sello Digital del SAT:', $options);
-        $this->writeText($this->reader->selloSat(), $options, 8);
+        $this->writeText($this->cfdi->selloSat ?? '', $options, 8);
         $this->moveCursorPosition(5);
 
         $this->writeTextBold('Sello Digital del CFDI:', $options);
-        $this->writeText($this->reader->selloCfd(), $options, 8);
+        $this->writeText($this->cfdi->selloCfd ?? '', $options, 8);
         $this->moveCursorPosition(5);
 
         $this->insertTablaCertificados();
@@ -229,9 +241,9 @@ class PDFCfdi extends PDFCfdiCore
     {
         $data = array(
             [
-                'certsat' => $this->reader->noCertificadoSAT(),
-                'fechatimbre' => $this->reader->fechaTimbrado(),
-                'rfcprov' => $this->reader->proveedorCertif()
+                'certsat' => $this->cfdi->noCertificadoSat,
+                'fechatimbre' => $this->cfdi->fechaTimbrado,
+                'rfcprov' => $this->cfdi->rfcProvCertif
             ]
         );
 
@@ -255,6 +267,10 @@ class PDFCfdi extends PDFCfdiCore
 
     private function insertQrCode()
     {
+        if ($this->cfdi->satQuery === null) {
+            return;
+        }
+
         $qrFile = CFDI_DIR . DIRECTORY_SEPARATOR . 'qrcode.png';
         $options = new QROptions([
             'outputType' => QRCode::OUTPUT_IMAGE_PNG,
@@ -263,7 +279,7 @@ class PDFCfdi extends PDFCfdiCore
         ]);
 
         $qrcode = new QRCode($options);
-        $qrcode->render($this->reader->qrCodeUrl(), $qrFile);
+        $qrcode->render($this->cfdi->satQuery, $qrFile);
 
         $this->moveCursorPosition(10);
         $this->insertPngImage($qrFile, 30, 140);
@@ -279,5 +295,21 @@ class PDFCfdi extends PDFCfdiCore
     {
         $pattern = 'Pagina {PAGENUM} / {TOTALPAGENUM}';
         $this->pdf->ezStartPageNumbers(self::MARGIN_L, 30, 9, '', $pattern, 1);
+    }
+
+    private function catalogo(): CfdiCatalogo
+    {
+        return new CfdiCatalogo();
+    }
+
+    private function cadenaOrigen(): string
+    {
+        if ($this->cfdi->timbreXml === null) {
+            return '';
+        }
+
+        $builder = new TfdCadenaDeOrigen();
+        $builder->setXmlResolver(new XmlResolver(CFDI_XSLT_DIR));
+        return $builder->build($this->cfdi->timbreXml);
     }
 }

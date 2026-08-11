@@ -14,7 +14,7 @@ use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Dinamic\Model\Serie;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiParsedData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Model\RelacionCfdiProveedor;
 
 class SupplierInvoiceImportService
@@ -59,7 +59,7 @@ class SupplierInvoiceImportService
             $db->beginTransaction();
 
             $data = $this->getCfdiData($cfdi);
-            $conceptos = $submittedConceptos ?? $data->concepts;
+            $conceptos = $submittedConceptos ?? $data->conceptos;
             $isEgreso = strtoupper($cfdi->tipo) === 'E';
 
             $invoice = $this->createOrUpdateInvoice($cfdi, $supplier, $options);
@@ -94,7 +94,7 @@ class SupplierInvoiceImportService
             if (!$this->cfdiStatusService->markInvoiceCreated($cfdi, $invoice)) {
                 throw new Exception('No se pudo actualizar el CFDI con la factura generada');
             }
-            $this->saveCfdiRelations($cfdi, $data->relations);
+            $this->saveCfdiRelations($cfdi, $data->relacionados);
 
             $db->commit();
 
@@ -163,7 +163,7 @@ class SupplierInvoiceImportService
         return $result;
     }
 
-    private function getCfdiData(CfdiProveedor $cfdi): CfdiParsedData
+    private function getCfdiData(CfdiProveedor $cfdi): CfdiData
     {
         $xml = $cfdi->localFileContent();
         if (empty($xml)) {

@@ -114,11 +114,11 @@
                     <div class="card-body">
                         <div class="mb-3">
                             {# SE MANTIENE EL MACRO form.inputtext #}
-                            {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptorNombre(), 'disabled') }}
+                            {{ form.inputtext('razonsocial', 'Razón social', fsc.reader.receptor.nombre, 'disabled') }}
                         </div>
                         <div class="mb-3">
                             {# SE MANTIENE EL MACRO form.inputtext #}
-                            {{ form.inputtext('rfc', 'RFC', fsc.reader.receptorRfc(), 'disabled') }}
+                            {{ form.inputtext('rfc', 'RFC', fsc.reader.receptor.rfc, 'disabled') }}
                         </div>
                     </div>
                 </div>
@@ -131,7 +131,7 @@
                             {{ form.inputtext('lugerexpedicion', 'Lugar de expedición', fsc.reader.lugarExpedicion, 'disabled') }}
                         </div>
                         <div class="mb-3">
-                            {{ form.inputtext('fechaemision', 'Fecha de expedición', fsc.reader.fechaExpedicion, 'disabled') }}
+                            {{ form.inputtext('fechaemision', 'Fecha de expedición', fsc.reader.fecha, 'disabled') }}
                         </div>
                         <div class="mb-3">
                             {{ form.inputtext('fechatimbrado', 'Fecha de timbrado', fsc.reader.fechaTimbrado, 'disabled') }}
@@ -139,15 +139,15 @@
                         </div>
                         <div class="mb-0">
                             <label class="form-label fw-bold">Observaciones:</label>
-                            <p class="mb-0 text-muted small">{{ fsc.reader.addendaObservaciones() }}</p>
+                            <p class="mb-0 text-muted small">{{ fsc.reader.addendaObservaciones }}</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{ _self.blockCfdiRelacionados(fsc.reader.relacionados(), fsc) }}
-        {{ _self.blockCfdiConceptos(fsc.reader.conceptos(), fsc) }}
+        {{ _self.blockCfdiRelacionados(fsc.reader.relacionados, fsc) }}
+        {{ _self.blockCfdiConceptos(fsc.reader.conceptos, fsc) }}
 
         <div class="card mb-3">
             <div class="card-header bg-dark text-white">
@@ -193,22 +193,22 @@
                         <div class="row">
                             <div class="col-md-4 mb-2">
                                 <span class="d-block fw-bold small text-muted">NoCertificadoSAT:</span>
-                                <span class="small">{{ fsc.reader.certificadoSAT() }}</span>
+                                <span class="small">{{ fsc.reader.noCertificadoSat }}</span>
                             </div>
                             <div class="col-md-4 mb-2">
                                 <span class="d-block fw-bold small text-muted">RfcProvCertif:</span>
-                                <span class="small">{{ fsc.reader.proveedorCertificacion() }}</span>
+                                <span class="small">{{ fsc.reader.rfcProvCertif }}</span>
                             </div>
                             <div class="col-md-4 mb-2">
                                 <span class="d-block fw-bold small text-muted">FechaTimbrado:</span>
-                                <span class="small">{{ fsc.reader.fechaTimbrado() }}</span>
+                                <span class="small">{{ fsc.reader.fechaTimbrado }}</span>
                             </div>
                         </div>
                         <div class="row">
                             <span><strong>Sello CFD</strong></span>
-                            <p>{{ fsc.reader.selloCfd() }}</p>
+                            <p>{{ fsc.reader.selloCfd }}</p>
                             <span><strong>Sello SAT</strong></span>
-                            <p>{{ fsc.reader.selloSat() }}</p>
+                            <p>{{ fsc.reader.selloSat }}</p>
                         </div>
                     </div>
                 </div>

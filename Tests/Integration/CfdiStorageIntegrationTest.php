@@ -6,7 +6,7 @@ use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\DatabaseCfdiStorage;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\FileCfdiStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Test\Traits\DefaultSettingsTrait;
 use FacturaScripts\Test\Traits\LogErrorsTrait;
@@ -65,21 +65,21 @@ final class CfdiStorageIntegrationTest extends TestCase
         $firstXml = '<cfdi>first</cfdi>';
         $secondXml = '<cfdi>second</cfdi>';
 
-        $this->assertSame($this->cfdi->uuid, $storage->save($this->cfdi->uuid, $firstXml));
-        $this->assertTrue($storage->exists($this->cfdi->uuid));
-        $this->assertSame($firstXml, $storage->get($this->cfdi->uuid));
+        $this->assertSame($this->cfdi->uuid, $storage->save(CfdiScope::CUSTOMER, $this->cfdi->uuid, $firstXml));
+        $this->assertTrue($storage->exists(CfdiScope::CUSTOMER, $this->cfdi->uuid));
+        $this->assertSame($firstXml, $storage->get(CfdiScope::CUSTOMER, $this->cfdi->uuid));
         $this->assertSame($firstXml, $this->cfdi->getXml());
 
-        $storage->save($this->cfdi->uuid, $secondXml);
-        $this->assertSame($secondXml, $storage->get($this->cfdi->uuid));
+        $storage->save(CfdiScope::CUSTOMER, $this->cfdi->uuid, $secondXml);
+        $this->assertSame($secondXml, $storage->get(CfdiScope::CUSTOMER, $this->cfdi->uuid));
         $this->assertSame($secondXml, $this->cfdi->getXml());
 
-        $this->assertTrue($storage->delete($this->cfdi->uuid));
-        $this->assertFalse($storage->exists($this->cfdi->uuid));
-        $this->assertNull($storage->get($this->cfdi->uuid));
+        $this->assertTrue($storage->delete(CfdiScope::CUSTOMER, $this->cfdi->uuid));
+        $this->assertFalse($storage->exists(CfdiScope::CUSTOMER, $this->cfdi->uuid));
+        $this->assertNull($storage->get(CfdiScope::CUSTOMER, $this->cfdi->uuid));
     }
 
-    public function testReadAndDeleteLegacyFile(): void
+    public function testReadsLegacyFile(): void
     {
         $folder = FS_FOLDER . '/MyFiles/CFDI/customer';
         $filename = 'legacy-' . $this->cfdi->uuid . '.xml';
@@ -90,17 +90,14 @@ final class CfdiStorageIntegrationTest extends TestCase
         $this->assertTrue(Tools::folderCheckOrCreate($folder));
         $this->assertNotFalse(file_put_contents($folder . '/' . $filename, $xml));
 
-        $storage = new FileCfdiStorage();
-        $this->assertTrue($storage->exists($this->cfdi->uuid));
-        $this->assertSame($xml, $storage->get($this->cfdi->uuid));
-        $this->assertTrue($storage->delete($this->cfdi->uuid));
-        $this->assertFileDoesNotExist($folder . '/' . $filename);
+        $this->assertSame($xml, $this->cfdi->getXml());
+        $this->assertTrue(unlink($folder . '/' . $filename));
     }
 
     protected function tearDown(): void
     {
         if ($this->cfdi !== null) {
-            (new DatabaseCfdiStorage())->delete($this->cfdi->uuid);
+            (new DatabaseCfdiStorage())->delete(CfdiScope::CUSTOMER, $this->cfdi->uuid);
             $this->cfdi->delete();
         }
 

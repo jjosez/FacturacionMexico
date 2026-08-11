@@ -3,17 +3,16 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Storage;
 
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Dinamic\Model\CfdiCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiStorageException;
 
 final class FileCfdiStorage implements CfdiStorageInterface
 {
     private const BASE_PATH = FS_FOLDER . '/MyFiles/FacturacionMexico/cfdi/';
 
-    public function save(string $uuid, string $xml): string
+    public function save(CfdiScope $scope, string $uuid, string $xml): string
     {
-        $relativePath = date('Y') . '/' . date('m') . '/' . $uuid . '.xml';
-        $fullPath = self::BASE_PATH . $relativePath;
+        $fullPath = $this->currentPath($scope, $uuid);
         $directory = dirname($fullPath);
 
         if (!Tools::folderCheckOrCreate($directory)) {
@@ -24,12 +23,12 @@ final class FileCfdiStorage implements CfdiStorageInterface
             throw new CfdiStorageException('No se pudo guardar el XML del CFDI.');
         }
 
-        return $relativePath;
+        return $uuid;
     }
 
-    public function get(string $uuid): ?string
+    public function get(CfdiScope $scope, string $uuid): ?string
     {
-        $path = $this->findPath($uuid);
+        $path = $this->findPath($scope, $uuid);
         if ($path === null) {
             return null;
         }
@@ -38,32 +37,28 @@ final class FileCfdiStorage implements CfdiStorageInterface
         return $xml === false ? null : $xml;
     }
 
-    public function exists(string $uuid): bool
+    public function exists(CfdiScope $scope, string $uuid): bool
     {
-        return $this->findPath($uuid) !== null;
+        return $this->findPath($scope, $uuid) !== null;
     }
 
-    public function delete(string $uuid): bool
+    public function delete(CfdiScope $scope, string $uuid): bool
     {
-        $path = $this->findPath($uuid);
+        $path = $this->findPath($scope, $uuid);
         return $path === null || unlink($path);
     }
 
-    private function findPath(string $uuid): ?string
+    private function currentPath(CfdiScope $scope, string $uuid): string
     {
-        $pattern = self::BASE_PATH . '*/*/' . $uuid . '.xml';
+        return self::BASE_PATH . $scope->value . '/' . date('Y') . '/' . date('m') . '/' . $uuid . '.xml';
+    }
+
+    private function findPath(CfdiScope $scope, string $uuid): ?string
+    {
+        $pattern = self::BASE_PATH . $scope->value . '/*/*/' . $uuid . '.xml';
         $paths = glob($pattern);
         if (!empty($paths)) {
             return $paths[0];
-        }
-
-        // Existing installations store the relative filename in the metadata model.
-        $cfdi = new CfdiCliente();
-        if ($cfdi->loadFromUuid($uuid) && !empty($cfdi->filename)) {
-            $legacyPath = FS_FOLDER . '/MyFiles/CFDI/customer/' . $cfdi->filename;
-            if (is_file($legacyPath)) {
-                return $legacyPath;
-            }
         }
 
         return null;

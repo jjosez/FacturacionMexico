@@ -3,10 +3,13 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Tests\Integration;
 
 use FacturaScripts\Core\DataSrc\Empresas;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\UploadedFile;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorage;
 use FacturaScripts\Test\Traits\LogErrorsTrait;
 use PHPUnit\Framework\TestCase;
 
@@ -18,6 +21,13 @@ final class SupplierCfdiImporterIntegrationTest extends TestCase
     private ?Proveedor $supplier = null;
     private string $supplierRfc;
     private string $uuid;
+    private string $storageType;
+
+    protected function setUp(): void
+    {
+        $this->storageType = Tools::settings('cfdi', 'storage-type', 'file');
+        Tools::settingsSet('cfdi', 'storage-type', 'database');
+    }
 
     public function testImportsMetadataAndXml(): void
     {
@@ -35,8 +45,9 @@ final class SupplierCfdiImporterIntegrationTest extends TestCase
         $this->assertSame(strtoupper($this->uuid), $this->cfdi->uuid);
         $this->assertSame('MXN', $this->cfdi->coddivisa);
         $this->assertSame('I', $this->cfdi->tipo);
-        $this->assertNotEmpty($this->cfdi->filename);
+        $this->assertEmpty($this->cfdi->filename);
         $this->assertNotSame('', $this->cfdi->localFileContent());
+        $this->assertNotNull(CfdiStorage::get()->get(CfdiScope::SUPPLIER, $this->cfdi->uuid));
 
         $this->supplier = $this->cfdi->getSupplier();
         $this->assertTrue($this->supplier->exists());
@@ -46,13 +57,15 @@ final class SupplierCfdiImporterIntegrationTest extends TestCase
     protected function tearDown(): void
     {
         if ($this->cfdi !== null) {
-            @unlink(SupplierCfdiImporter::DESTINATION_FOLDER . $this->cfdi->filename);
+            CfdiStorage::get()->delete(CfdiScope::SUPPLIER, $this->cfdi->uuid);
             $this->cfdi->delete();
         }
 
         if ($this->supplier !== null) {
             $this->supplier->delete();
         }
+
+        Tools::settingsSet('cfdi', 'storage-type', $this->storageType);
 
         $this->logErrors();
     }

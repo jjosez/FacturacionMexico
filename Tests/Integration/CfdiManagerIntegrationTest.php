@@ -12,6 +12,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiBuildResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiSatStatus;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\StampResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorageInterface;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\StampProviderInterface;
 use FacturaScripts\Test\Traits\DefaultSettingsTrait;
 use FacturaScripts\Test\Traits\LogErrorsTrait;
@@ -97,7 +98,7 @@ final class CfdiManagerIntegrationTest extends TestCase
         $this->createdCfdi = $result->getCfdi();
         $this->assertNotNull($this->createdCfdi);
         $this->assertSame(strtoupper($uuid), $this->createdCfdi->uuid);
-        $this->assertSame($xml, $storage->get($this->createdCfdi->uuid));
+        $this->assertSame($xml, $storage->get(CfdiScope::CUSTOMER, $this->createdCfdi->uuid));
         $this->assertSame($xml, $manager->getXml($this->createdCfdi));
     }
 
@@ -141,20 +142,20 @@ XML;
 
 final class FailingStorage implements CfdiStorageInterface
 {
-    public function save(string $uuid, string $xml): string { throw new \RuntimeException('Storage test failure.'); }
-    public function get(string $uuid): ?string { return null; }
-    public function exists(string $uuid): bool { return false; }
-    public function delete(string $uuid): bool { return true; }
+    public function save(CfdiScope $scope, string $uuid, string $xml): string { throw new \RuntimeException('Storage test failure.'); }
+    public function get(CfdiScope $scope, string $uuid): ?string { return null; }
+    public function exists(CfdiScope $scope, string $uuid): bool { return false; }
+    public function delete(CfdiScope $scope, string $uuid): bool { return true; }
 }
 
 final class MemoryStorage implements CfdiStorageInterface
 {
     private array $xml = [];
 
-    public function save(string $uuid, string $xml): string { $this->xml[$uuid] = $xml; return $uuid; }
-    public function get(string $uuid): ?string { return $this->xml[$uuid] ?? null; }
-    public function exists(string $uuid): bool { return isset($this->xml[$uuid]); }
-    public function delete(string $uuid): bool { unset($this->xml[$uuid]); return true; }
+    public function save(CfdiScope $scope, string $uuid, string $xml): string { $this->xml[$scope->value][$uuid] = $xml; return $uuid; }
+    public function get(CfdiScope $scope, string $uuid): ?string { return $this->xml[$scope->value][$uuid] ?? null; }
+    public function exists(CfdiScope $scope, string $uuid): bool { return isset($this->xml[$scope->value][$uuid]); }
+    public function delete(CfdiScope $scope, string $uuid): bool { unset($this->xml[$scope->value][$uuid]); return true; }
 }
 
 final class TestStampProvider implements StampProviderInterface

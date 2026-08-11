@@ -5,27 +5,27 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Customer;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiStatus;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiParsedData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 
 final class CustomerCfdiRepository
 {
-    public function createFromInvoice(FacturaCliente $invoice, CfdiParsedData $data): ?CfdiCliente
+    public function createFromInvoice(FacturaCliente $invoice, CfdiData $data): ?CfdiCliente
     {
         $cfdi = new CfdiCliente();
         $cfdi->codcliente = $invoice->codcliente;
         $cfdi->idfactura = $invoice->idfactura;
         $cfdi->cfdiglobal = $invoice->isGlobalInvoice() ?: null;
-        $cfdi->coddivisa = $data->currency;
+        $cfdi->coddivisa = $data->moneda;
         $cfdi->estado = 'Timbrado';
-        $cfdi->fecha_emision = $data->issueDate;
-        $cfdi->fecha_timbrado = $data->stampedAt;
+        $cfdi->fecha_emision = $data->fecha;
+        $cfdi->fecha_timbrado = $data->fechaTimbrado;
         $cfdi->folio = $data->folio;
-        $cfdi->forma_pago = $data->paymentForm;
-        $cfdi->metodo_pago = $data->paymentMethod;
-        $cfdi->receptor_nombre = $data->recipientName;
-        $cfdi->receptor_rfc = $data->recipientRfc;
-        $cfdi->serie = $data->series;
-        $cfdi->tipo = $data->type;
+        $cfdi->forma_pago = $data->formaPago;
+        $cfdi->metodo_pago = $data->metodoPago;
+        $cfdi->receptor_nombre = $data->receptor['nombre'];
+        $cfdi->receptor_rfc = $data->receptor['rfc'];
+        $cfdi->serie = $data->serie;
+        $cfdi->tipo = $data->tipoComprobante;
         $cfdi->total = $data->total;
         $cfdi->uuid = $data->uuid;
         $cfdi->version = $data->version;

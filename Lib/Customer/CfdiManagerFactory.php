@@ -7,13 +7,11 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Customer;
 
 use FacturaScripts\Dinamic\Model\Empresa;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorageInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\StampProviderInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiConfigurationException;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\FinkokStampProvider;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\DatabaseCfdiStorage;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\FileCfdiStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CertificateService;
 
 /**
@@ -109,11 +107,7 @@ class CfdiManagerFactory
      */
     public static function createStorageProvider(): CfdiStorageInterface
     {
-        return match (CfdiSettings::storageType()) {
-            'database' => new DatabaseCfdiStorage(),
-            'file' => new FileCfdiStorage(),
-            default => new FileCfdiStorage(),
-        };
+        return CfdiStorage::get();
     }
 
     /**
