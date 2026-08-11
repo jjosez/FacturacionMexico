@@ -67,9 +67,10 @@ class CfdiEmailService
     {
         Tools::folderCheckOrCreate(CFDI_DIR . '/tmp');
 
-        $reader = (new CfdiParser($xml))->parse();
+        $parser = new CfdiParser($xml);
+        $reader = $parser->parse();
         $logoID = $factura->getCompany()->idlogo;
-        $pdf = new PDFCfdi($reader, $logoID)->getPdfBuffer();
+        $pdf = new PDFCfdi($reader, $parser, $logoID)->getPdfBuffer();
 
         $basePath = CFDI_DIR . '/tmp/' . $cfdi->uuid;
         $pdfPath = $basePath . '.pdf';

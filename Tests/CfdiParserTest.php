@@ -13,9 +13,9 @@ final class CfdiParserTest extends TestCase
         $data = (new CfdiParser($this->xml()))->parse();
 
         $this->assertSame('550e8400-e29b-41d4-a716-446655440000', $data->uuid);
-        $this->assertSame('AAA010101AAA', $data->emisor['rfc']);
-        $this->assertSame('BBB010101BBB', $data->receptor['rfc']);
-        $this->assertSame('G03', $data->receptor['usoCfdi']);
+        $this->assertSame('AAA010101AAA', $data->emisorRfc);
+        $this->assertSame('BBB010101BBB', $data->receptorRfc);
+        $this->assertSame('G03', $data->receptorUsoCfdi);
         $this->assertSame('MXN', $data->moneda);
         $this->assertSame('I', $data->tipoComprobante);
         $this->assertCount(1, $data->conceptos);
@@ -34,6 +34,23 @@ final class CfdiParserTest extends TestCase
 
         $this->assertNull($data->uuid);
         $this->assertNull($data->fechaTimbrado);
+    }
+
+    public function testNormalizesMissingOptionalFieldsToNull(): void
+    {
+        $xml = str_replace(
+            ' LugarExpedicion="01000" FormaPago="01" MetodoPago="PUE" Serie="A" Folio="123"',
+            ' LugarExpedicion="01000"',
+            $this->xml()
+        );
+
+        $data = (new CfdiParser($xml))->parse();
+
+        $this->assertNull($data->serie);
+        $this->assertNull($data->formaPago);
+        $this->assertNull($data->metodoPago);
+        $this->assertNull($data->tipoCambio);
+        $this->assertNull($data->descuento);
     }
 
     public function testParsesEgresoAndMultipleRelationGroups(): void

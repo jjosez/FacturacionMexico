@@ -22,8 +22,8 @@ final class CustomerCfdiRepository
         $cfdi->folio = $data->folio;
         $cfdi->forma_pago = $data->formaPago;
         $cfdi->metodo_pago = $data->metodoPago;
-        $cfdi->receptor_nombre = $data->receptor['nombre'];
-        $cfdi->receptor_rfc = $data->receptor['rfc'];
+        $cfdi->receptor_nombre = $data->receptorNombre;
+        $cfdi->receptor_rfc = $data->receptorRfc;
         $cfdi->serie = $data->serie;
         $cfdi->tipo = $data->tipoComprobante;
         $cfdi->total = $data->total;

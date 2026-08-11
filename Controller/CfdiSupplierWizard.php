@@ -339,6 +339,7 @@ class CfdiSupplierWizard extends Controller
             'update_supplier_prices' => $this->requestBoolean('update_supplier_prices'),
             'auto_match_products' => true,
             'price_multiplier' => (float)$this->request->input('price_multiplier', 1.0),
+            'codpago' => $this->request->input('codpago'),
             'codserie' => $this->request->get('codserie'),
         ]);
     }
@@ -418,11 +419,7 @@ class CfdiSupplierWizard extends Controller
      */
     public function cfdiToInvoicePaymentMethods(): array
     {
-        $where = [
-            Where::isNotNull('clavesat')
-        ];
-
-        return FormaPago::all($where);
+        return FormaPago::all([Where::eq('activa', true)]);
     }
 
     public function getMatchedConcept(int $index): ?array

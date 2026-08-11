@@ -4,8 +4,6 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\DTO;
 
 final class CfdiData
 {
-    /** @param array{rfc: string, nombre: ?string, regimenFiscal: ?string} $emisor */
-    /** @param array{rfc: string, nombre: ?string, regimenFiscal: ?string, domicilioFiscal: ?string, usoCfdi: ?string, residenciaFiscal: ?string, numRegIdTrib: ?string} $receptor */
     /** @param array<int, array<string, mixed>> $conceptos */
     /** @param array{traslados: array, retenciones: array, totalTrasladados: ?string, totalRetenidos: ?string} $impuestos */
     /** @param array<int, array{tiporelacion: ?string, relacionados: array<int, string>}> $relacionados */
@@ -26,8 +24,16 @@ final class CfdiData
         public string $subtotal,
         public ?string $descuento,
         public string $total,
-        public array $emisor,
-        public array $receptor,
+        public string $emisorRfc,
+        public ?string $emisorNombre,
+        public ?string $emisorRegimenFiscal,
+        public string $receptorRfc,
+        public ?string $receptorNombre,
+        public ?string $receptorDomicilioFiscal,
+        public ?string $receptorRegimenFiscal,
+        public ?string $receptorUsoCfdi,
+        public ?string $receptorResidenciaFiscal,
+        public ?string $receptorNumRegIdTrib,
         public array $conceptos,
         public array $impuestos,
         public array $relacionados,
@@ -36,8 +42,6 @@ final class CfdiData
         public ?string $noCertificadoSat,
         public ?string $selloCfd,
         public ?string $selloSat,
-        public ?string $timbreXml,
-        public ?string $satQuery,
         public ?string $addendaObservaciones
     ) {
     }

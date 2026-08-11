@@ -18,6 +18,7 @@ class SupplierInvoiceImportOptions
     public float $priceMultiplier = 1.0;
     public string $taxMode = self::TAX_MODE_PRESERVE;
     public ?int $codalmacen = null;
+    public ?string $codpago = null;
     public ?string $codserie = null;
     public bool $linkOnlyExisting = true;
 
@@ -40,6 +41,7 @@ class SupplierInvoiceImportOptions
             'priceMultiplier' => isset($data['price_multiplier']) ? (float)$data['price_multiplier'] : (isset($data['priceMultiplier']) ? (float)$data['priceMultiplier'] : 1.0),
             'taxMode' => $data['tax_mode'] ?? $data['taxMode'] ?? self::TAX_MODE_PRESERVE,
             'codalmacen' => isset($data['codalmacen']) ? (int)$data['codalmacen'] : null,
+            'codpago' => $data['codpago'] ?? null,
             'codserie' => isset($data['codserie']) ? (string)$data['codserie'] : null,
         ]);
     }
@@ -54,6 +56,7 @@ class SupplierInvoiceImportOptions
             'priceMultiplier' => $this->priceMultiplier,
             'taxMode' => $this->taxMode,
             'codalmacen' => $this->codalmacen,
+            'codpago' => $this->codpago,
             'codserie' => $this->codserie,
         ];
     }

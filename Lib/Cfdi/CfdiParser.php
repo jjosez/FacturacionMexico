@@ -5,6 +5,8 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi;
 use CfdiUtils\Cfdi;
 use CfdiUtils\ConsultaCfdiSat\RequestParameters;
 use CfdiUtils\Nodes\XmlNodeUtils;
+use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
+use CfdiUtils\XmlResolver\XmlResolver;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiValidationException;
 
@@ -34,6 +36,8 @@ final class CfdiParser
     public function parse(): CfdiData
     {
         $stamp = $this->stamp();
+        $emisor = $this->comprobante->emisor;
+        $receptor = $this->comprobante->receptor;
 
         return new CfdiData(
             $this->required($this->comprobante, 'Version'),
@@ -52,8 +56,16 @@ final class CfdiParser
             $this->required($this->comprobante, 'SubTotal'),
             $this->attribute($this->comprobante, 'Descuento'),
             $this->required($this->comprobante, 'Total'),
-            $this->party($this->comprobante->emisor, false),
-            $this->party($this->comprobante->receptor, true),
+            $this->required($emisor, 'Rfc'),
+            $this->attribute($emisor, 'Nombre'),
+            $this->attribute($emisor, 'RegimenFiscal'),
+            $this->required($receptor, 'Rfc'),
+            $this->attribute($receptor, 'Nombre'),
+            $this->attribute($receptor, 'DomicilioFiscalReceptor'),
+            $this->attribute($receptor, 'RegimenFiscalReceptor'),
+            $this->attribute($receptor, 'UsoCFDI'),
+            $this->attribute($receptor, 'ResidenciaFiscal'),
+            $this->attribute($receptor, 'NumRegIdTrib'),
             $this->concepts(),
             $this->taxes($this->comprobante->impuestos),
             $this->relations(),
@@ -62,10 +74,27 @@ final class CfdiParser
             $this->attribute($stamp, 'NoCertificadoSAT'),
             $this->attribute($stamp, 'SelloCFD'),
             $this->attribute($stamp, 'SelloSAT'),
-            $this->timbreXml($stamp),
-            $this->satQuery($stamp),
             $this->addendaObservaciones()
         );
+    }
+
+    /** @deprecated Presentation helper. Use only until PDF/QR refactor. */
+    public function cadenaOrigen(): string
+    {
+        $stamp = $this->stamp();
+        if ($stamp === null) {
+            return '';
+        }
+
+        $builder = new TfdCadenaDeOrigen();
+        $builder->setXmlResolver(new XmlResolver(CFDI_XSLT_DIR));
+        return $builder->build(XmlNodeUtils::nodeToXmlString($stamp));
+    }
+
+    /** @deprecated Presentation helper. Use only until PDF/QR refactor. */
+    public function qrCodeUrl(): string
+    {
+        return RequestParameters::createFromCfdi($this->cfdi)->expression();
     }
 
     private function addendaObservaciones(): ?string
@@ -81,11 +110,6 @@ final class CfdiParser
 
         $value = (string) ($node[$name] ?? '');
         return $value === '' ? null : $value;
-    }
-
-    private function timbreXml(?object $stamp): ?string
-    {
-        return $stamp === null ? null : XmlNodeUtils::nodeToXmlString($stamp);
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -111,19 +135,6 @@ final class CfdiParser
         }
 
         return $concepts;
-    }
-
-    private function party(object $node, bool $receiver): array
-    {
-        return [
-            'rfc' => $this->required($node, 'Rfc'),
-            'nombre' => $this->attribute($node, 'Nombre'),
-            'regimenFiscal' => $this->attribute($node, 'RegimenFiscal'),
-            'domicilioFiscal' => $receiver ? $this->attribute($node, 'DomicilioFiscalReceptor') : null,
-            'usoCfdi' => $receiver ? $this->attribute($node, 'UsoCFDI') : null,
-            'residenciaFiscal' => $receiver ? $this->attribute($node, 'ResidenciaFiscal') : null,
-            'numRegIdTrib' => $receiver ? $this->attribute($node, 'NumRegIdTrib') : null,
-        ];
     }
 
     /** @return array<int, array{tiporelacion: ?string, relacionados: array<int, string>}> */
@@ -155,11 +166,6 @@ final class CfdiParser
         }
 
         return $value;
-    }
-
-    private function satQuery(?object $stamp): ?string
-    {
-        return $stamp === null ? null : RequestParameters::createFromCfdi($this->cfdi)->expression();
     }
 
     private function stamp(): ?object

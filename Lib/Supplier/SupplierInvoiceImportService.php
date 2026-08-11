@@ -190,7 +190,7 @@ class SupplierInvoiceImportService
 
         $invoice->setSubject($supplier);
         $invoice->numproveedor = $cfdi->invoiceNumber();
-        $invoice->codpago = $this->getFormaPagoFromCfdi($cfdi);
+        $invoice->codpago = $this->getFormaPagoFromCfdi($cfdi, $options->codpago);
         $invoice->setDate($cfdi->emissionDate(), $cfdi->emissionTime());
 
         if (strtoupper($cfdi->tipo) === 'E') {
@@ -304,14 +304,33 @@ class SupplierInvoiceImportService
         }
     }
 
-    private function getFormaPagoFromCfdi(CfdiProveedor $cfdi): string
+    private function getFormaPagoFromCfdi(CfdiProveedor $cfdi, ?string $selectedCode = null): string
     {
+        if (!empty($selectedCode)) {
+            $result = FormaPago::table()->whereEq('codpago', $selectedCode)->first();
+            if ($result && !empty($result['codpago'])) {
+                return $result['codpago'];
+            }
+
+            throw new Exception('La forma de pago seleccionada no existe.');
+        }
+
         $result = FormaPago::table()->whereEq('clavesat', $cfdi->forma_pago)->first();
 
         if ($result && !empty($result['codpago'])) {
             return $result['codpago'];
         }
 
-        return 'CONTADO';
+        $result = FormaPago::table()->whereEq('codpago', $cfdi->forma_pago)->first();
+        if ($result && !empty($result['codpago'])) {
+            return $result['codpago'];
+        }
+
+        $paymentMethods = FormaPago::all([Where::eq('activa', true)], ['codpago' => 'ASC'], 0, 1);
+        if (!empty($paymentMethods)) {
+            return $paymentMethods[0]->codpago;
+        }
+
+        throw new Exception('No hay formas de pago activas para crear la factura del proveedor.');
     }
 }

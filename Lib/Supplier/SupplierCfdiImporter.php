@@ -74,11 +74,11 @@ class SupplierCfdiImporter
     protected function loadOrCreateSupplier(): void
     {
         $this->supplier = new Proveedor();
-        $where = [new DataBaseWhere('cifnif', $this->data->emisor['rfc'])];
+        $where = [new DataBaseWhere('cifnif', $this->data->emisorRfc)];
 
         if (!$this->supplier->loadFromCode('', $where)) {
-            $this->supplier->cifnif = $this->data->emisor['rfc'];
-            $this->supplier->nombre = $this->data->emisor['nombre'];
+            $this->supplier->cifnif = $this->data->emisorRfc;
+            $this->supplier->nombre = $this->data->emisorNombre;
 
             if (!$this->supplier->save()) {
                 throw new Exception('Error al guardar el proveedor.');
@@ -98,10 +98,10 @@ class SupplierCfdiImporter
         $cfdi->codproveedor = $this->supplier->codproveedor;
         $cfdi->coddivisa = $this->data->moneda;
         $cfdi->estado = SupplierCfdiStatusService::STATUS_IMPORTED;
-        $cfdi->receptor_rfc = $this->data->receptor['rfc'];
-        $cfdi->receptor_nombre = $this->data->receptor['nombre'];
-        $cfdi->emisor_rfc = $this->data->emisor['rfc'];
-        $cfdi->emisor_nombre = $this->data->emisor['nombre'];
+        $cfdi->receptor_rfc = $this->data->receptorRfc;
+        $cfdi->receptor_nombre = $this->data->receptorNombre;
+        $cfdi->emisor_rfc = $this->data->emisorRfc;
+        $cfdi->emisor_nombre = $this->data->emisorNombre;
         $cfdi->fecha_emision = $this->data->fecha;
         $cfdi->fecha_timbrado = $this->data->fechaTimbrado;
         $cfdi->filename = '';

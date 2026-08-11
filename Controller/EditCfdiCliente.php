@@ -47,6 +47,7 @@ class EditCfdiCliente extends Controller
     public string $xml = '';
 
     private CfdiManager $cfdiService;
+    private ?CfdiParser $parser = null;
 
     public function getPageData(): array
     {
@@ -137,7 +138,8 @@ class EditCfdiCliente extends Controller
         $this->xml = $this->cfdiService->getXml($this->cfdi) ?? '';
 
         if ($this->xml) {
-            $this->reader = (new CfdiParser($this->xml))->parse();
+            $this->parser = new CfdiParser($this->xml);
+            $this->reader = $this->parser->parse();
         }
     }
 
@@ -271,10 +273,11 @@ class EditCfdiCliente extends Controller
     private function exportPdf(): void
     {
         $xml = $this->cfdiService->getXml($this->cfdi);
-        $reader = (new CfdiParser($xml))->parse();
+        $parser = new CfdiParser($xml);
+        $reader = $parser->parse();
 
         $logoID = $this->factura->getCompany()->idlogo;
-        $pdf = new PDFCfdi($reader, $logoID);
+        $pdf = new PDFCfdi($reader, $parser, $logoID);
 
         $this->response->pdf($pdf->getPdfBuffer(), $this->factura->codigo);
         $this->response->send();
@@ -414,8 +417,8 @@ class EditCfdiCliente extends Controller
         ]);
 
         $qrcode = new QRCode($options);
-        if ($this->reader?->satQuery !== null) {
-            $qrcode->render($this->reader->satQuery, $qrFile);
+        if ($this->reader?->uuid !== null && $this->parser !== null) {
+            $qrcode->render($this->parser->qrCodeUrl(), $qrFile);
         }
     }
 
