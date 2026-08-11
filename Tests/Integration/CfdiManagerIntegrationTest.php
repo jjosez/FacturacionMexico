@@ -6,8 +6,8 @@ use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiManager;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiRelationService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Service\CustomerCfdiService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\CfdiRelationService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiBuildResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiSatStatus;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\StampResult;
@@ -58,7 +58,7 @@ final class CfdiManagerIntegrationTest extends TestCase
         $uuid = $this->uuid();
         $initialState = $this->invoice->idestado;
         $xml = $this->xml($uuid);
-        $manager = new CfdiManager(
+        $manager = new CustomerCfdiService(
             new TestStampProvider($uuid, $xml),
             new FailingStorage(),
             new CfdiRelationService(),
@@ -84,7 +84,7 @@ final class CfdiManagerIntegrationTest extends TestCase
         $uuid = $this->uuid();
         $xml = $this->xml($uuid);
         $storage = new MemoryStorage();
-        $manager = new CfdiManager(
+        $manager = new CustomerCfdiService(
             new TestStampProvider($uuid, $xml),
             $storage,
             new CfdiRelationService(),

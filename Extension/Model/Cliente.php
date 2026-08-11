@@ -5,7 +5,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Model;
 use Closure;
 use FacturaScripts\Core\Model\Cliente as Customer;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\CustomerValidator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\CustomerValidator;
 
 /**
  * @method getDefaultAddress()

@@ -29,13 +29,13 @@ use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Extension\Controller\FormaPagoControllerTrait;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiStatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\CfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\InvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Read\CfdiReader;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceStateService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierProductLinkService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiPreviewService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
 
@@ -111,7 +111,7 @@ class EditCfdiProveedor extends EditController
                 }
 
                 $this->fileName = $this->getModel()->filename;
-                $this->reader = (new SupplierCfdiPreviewService())->data($this->getModel());
+                $this->reader = (new CfdiReader())->data($this->getModel());
                 $this->supplier = $this->getModel()->getSupplier();
             }
 
@@ -156,11 +156,11 @@ class EditCfdiProveedor extends EditController
             try {
                 $conceptos = $this->mapConceptosToInvoice();
 
-                $result = (new SupplierInvoiceImportService())->importSingle(
+                $result = (new InvoiceImportService())->importSingle(
                     $this->getModel(),
                     $this->supplier,
-                    new SupplierInvoiceImportOptions([
-                        'productAction' => SupplierInvoiceImportOptions::PRODUCT_ACTION_SKIP,
+                    new ImportOptions([
+                        'productAction' => ImportOptions::PRODUCT_ACTION_SKIP,
                         'autoMatchProducts' => true,
                     ]),
                     $conceptos
@@ -182,7 +182,7 @@ class EditCfdiProveedor extends EditController
         $uploadedFile = $this->request->files->get('cfdifile');
 
         try {
-            $importer = new SupplierCfdiImporter();
+            $importer = new CfdiImporter();
             $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
 
             Tools::log()->info('CFDI importado correctamente: ' . $cfdi->uuid);
@@ -297,8 +297,8 @@ class EditCfdiProveedor extends EditController
             /** @var CfdiProveedor $model */
             $model = $this->getModel();
 
-            if ($model->estado !== SupplierCfdiStatusService::STATUS_LINKED) {
-                if ((new SupplierCfdiStatusService())->markLinked($model)) {
+            if ($model->estado !== StatusService::STATUS_LINKED) {
+                if ((new StatusService())->markLinked($model)) {
                     Tools::log('CFDI')->notice('El CFDI se marcó cómo VINCULADO.');
                 }
             }

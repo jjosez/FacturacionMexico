@@ -26,18 +26,18 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiRelationService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\CustomerValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiManager;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiManagerFactory;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\Validator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Factory\CustomerCfdiServiceFactory;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Service\CustomerCfdiService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\CfdiRelationService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\CustomerValidator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\Validator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiConfigurationException;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\CfdiEmailService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\PDF\PDFCfdi;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 
 class EditCfdiCliente extends Controller
 {
@@ -46,7 +46,7 @@ class EditCfdiCliente extends Controller
     public ?CfdiData $reader = null;
     public string $xml = '';
 
-    private CfdiManager $cfdiService;
+    private CustomerCfdiService $cfdiService;
     private ?CfdiParser $parser = null;
 
     public function getPageData(): array
@@ -67,7 +67,7 @@ class EditCfdiCliente extends Controller
         $this->cfdi = new CfdiCliente();
         $this->factura = new FacturaCliente();
 
-        $this->cfdiService = CfdiManagerFactory::createCfdiManager($this->empresa);
+        $this->cfdiService = CustomerCfdiServiceFactory::createCustomerCfdiService($this->empresa);
 
         $action = $this->request->queryOrInput('action', '');
         $code = $this->request->queryOrInput('code', '');
@@ -86,12 +86,14 @@ class EditCfdiCliente extends Controller
 
     public function setTemplate($template): bool
     {
-        if ($this->cfdi->id) return parent::setTemplate('CfdiCliente');
+        if ($this->cfdi->id) {
+            return parent::setTemplate('CfdiCliente');
+        }
 
         if (CustomerValidator::isValidForCfdi($this->factura->getSubject())) {
             return parent::setTemplate('CfdiClienteWizard');
         }
-        
+
         return parent::setTemplate('CfdiCustomerFail');
     }
 
@@ -262,7 +264,7 @@ class EditCfdiCliente extends Controller
         $this->response
             ->header('Content-Type', 'application/xml')
             ->header('Content-Disposition', 'attachment; filename="' . $this->cfdi->uuid . '.xml"')
-            ->header('Content-Length', (string) strlen($xml))
+            ->header('Content-Length', (string)strlen($xml))
             ->setContent($xml);
         $this->response->send();
     }
@@ -396,7 +398,7 @@ class EditCfdiCliente extends Controller
         $result = ['valid' => true, 'errors' => []];
 
         try {
-            CfdiManagerFactory::createStampProvider($this->empresa);
+            CustomerCfdiServiceFactory::createStampProvider($this->empresa);
         } catch (CfdiConfigurationException $e) {
             $result['valid'] = false;
             $result['errors'] = array_values($e->getMissingSettings());
@@ -407,7 +409,9 @@ class EditCfdiCliente extends Controller
 
     protected function renderQrCode(): void
     {
-        if (!$this->cfdi->id) return;
+        if (!$this->cfdi->id) {
+            return;
+        }
 
         $qrFile = CFDI_DIR . DIRECTORY_SEPARATOR . 'qrcode.png';
         $options = new QROptions([

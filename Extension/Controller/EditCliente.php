@@ -22,7 +22,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Controller;
 use Closure;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Document\Validation\CustomerValidator;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\CustomerValidator;
 
 /**
  * @method addButton(string $string, string[] $array)

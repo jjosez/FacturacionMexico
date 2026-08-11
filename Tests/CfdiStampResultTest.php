@@ -2,7 +2,7 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Tests;
 
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Customer\CfdiStampResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\CfdiStampResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\StampResult;
 use PHPUnit\Framework\TestCase;
 

@@ -3,19 +3,19 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier;
 
 use Exception;
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Dinamic\Model\Variante;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ProductImportOptions;
 
 class SupplierProductResolver
 {
     /**
      * @return array{product: ?Producto, created: bool, linked: bool}
      */
-    public function resolve(array $concepto, Proveedor $supplier, SupplierInvoiceImportOptions $options): array
+    public function resolve(array $concepto, Proveedor $supplier, ProductImportOptions $options): array
     {
         $product = $this->loadManualProduct((string)($concepto['referencia'] ?? ''));
         if ($product !== null) {

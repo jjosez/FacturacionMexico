@@ -24,13 +24,13 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiStatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceBatchResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\Queue\SupplierCfdiImportQueue;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\Queue\SupplierCfdiAsyncImportProcessor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\CfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\InvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Result\BatchResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Queue\AsyncImportProcessor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Queue\ImportQueue;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 
 /**
@@ -107,7 +107,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
         $this->addFilterAutocomplete($viewName, 'supplier', 'supplier', 'codproveedor', 'proveedores', 'codproveedor', 'razonsocial');
         $this->addFilterPeriod($viewName, 'date', 'period', 'fecha_emision');
         $this->addFilterSelect($viewName, 'tipo', 'type', 'tipo', CfdiCatalogo::tipoCfdi());
-        $this->addFilterSelect($viewName, 'estado', 'state', 'estado', SupplierCfdiStatusService::filterOptions());
+        $this->addFilterSelect($viewName, 'estado', 'state', 'estado', StatusService::filterOptions());
 
         $this->setSettings($viewName, 'btnNew', false);
         //$this->setSettings($viewName, 'btnDelete', false);
@@ -116,7 +116,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
     protected function importCfdiAction(): void
     {
         try {
-            $importer = new SupplierCfdiImporter();
+            $importer = new CfdiImporter();
             $uploadedFile = $this->request->files->get('cfdifile');
             $cfdi = $importer->processUpload($uploadedFile, $this->empresa);
 
@@ -148,10 +148,10 @@ class ListCfdiProveedor extends ExtendedController\ListController
 
         $files = is_array($files) ? $files : [$files];
 
-        $importer = new SupplierCfdiImporter();
-        $service = new SupplierInvoiceImportService();
+        $importer = new CfdiImporter();
+        $service = new InvoiceImportService();
 
-        $options = SupplierInvoiceImportOptions::fromArray([
+        $options = ImportOptions::fromArray([
             'product_action' => $this->request->get('product_action', 'auto'),
             'tax_mode' => $this->request->get('tax_mode', 'preserve'),
             'update_supplier_prices' => $this->requestBoolean('update_supplier_prices'),
@@ -159,7 +159,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
             'price_multiplier' => (float)$this->request->input('price_multiplier', 1.0),
         ]);
 
-        $result = new SupplierInvoiceBatchResult();
+        $result = new BatchResult();
         $result->setTotal(count($files));
 
         $importedCfdis = [];
@@ -229,8 +229,8 @@ class ListCfdiProveedor extends ExtendedController\ListController
         $user = $this->user;
 
         try {
-            $queue = new SupplierCfdiImportQueue();
-            $options = SupplierInvoiceImportOptions::fromArray([
+            $queue = new ImportQueue();
+            $options = ImportOptions::fromArray([
                 'product_action' => $this->request->get('product_action', 'auto'),
                 'tax_mode' => $this->request->get('tax_mode', 'preserve'),
                 'update_supplier_prices' => $this->requestBoolean('update_supplier_prices'),
@@ -266,7 +266,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
             return;
         }
 
-        $queue = new SupplierCfdiImportQueue();
+        $queue = new ImportQueue();
         $status = $queue->getStatus($jobId);
 
         if ($status === null) {
@@ -287,7 +287,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
     {
         $this->setTemplate(false);
 
-        $processor = new SupplierCfdiAsyncImportProcessor();
+        $processor = new AsyncImportProcessor();
         $processed = $processor->processAll(10);
 
         $this->response->setContent(json_encode([

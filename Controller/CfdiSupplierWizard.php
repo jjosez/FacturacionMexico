@@ -29,9 +29,9 @@ use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiPreviewService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\InvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Read\CfdiReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 
 class CfdiSupplierWizard extends Controller
@@ -304,7 +304,7 @@ class CfdiSupplierWizard extends Controller
     {
         try {
             $options = $this->getImportOptions();
-            $service = new SupplierInvoiceImportService();
+            $service = new InvoiceImportService();
             $result = $service->importSingle(
                 $this->cfdi,
                 $this->supplier,
@@ -331,9 +331,9 @@ class CfdiSupplierWizard extends Controller
         }
     }
 
-    protected function getImportOptions(): SupplierInvoiceImportOptions
+    protected function getImportOptions(): ImportOptions
     {
-        return SupplierInvoiceImportOptions::fromArray([
+        return ImportOptions::fromArray([
             'product_action' => $this->request->get('product_action', 'auto'),
             'tax_mode' => $this->request->get('tax_mode', 'preserve'),
             'update_supplier_prices' => $this->requestBoolean('update_supplier_prices'),
@@ -384,7 +384,7 @@ class CfdiSupplierWizard extends Controller
     protected function loadCfdiReader(): bool
     {
         try {
-            $reader = (new SupplierCfdiPreviewService())->data($this->cfdi);
+            $reader = (new CfdiReader())->data($this->cfdi);
             if ($reader === null) {
                 return false;
             }

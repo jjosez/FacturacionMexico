@@ -5,7 +5,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Extension\Model;
 use Closure;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\FacturaProveedor as FacturaProveedorModel;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierCfdiStatusService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
 
 class FacturaProveedor
 {
@@ -19,7 +19,7 @@ class FacturaProveedor
 
             $cfdi = new CfdiProveedor();
             if ($cfdi->loadWhereEq('idfactura', $this->idfactura)) {
-                (new SupplierCfdiStatusService())->markReceived($cfdi, $this);
+                (new StatusService())->markReceived($cfdi, $this);
             }
 
             return true;

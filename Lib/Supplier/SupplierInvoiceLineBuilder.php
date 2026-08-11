@@ -6,6 +6,8 @@ use FacturaScripts\Core\Plugins;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\LineaFacturaProveedor;
 use FacturaScripts\Dinamic\Model\Producto;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ProductImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\TaxImportOptions;
 
 class SupplierInvoiceLineBuilder
 {
@@ -13,7 +15,8 @@ class SupplierInvoiceLineBuilder
         FacturaProveedor $invoice,
         array $concepto,
         Producto $product,
-        SupplierInvoiceImportOptions $options,
+        ProductImportOptions $productOptions,
+        TaxImportOptions $taxOptions,
         bool $isEgreso = false
     ): LineaFacturaProveedor {
         $line = $invoice->getNewProductLine($product->referencia);
@@ -30,7 +33,7 @@ class SupplierInvoiceLineBuilder
             ? abs((float)$concepto['ValorUnitario'])
             : (float)$concepto['ValorUnitario'];
 
-        $this->applyCommonValues($line, $concepto, $options);
+        $this->applyCommonValues($line, $concepto, $productOptions, $taxOptions);
         $line->save();
 
         return $line;
@@ -39,7 +42,8 @@ class SupplierInvoiceLineBuilder
     public function buildFreeLine(
         FacturaProveedor $invoice,
         array $concepto,
-        SupplierInvoiceImportOptions $options,
+        ProductImportOptions $productOptions,
+        TaxImportOptions $taxOptions,
         bool $isEgreso = false
     ): LineaFacturaProveedor {
         $line = $invoice->getNewLine($concepto);
@@ -51,7 +55,7 @@ class SupplierInvoiceLineBuilder
             ? abs((float)$concepto['ValorUnitario'])
             : (float)$concepto['ValorUnitario'];
 
-        $this->applyCommonValues($line, $concepto, $options);
+        $this->applyCommonValues($line, $concepto, $productOptions, $taxOptions);
         $line->save();
 
         return $line;
@@ -60,10 +64,11 @@ class SupplierInvoiceLineBuilder
     private function applyCommonValues(
         LineaFacturaProveedor $line,
         array $concepto,
-        SupplierInvoiceImportOptions $options
+        ProductImportOptions $productOptions,
+        TaxImportOptions $taxOptions
     ): void {
-        if ($options->shouldUpdatePrices()) {
-            $line->pvpunitario *= $options->priceMultiplier;
+        if ($productOptions->shouldUpdatePrices()) {
+            $line->pvpunitario *= $productOptions->priceMultiplier;
         }
 
         $discount = isset($concepto['Descuento']) ? abs((float)$concepto['Descuento']) : 0.0;
@@ -72,7 +77,7 @@ class SupplierInvoiceLineBuilder
             ? round(($discount / $gross) * 100, 6)
             : 0.0;
 
-        if ($options->shouldPreserveTax()) {
+        if ($taxOptions->shouldPreserveTax()) {
             $iva = 0.0;
             foreach ($concepto['Traslados'] ?? [] as $traslado) {
                 if (($traslado['Impuesto'] ?? '') === '002') {
