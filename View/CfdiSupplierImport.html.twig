@@ -3,13 +3,14 @@
 {% block bodyHeaderOptions %}
     <div class="container-fluid mb-3">
         <div class="row align-items-center">
-            <div class="col">
+            <div class="col-auto">
                 <a class="btn btn-sm btn-dark" href="{{ asset('ListCfdiProveedor') }}">
                     <i class="fas fa-arrow-left me-1"></i>CFDI proveedores
                 </a>
             </div>
             <div class="col text-end">
-                <h1 class="h5 mb-0">Importación masiva de CFDI <i class="fas fa-file-import ms-1"></i></h1>
+                <h1 class="h5 mb-1">Importación masiva de CFDI <i class="fas fa-file-import ms-1"></i></h1>
+                <p class="small text-muted mb-0">Registra comprobantes de proveedor y genera sus facturas opcionalmente.</p>
             </div>
         </div>
     </div>
@@ -21,16 +22,18 @@
             <div class="col-12 col-xl-8">
                 <form id="supplierCfdiImportForm" class="card border-0 shadow-sm" enctype="multipart/form-data">
                     {{ formToken() }}
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-start justify-content-between mb-4">
+                    <div class="card-header bg-white border-bottom p-4">
+                        <div class="d-flex align-items-start justify-content-between gap-3">
                             <div>
                                 <h2 class="h4 mb-1">Seleccionar comprobantes</h2>
-                                <p class="text-muted mb-0">Hasta 10 CFDI en modo inmediato o 50 mediante ZIP en la cola ampliada.</p>
+                                <p class="small text-muted mb-0">Selecciona XML individuales o un ZIP con los comprobantes a procesar.</p>
                             </div>
-                            <span class="badge text-bg-light border">XML / ZIP · 10 MB</span>
+                            <span class="badge text-bg-light border text-nowrap">XML / ZIP · 10 MB</span>
                         </div>
+                    </div>
 
-                        <div class="mb-4">
+                    <div class="card-body p-4">
+                        <section class="border rounded-3 p-3 p-md-4 mb-4 bg-body-tertiary">
                             <label for="supplierCfdiFiles" class="form-label fw-semibold">Archivos CFDI</label>
                             <input type="file" name="xmlfiles[]" id="supplierCfdiFiles" class="form-control"
                                    accept=".xml,.zip" multiple required
@@ -39,26 +42,50 @@
                                 Este servidor acepta hasta {{ fsc.maxDirectUploadFiles() }} archivos directos por petición.
                                 Para importar más, agrupe los XML en un ZIP.
                             </div>
-                        </div>
+                        </section>
 
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label for="supplierCfdiMode" class="form-label fw-semibold">Resultado esperado</label>
-                                <select name="mode" id="supplierCfdiMode" class="form-select">
-                                    <option value="register" selected>Solo registrar CFDI</option>
-                                    <option value="register_and_invoice">Registrar y generar facturas</option>
-                                </select>
-                                <div class="form-text">Si una factura falla, su CFDI permanecerá registrado.</div>
+                        <section id="supplierCfdiSelectionSummary" class="bg-body-tertiary rounded-3 p-3 mb-4 d-none">
+                            <div class="row g-3 text-center text-md-start">
+                                <div class="col-6 col-md-3">
+                                    <div class="small text-muted">Seleccionados</div>
+                                    <div class="fw-semibold" id="supplierCfdiSelectedCount">0</div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="small text-muted">XML</div>
+                                    <div class="fw-semibold" id="supplierCfdiXmlCount">0</div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="small text-muted">ZIP</div>
+                                    <div class="fw-semibold" id="supplierCfdiZipCount">0</div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="small text-muted">Tamaño total</div>
+                                    <div class="fw-semibold" id="supplierCfdiSelectedSize">0 KB</div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="supplierCfdiProcessing" class="form-label fw-semibold">Procesamiento</label>
-                                <select id="supplierCfdiProcessing" class="form-select">
-                                    <option value="sync" selected>Inmediato, máximo 10 CFDI</option>
-                                    <option value="async">Cola ampliada, máximo 50 CFDI</option>
-                                </select>
-                                <div class="form-text">En la cola ampliada debe mantener esta página abierta hasta ver el resultado.</div>
+                        </section>
+
+                        <section class="mb-4">
+                            <h3 class="h6 mb-3">Opciones de importación</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="supplierCfdiMode" class="form-label fw-semibold">Resultado esperado</label>
+                                    <select name="mode" id="supplierCfdiMode" class="form-select">
+                                        <option value="register" selected>Solo registrar CFDI</option>
+                                        <option value="register_and_invoice">Registrar y generar facturas</option>
+                                    </select>
+                                    <div class="form-text">Si una factura falla, su CFDI permanecerá registrado.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="supplierCfdiProcessing" class="form-label fw-semibold">Procesamiento</label>
+                                    <select id="supplierCfdiProcessing" class="form-select">
+                                        <option value="sync" selected>Inmediato, máximo 10 CFDI</option>
+                                        <option value="async">Cola ampliada, máximo 50 CFDI</option>
+                                    </select>
+                                    <div class="form-text">En la cola ampliada debe mantener esta página abierta hasta ver el resultado.</div>
+                                </div>
                             </div>
-                        </div>
+                        </section>
 
                         <div id="invoiceOptions" class="border rounded-3 p-3 bg-light d-none">
                             <h3 class="h6 mb-3">Opciones para las facturas proveedor</h3>
@@ -98,27 +125,44 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer bg-white border-0 px-4 pb-4">
-                        <button type="submit" id="supplierCfdiSubmit" class="btn btn-primary">
-                            <i class="fas fa-play me-1"></i>Iniciar importación
-                        </button>
+                    <div class="card-footer bg-white border-top p-4">
+                        <div class="d-grid d-sm-flex justify-content-sm-between align-items-sm-center gap-3">
+                            <p class="small text-muted mb-0">
+                                <i class="fas fa-circle-info me-1"></i>Los CFDI registrados se conservan si falla su factura.
+                            </p>
+                            <button type="submit" id="supplierCfdiSubmit" class="btn btn-primary text-nowrap">
+                                <i class="fas fa-play me-1"></i>Iniciar importación
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
 
             <div class="col-12 col-xl-4">
-                <div class="card border-0 shadow-sm h-100">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom p-4">
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <div>
+                                <h2 class="h5 mb-1">Resultado</h2>
+                                <p class="small text-muted mb-0" id="supplierCfdiResultContext">Estado del lote actual</p>
+                            </div>
+                            <span id="supplierCfdiStatusBadge" class="badge text-bg-secondary">En espera</span>
+                        </div>
+                    </div>
                     <div class="card-body p-4">
-                        <h2 class="h5">Resultado</h2>
                         <div id="supplierCfdiIdle" class="text-muted py-5 text-center">
                             <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
                             <p>Los resultados de cada XML aparecerán aquí.</p>
                         </div>
                         <div id="supplierCfdiProgress" class="d-none py-4">
-                            <div class="progress" role="progressbar">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                            <div class="d-flex justify-content-between small mb-2">
+                                <span>Procesando lote</span>
+                                <span id="supplierCfdiProcessingCount"></span>
                             </div>
-                            <p class="small text-muted mt-2 mb-0">Procesando comprobantes...</p>
+                            <div class="progress" role="progressbar">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div>
+                            </div>
+                            <p class="small text-muted mt-2 mb-0">Validando y registrando comprobantes...</p>
                         </div>
                         <div id="supplierCfdiSummary" class="d-none"></div>
                     </div>
@@ -134,14 +178,24 @@
         const processing = document.getElementById('supplierCfdiProcessing');
         const filesInput = document.getElementById('supplierCfdiFiles');
         const invoiceOptions = document.getElementById('invoiceOptions');
+        const selectionSummary = document.getElementById('supplierCfdiSelectionSummary');
+        const selectedCount = document.getElementById('supplierCfdiSelectedCount');
+        const xmlCount = document.getElementById('supplierCfdiXmlCount');
+        const zipCount = document.getElementById('supplierCfdiZipCount');
+        const selectedSize = document.getElementById('supplierCfdiSelectedSize');
         const submit = document.getElementById('supplierCfdiSubmit');
         const idle = document.getElementById('supplierCfdiIdle');
         const progress = document.getElementById('supplierCfdiProgress');
+        const processingCount = document.getElementById('supplierCfdiProcessingCount');
         const summary = document.getElementById('supplierCfdiSummary');
+        const statusBadge = document.getElementById('supplierCfdiStatusBadge');
+        const resultContext = document.getElementById('supplierCfdiResultContext');
 
         mode.addEventListener('change', () => {
             invoiceOptions.classList.toggle('d-none', mode.value !== 'register_and_invoice');
         });
+
+        filesInput.addEventListener('change', updateSelectionSummary);
 
         form.addEventListener('submit', async event => {
             event.preventDefault();
@@ -154,6 +208,8 @@
                     Agrupe los ${filesInput.files.length} XML seleccionados en un archivo ZIP.
                 </div>`;
                 summary.classList.remove('d-none');
+                setStatus('Revisar', 'warning');
+                resultContext.textContent = 'La selección excede el límite del servidor';
                 return;
             }
 
@@ -161,6 +217,9 @@
             idle.classList.add('d-none');
             summary.classList.add('d-none');
             progress.classList.remove('d-none');
+            processingCount.textContent = `${filesInput.files.length} archivo${filesInput.files.length === 1 ? '' : 's'}`;
+            setStatus('Procesando', 'primary');
+            resultContext.textContent = 'Importación en curso';
 
             try {
                 const data = new FormData(form);
@@ -186,6 +245,8 @@
             } catch (error) {
                 summary.innerHTML = `<div class="alert alert-danger mb-0">${escapeHtml(error.message)}</div>`;
                 summary.classList.remove('d-none');
+                setStatus('Error', 'danger');
+                resultContext.textContent = 'No se completó la importación';
             } finally {
                 progress.classList.add('d-none');
                 submit.disabled = false;
@@ -197,27 +258,56 @@
                 registered: ['Registrado', 'success'],
                 invoice_created: ['Factura creada', 'primary'],
                 invoice_failed: ['Factura pendiente', 'warning'],
-                duplicate: ['Duplicado', 'secondary'],
+                duplicate: ['Duplicado', 'warning'],
                 registration_failed: ['Error', 'danger']
             };
+            const duplicates = (results.items || []).filter(item => item.status === 'duplicate').length;
             const items = (results.items || []).map(item => {
                 const label = labels[item.status] || [item.status, 'secondary'];
-                return `<div class="border rounded-3 p-3 mb-2">
+                return `<div class="border rounded-3 p-3">
                     <div class="d-flex justify-content-between gap-2">
                         <strong class="text-truncate">${escapeHtml(item.file || item.uuid || 'CFDI')}</strong>
                         <span class="badge text-bg-${label[1]}">${label[0]}</span>
                     </div>
                     <div class="small text-muted mt-2">${escapeHtml(item.message || '')}</div>
-                    ${item.uuid ? `<code class="small">${escapeHtml(item.uuid)}</code>` : ''}
+                    ${item.uuid ? `<div class="small font-monospace text-break mt-1">${escapeHtml(item.uuid)}</div>` : ''}
                 </div>`;
             }).join('');
 
-            summary.innerHTML = `<div class="row g-2 text-center mb-3">
-                <div class="col"><div class="border rounded p-2"><strong>${results.registered || 0}</strong><br><small>Registrados</small></div></div>
-                <div class="col"><div class="border rounded p-2"><strong>${results.invoices_created || 0}</strong><br><small>Facturas</small></div></div>
-                <div class="col"><div class="border rounded p-2"><strong>${results.failed || 0}</strong><br><small>Fallidos</small></div></div>
-            </div>${items}`;
+            summary.innerHTML = `<div class="row g-2 text-center mb-4">
+                <div class="col-6"><div class="border rounded p-2"><strong>${results.registered || 0}</strong><br><small class="text-muted">Registrados</small></div></div>
+                <div class="col-6"><div class="border rounded p-2"><strong>${results.invoices_created || 0}</strong><br><small class="text-muted">Facturas</small></div></div>
+                <div class="col-6"><div class="border rounded p-2"><strong>${duplicates}</strong><br><small class="text-muted">Duplicados</small></div></div>
+                <div class="col-6"><div class="border rounded p-2"><strong>${results.failed || 0}</strong><br><small class="text-muted">Errores</small></div></div>
+            </div><div class="vstack gap-2">${items}</div>`;
             summary.classList.remove('d-none');
+            setStatus(results.failed > 0 || results.partial > 0 ? 'Con avisos' : 'Completado',
+                results.failed > 0 || results.partial > 0 ? 'warning' : 'success');
+            resultContext.textContent = `${results.total || 0} comprobante${results.total === 1 ? '' : 's'} procesado${results.total === 1 ? '' : 's'}`;
+        }
+
+        function updateSelectionSummary() {
+            const files = Array.from(filesInput.files || []);
+            const xmlFiles = files.filter(file => file.name.toLowerCase().endsWith('.xml')).length;
+            const zipFiles = files.filter(file => file.name.toLowerCase().endsWith('.zip')).length;
+            const totalBytes = files.reduce((total, file) => total + file.size, 0);
+
+            selectedCount.textContent = files.length;
+            xmlCount.textContent = xmlFiles;
+            zipCount.textContent = zipFiles;
+            selectedSize.textContent = formatBytes(totalBytes);
+            selectionSummary.classList.toggle('d-none', files.length === 0);
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return `${bytes} B`;
+            if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+            return `${(bytes / 1048576).toFixed(1)} MB`;
+        }
+
+        function setStatus(label, type) {
+            statusBadge.className = `badge text-bg-${type}`;
+            statusBadge.textContent = label;
         }
 
         function escapeHtml(value) {
