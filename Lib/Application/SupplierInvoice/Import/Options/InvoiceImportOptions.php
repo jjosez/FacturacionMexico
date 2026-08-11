@@ -1,6 +1,6 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options;
 
 final class InvoiceImportOptions
 {

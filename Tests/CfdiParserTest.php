@@ -2,7 +2,7 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Tests;
 
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiParser;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiValidationException;
 use PHPUnit\Framework\TestCase;
 

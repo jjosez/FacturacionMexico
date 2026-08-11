@@ -24,7 +24,7 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Lib\Email\NewMail;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiParser;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\PDF\PDFCfdi;
 
 class CfdiEmailService

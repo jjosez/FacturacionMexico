@@ -1,11 +1,11 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Storage;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage;
 
 use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiStorageException;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedorData;

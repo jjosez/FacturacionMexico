@@ -1,15 +1,15 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Queue;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue;
 
 use Exception;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Core\UploadedFile;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Result\BatchResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Result\InvoiceImportResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\CfdiImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\InvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result\BatchResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result\InvoiceImportResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Register\CfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\InvoiceImportService;
 
 class AsyncImportProcessor
 {

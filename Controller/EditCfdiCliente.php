@@ -26,14 +26,14 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiParser;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Factory\CustomerCfdiServiceFactory;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Service\CustomerCfdiService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\CfdiRelationService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\CustomerValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\Validator;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiConfigurationException;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\CfdiEmailService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\PDF\PDFCfdi;
@@ -141,7 +141,7 @@ class EditCfdiCliente extends Controller
 
         if ($this->xml) {
             $this->parser = new CfdiParser($this->xml);
-            $this->reader = $this->parser->parse();
+            $this->reader = $this->cfdiService->parse($this->xml);
         }
     }
 

@@ -46,7 +46,7 @@ class CfdiBuildResult
 
     public function getBuildMessages(): array
     {
-        return explode($this->buildMessage, PHP_EOL) ?? [];
+        return $this->buildMessage === '' ? [] : explode(PHP_EOL, $this->buildMessage);
     }
 
     public function hasError(): bool

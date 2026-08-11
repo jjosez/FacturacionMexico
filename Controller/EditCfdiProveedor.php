@@ -29,14 +29,14 @@ use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Plugins\FacturacionMexico\Extension\Controller\FormaPagoControllerTrait;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\CfdiImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\InvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Register\CfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\InvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ImportOptions;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Read\CfdiReader;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceStateService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierProductLinkService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceStateService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierProductLinkService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiProveedor;
 
 class EditCfdiProveedor extends EditController

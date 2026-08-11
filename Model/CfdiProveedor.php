@@ -25,8 +25,8 @@ use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Model\Base\CfdiTrait;
 
 class CfdiProveedor extends ModelClass

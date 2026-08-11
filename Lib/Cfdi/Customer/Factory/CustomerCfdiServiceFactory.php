@@ -9,11 +9,12 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Factory;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\CfdiRelationService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Service\CustomerCfdiService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorageInterface;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorageInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\StampProviderInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiConfigurationException;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\FinkokStampProvider;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CertificateService;
 
 /**

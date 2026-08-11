@@ -4,8 +4,8 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer;
 
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiStatus;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiStatus;
 
 final class CustomerCfdiRepository
 {

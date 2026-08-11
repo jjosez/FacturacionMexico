@@ -1,6 +1,6 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Queue;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue;
 
 use FacturaScripts\Core\Base\DataBase;
 use ZipArchive;

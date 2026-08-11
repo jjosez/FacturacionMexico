@@ -6,8 +6,8 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Infrastructure\PDF;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use FacturaScripts\Dinamic\Model\AttachedFile;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiParser;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 use Luecano\NumeroALetras\NumeroALetras;
 
@@ -47,6 +47,7 @@ class PDFCfdi extends PDFCfdiCore
         $this->insertEmisor();
         $this->insertLogo();
         $this->insertTablaConceptos();
+        $this->insertPagos();
         $this->insertTablaTotales();
         $this->insertTimbreFiscal();
         $this->insertPageFooter();
@@ -178,7 +179,7 @@ class PDFCfdi extends PDFCfdiCore
                 'subtotal' => $this->cfdi->subtotal,
                 'descuento' => $this->cfdi->descuento,
                 'iva' => $this->cfdi->impuestos['totalTrasladados'],
-                'retenciones' => 0.00
+                'retenciones' => $this->cfdi->impuestos['totalRetenidos']
             ]
         );
 

@@ -29,10 +29,10 @@ use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\InvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\InvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ImportOptions;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Read\CfdiReader;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiData;
 
 class CfdiSupplierWizard extends Controller
 {

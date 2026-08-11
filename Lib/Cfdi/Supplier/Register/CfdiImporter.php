@@ -1,19 +1,21 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Register;
 
 use Exception;
+use Throwable;
+use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\UploadedFile;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorageInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorage;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorageInterface;
 
 class CfdiImporter
 {
@@ -39,18 +41,48 @@ class CfdiImporter
             throw new Exception('El XML no contiene un TimbreFiscalDigital.');
         }
 
-        $this->loadOrCreateSupplier();
         $this->company = $company;
-
-        if ($this->cfdiExists()) {
+        if (
+            $this->cfdiExists()
+            || $this->storage->exists(CfdiScope::SUPPLIER, $this->data->uuid)
+        ) {
             throw new Exception('El CFDI ya fue registrado previamente. ' . $this->data->uuid);
         }
 
-        $cfdi = $this->saveCfdi();
+        $dataBase = new DataBase();
+        if ($dataBase->inTransaction()) {
+            throw new Exception('No se puede registrar un CFDI de proveedor dentro de otra transacción.');
+        }
+
+        $storageSaved = false;
+        $cfdi = null;
+
         try {
+            if (!$dataBase->beginTransaction()) {
+                throw new Exception('No se pudo iniciar la transacción del CFDI de proveedor.');
+            }
+
+            $this->loadOrCreateSupplier();
+            $cfdi = $this->saveCfdi();
             $this->storage->save(CfdiScope::SUPPLIER, $cfdi->uuid, $this->xml);
-        } catch (Exception $e) {
-            $cfdi->delete();
+            $storageSaved = true;
+
+            if (!$dataBase->commit()) {
+                throw new Exception('No se pudo confirmar la transacción del CFDI de proveedor.');
+            }
+        } catch (Throwable $e) {
+            if ($dataBase->inTransaction()) {
+                $dataBase->rollback();
+            }
+
+            if ($storageSaved && $cfdi !== null) {
+                try {
+                    $this->storage->delete(CfdiScope::SUPPLIER, $cfdi->uuid);
+                } catch (Throwable) {
+                    // Preserve the original transaction failure.
+                }
+            }
+
             throw $e;
         }
 

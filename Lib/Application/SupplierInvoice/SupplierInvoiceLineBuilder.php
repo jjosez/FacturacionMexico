@@ -1,13 +1,13 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice;
 
 use FacturaScripts\Core\Plugins;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\LineaFacturaProveedor;
 use FacturaScripts\Dinamic\Model\Producto;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ProductImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\TaxImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ProductImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\TaxImportOptions;
 
 class SupplierInvoiceLineBuilder
 {

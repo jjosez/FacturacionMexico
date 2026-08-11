@@ -1,13 +1,12 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared;
 
 use CfdiUtils\Cfdi;
 use CfdiUtils\ConsultaCfdiSat\RequestParameters;
 use CfdiUtils\Nodes\XmlNodeUtils;
 use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
 use CfdiUtils\XmlResolver\XmlResolver;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiValidationException;
 
 final class CfdiParser

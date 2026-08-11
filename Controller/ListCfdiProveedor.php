@@ -24,12 +24,12 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\CfdiImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\InvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Result\BatchResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Queue\AsyncImportProcessor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Queue\ImportQueue;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Register\CfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\InvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result\BatchResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue\AsyncImportProcessor;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue\ImportQueue;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 
@@ -124,7 +124,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
 
             $this->redirect($cfdi->url());
         } catch (Exception $e) {
-            Tools::log('CFDI')->warning($e->getMessage());
+            Tools::log()->warning($e->getMessage());
         }
     }
 

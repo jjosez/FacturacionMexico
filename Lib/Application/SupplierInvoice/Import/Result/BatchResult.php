@@ -1,6 +1,6 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Result;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result;
 
 class BatchResult
 {

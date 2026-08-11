@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice;
 
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;

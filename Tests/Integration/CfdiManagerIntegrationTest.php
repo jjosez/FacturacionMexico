@@ -11,8 +11,8 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\CfdiRelationServi
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiBuildResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiSatStatus;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\StampResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorageInterface;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorageInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\StampProviderInterface;
 use FacturaScripts\Test\Traits\DefaultSettingsTrait;
 use FacturaScripts\Test\Traits\LogErrorsTrait;

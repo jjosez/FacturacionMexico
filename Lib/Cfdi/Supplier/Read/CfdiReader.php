@@ -3,8 +3,8 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Read;
 
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiParser;
 
 final class CfdiReader
 {

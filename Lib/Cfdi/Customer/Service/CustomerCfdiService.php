@@ -12,6 +12,7 @@ use FacturaScripts\Core\Base\DataBase;
 use FacturaScripts\Dinamic\Model\CfdiCliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiBuildResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiData;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\StampResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiStampException;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Build\CfdiFactory;
@@ -19,11 +20,11 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\CfdiRelationServi
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\CfdiStampResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\CustomerCfdiRepository;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorageInterface;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorageInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Stamp\StampProviderInterface;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiStatus;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiStatus;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\RelationValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CertificateService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\SatStatusService;
@@ -219,6 +220,17 @@ class CustomerCfdiService
     public function getXml(CfdiCliente $cfdi): ?string
     {
         return $this->storage->get(CfdiScope::CUSTOMER, $cfdi->uuid);
+    }
+
+    public function read(CfdiCliente $cfdi): ?CfdiData
+    {
+        $xml = $this->getXml($cfdi);
+        return $xml === null || $xml === '' ? null : $this->parse($xml);
+    }
+
+    public function parse(string $xml): CfdiData
+    {
+        return (new CfdiParser($xml))->parse();
     }
 
     public function updateMailDate(CfdiCliente $cfdi): bool

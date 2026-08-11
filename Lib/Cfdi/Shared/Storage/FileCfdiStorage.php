@@ -1,9 +1,9 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Storage;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage;
 
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiStorageException;
 
 final class FileCfdiStorage implements CfdiStorageInterface

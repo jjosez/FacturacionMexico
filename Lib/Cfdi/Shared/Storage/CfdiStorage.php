@@ -1,6 +1,6 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Storage;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage;
 
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
 

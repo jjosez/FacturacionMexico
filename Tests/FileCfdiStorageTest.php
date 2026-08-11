@@ -2,8 +2,8 @@
 
 namespace FacturaScripts\Plugins\FacturacionMexico\Tests;
 
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\FileCfdiStorage;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\FileCfdiStorage;
 use PHPUnit\Framework\TestCase;
 
 final class FileCfdiStorageTest extends TestCase

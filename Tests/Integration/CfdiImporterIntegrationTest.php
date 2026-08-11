@@ -3,13 +3,16 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Tests\Integration;
 
 use FacturaScripts\Core\DataSrc\Empresas;
+use FacturaScripts\Core\Base\DataBase;
+use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\UploadedFile;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\CfdiImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiScope;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Storage\CfdiStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Register\CfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorage;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorageInterface;
 use FacturaScripts\Test\Traits\LogErrorsTrait;
 use PHPUnit\Framework\TestCase;
 
@@ -52,6 +55,57 @@ final class CfdiImporterIntegrationTest extends TestCase
         $this->supplier = $this->cfdi->getSupplier();
         $this->assertTrue($this->supplier->exists());
         $this->assertSame($this->supplierRfc, $this->supplier->cifnif);
+    }
+
+    public function testStorageFailureRollsBackCfdiAndNewSupplier(): void
+    {
+        $this->uuid = $this->uuid();
+        $this->supplierRfc = 'X' . str_pad((string) random_int(0, 999999999999), 12, '0', STR_PAD_LEFT);
+        $company = Empresas::default();
+
+        try {
+            (new CfdiImporter(new SupplierFailingStorage()))->processUpload(
+                $this->upload($this->uuid),
+                $company
+            );
+            $this->fail('La importación debía fallar al guardar el XML.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('Storage test failure.', $e->getMessage());
+        }
+
+        $cfdi = new CfdiProveedor();
+        $this->assertFalse($cfdi->loadFromUuid(strtoupper($this->uuid)));
+
+        $supplier = new Proveedor();
+        $this->assertFalse($supplier->loadFromCode('', [
+            new DataBaseWhere('cifnif', $this->supplierRfc),
+        ]));
+    }
+
+    public function testImportDoesNotCommitAnOuterTransaction(): void
+    {
+        $this->uuid = $this->uuid();
+        $this->supplierRfc = 'X' . str_pad((string) random_int(0, 999999999999), 12, '0', STR_PAD_LEFT);
+        $dataBase = new DataBase();
+        $this->assertTrue($dataBase->beginTransaction());
+
+        try {
+            (new CfdiImporter(new SupplierFailingStorage()))->processUpload(
+                $this->upload($this->uuid),
+                Empresas::default()
+            );
+            $this->fail('La importación debía rechazar la transacción externa.');
+        } catch (\Exception $e) {
+            $this->assertSame(
+                'No se puede registrar un CFDI de proveedor dentro de otra transacción.',
+                $e->getMessage()
+            );
+            $this->assertTrue($dataBase->inTransaction());
+        } finally {
+            if ($dataBase->inTransaction()) {
+                $dataBase->rollback();
+            }
+        }
     }
 
     protected function tearDown(): void
@@ -108,5 +162,28 @@ final class CfdiImporterIntegrationTest extends TestCase
     <cfdi:Complemento><tfd:TimbreFiscalDigital Version="1.1" UUID="$uuid" FechaTimbrado="2026-08-10T12:01:00" RfcProvCertif="$this->supplierRfc" SelloCFD="abc" NoCertificadoSAT="00001000000504465028" SelloSAT="def" /></cfdi:Complemento>
 </cfdi:Comprobante>
 XML;
+    }
+}
+
+final class SupplierFailingStorage implements CfdiStorageInterface
+{
+    public function save(CfdiScope $scope, string $uuid, string $xml): string
+    {
+        throw new \RuntimeException('Storage test failure.');
+    }
+
+    public function get(CfdiScope $scope, string $uuid): ?string
+    {
+        return null;
+    }
+
+    public function exists(CfdiScope $scope, string $uuid): bool
+    {
+        return false;
+    }
+
+    public function delete(CfdiScope $scope, string $uuid): bool
+    {
+        return true;
     }
 }

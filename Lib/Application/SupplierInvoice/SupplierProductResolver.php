@@ -1,6 +1,6 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice;
 
 use Exception;
 use FacturaScripts\Core\Where;
@@ -8,7 +8,7 @@ use FacturaScripts\Dinamic\Model\Producto;
 use FacturaScripts\Dinamic\Model\ProductoProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Dinamic\Model\Variante;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ProductImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ProductImportOptions;
 
 class SupplierProductResolver
 {

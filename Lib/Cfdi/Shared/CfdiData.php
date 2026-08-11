@@ -1,6 +1,6 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\DTO;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared;
 
 final class CfdiData
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import;
+namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import;
 
 use Exception;
 use FacturaScripts\Core\Base\DataBase;
@@ -12,17 +12,17 @@ use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\FormaPago;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Dinamic\Model\Serie;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\CfdiParser;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\ImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Options\InvoiceImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Result\BatchResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Import\Result\InvoiceImportResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiData;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiParser;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\InvoiceImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result\BatchResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result\InvoiceImportResult;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiData;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceLineBuilder;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierInvoiceStateService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierProductLinkService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Supplier\SupplierProductResolver;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceLineBuilder;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierInvoiceStateService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierProductLinkService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\SupplierProductResolver;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
 use FacturaScripts\Plugins\FacturacionMexico\Model\RelacionCfdiProveedor;
 
