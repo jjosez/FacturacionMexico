@@ -3,31 +3,29 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue;
 
 use Exception;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Core\UploadedFile;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\Result\SupplierCfdiBatchResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\SupplierCfdiImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result\BatchResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result\InvoiceImportResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Register\CfdiImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\InvoiceImportService;
+use Throwable;
 
 class AsyncImportProcessor
 {
     private ImportQueue $queue;
-    private InvoiceImportService $importService;
-    private CfdiImporter $cfdiImporter;
+    private SupplierCfdiImporter $importer;
     private bool $shouldStop = false;
 
     public function __construct(
-        ?InvoiceImportService $importService = null,
+        ?SupplierCfdiImporter $importer = null,
         ?ImportQueue $queue = null
     ) {
-        $this->importService = $importService ?? new InvoiceImportService();
+        $this->importer = $importer ?? new SupplierCfdiImporter();
         $this->queue = $queue ?? new ImportQueue();
-        $this->cfdiImporter = new CfdiImporter();
     }
 
-    public function process(string $jobId): BatchResult
+    public function process(string $jobId): SupplierCfdiBatchResult
     {
         $job = $this->queue->get($jobId);
 
@@ -39,45 +37,56 @@ class AsyncImportProcessor
             throw new Exception('Job no está en estado pending: ' . $job->status);
         }
 
-        $this->queue->markAsProcessing($jobId);
+        if (!$this->queue->markAsProcessing($jobId)) {
+            throw new Exception('El trabajo ya está siendo procesado.');
+        }
 
-        $result = new BatchResult();
+        $result = new SupplierCfdiBatchResult();
+        $xmlFiles = [];
 
         try {
             $xmlFiles = $this->queue->extractZip($job->filePath);
-            $result->setTotal(count($xmlFiles));
-
-            $options = $this->getOptionsFromJob($job);
-
-            foreach ($xmlFiles as $index => $filePath) {
-                if ($this->shouldStop) {
-                    $this->queue->fail($jobId, 'Procesamiento detenido');
-                    break;
-                }
-
-                try {
-                    $importResult = $this->processFile($filePath, $job->companyId, $options, $result);
-                    if (!$importResult->success) {
-                        throw new Exception($importResult->error ?? 'No se pudo importar el CFDI');
-                    }
-                    $result->addSuccess(basename($filePath), 0);
-                } catch (Exception $e) {
-                    $result->addFailure(basename($filePath), $e->getMessage());
-                }
-
-                $this->queue->updateProgress($jobId, $index + 1, count($xmlFiles));
+            if ($xmlFiles === []) {
+                throw new Exception('El trabajo no contiene archivos XML.');
             }
 
+            $company = new Empresa();
+            if (!$company->load($job->companyId)) {
+                throw new Exception('No se encontró la empresa del trabajo.');
+            }
+
+            $uploads = array_map([$this, 'uploadedFile'], $xmlFiles);
+            $config = $this->getConfigFromJob($job);
+            $result = $this->importer->import(
+                $uploads,
+                $company,
+                $config['mode'],
+                $config['options'],
+                SupplierCfdiImporter::MAX_FILES,
+                function (int $processed, int $total) use ($jobId): void {
+                    if ($this->shouldStop) {
+                        throw new Exception('Procesamiento detenido.');
+                    }
+                    $this->queue->updateProgress($jobId, $processed, $total);
+                }
+            );
             $this->queue->complete($jobId, $result->toArray());
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->queue->fail($jobId, $e->getMessage());
             $result->addFailure('', $e->getMessage());
+        } finally {
+            if ($xmlFiles !== []) {
+                Tools::folderDelete(dirname($xmlFiles[0]));
+            }
+            if (is_file($job->filePath)) {
+                unlink($job->filePath);
+            }
         }
 
         return $result;
     }
 
-    public function processNext(): ?BatchResult
+    public function processNext(): ?SupplierCfdiBatchResult
     {
         $job = $this->queue->dequeue();
 
@@ -102,7 +111,7 @@ class AsyncImportProcessor
             try {
                 $this->process((string)$job->id);
                 $processed++;
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 continue;
             }
         }
@@ -120,49 +129,32 @@ class AsyncImportProcessor
         return $this->queue->getStats();
     }
 
-    private function processFile(
-        string $filePath,
-        int $companyId,
-        ImportOptions $options,
-        BatchResult $result
-    ): InvoiceImportResult {
-        $xmlContent = file_get_contents($filePath);
-
-        if ($xmlContent === false) {
-            throw new Exception('No se pudo leer el archivo: ' . $filePath);
+    private function getConfigFromJob(ImportJob $job): array
+    {
+        if (empty($job->config)) {
+            return [
+                'mode' => SupplierCfdiImporter::MODE_REGISTER,
+                'options' => new ImportOptions(),
+            ];
         }
 
-        $tempFile = sys_get_temp_dir() . '/' . basename($filePath);
-        file_put_contents($tempFile, $xmlContent);
-
-        $uploadedFile = new UploadedFile($tempFile, basename($filePath));
-
-        try {
-            $company = new Empresa();
-            $company->load($companyId);
-
-            $cfdi = $this->cfdiImporter->processUpload($uploadedFile, $company);
-
-            return $this->importService->importSingle($cfdi, $cfdi->getSupplier(), $options);
-        } finally {
-            if (file_exists($tempFile)) {
-                unlink($tempFile);
-            }
-        }
+        $data = json_decode($job->config, true);
+        return [
+            'mode' => $data['mode'] ?? SupplierCfdiImporter::MODE_REGISTER,
+            'options' => ImportOptions::fromArray($data['options'] ?? []),
+        ];
     }
 
-    private function getOptionsFromJob(ImportJob $job): ImportOptions
+    private function uploadedFile(string $path): UploadedFile
     {
-        if (empty($job->result)) {
-            return new ImportOptions();
-        }
-
-        $data = json_decode($job->result, true);
-
-        if (!isset($data['options'])) {
-            return new ImportOptions();
-        }
-
-        return ImportOptions::fromArray($data['options']);
+        $file = new UploadedFile([
+            'error' => UPLOAD_ERR_OK,
+            'name' => basename($path),
+            'size' => filesize($path),
+            'tmp_name' => $path,
+            'type' => 'application/xml',
+        ]);
+        $file->test = true;
+        return $file;
     }
 }

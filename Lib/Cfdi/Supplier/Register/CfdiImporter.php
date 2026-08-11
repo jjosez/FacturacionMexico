@@ -16,6 +16,7 @@ use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorageInterface;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Exception\CfdiAlreadyRegisteredException;
 
 class CfdiImporter
 {
@@ -46,7 +47,7 @@ class CfdiImporter
             $this->cfdiExists()
             || $this->storage->exists(CfdiScope::SUPPLIER, $this->data->uuid)
         ) {
-            throw new Exception('El CFDI ya fue registrado previamente. ' . $this->data->uuid);
+            throw new CfdiAlreadyRegisteredException('El CFDI ya fue registrado previamente. ' . $this->data->uuid);
         }
 
         $dataBase = new DataBase();

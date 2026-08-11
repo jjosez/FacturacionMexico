@@ -12,10 +12,12 @@ class ImportJob
     public const STATUS_FAILED = 'failed';
 
     public int $id = 0;
+    public ?string $lockToken = null;
     public int $companyId = 0;
-    public int $userId = 0;
+    public string $userNick = '';
     public string $status = self::STATUS_PENDING;
     public string $filePath = '';
+    public ?string $config = null;
     public ?string $result = null;
     public ?string $error = null;
     public int $progress = 0;
@@ -89,10 +91,12 @@ class ImportJob
     {
         return [
             'id' => $this->id,
-            'company_id' => $this->companyId,
-            'user_id' => $this->userId,
+            'lock_token' => $this->lockToken,
+            'idempresa' => $this->companyId,
+            'nick' => $this->userNick,
             'status' => $this->status,
             'file_path' => $this->filePath,
+            'config' => $this->config,
             'result' => $this->result,
             'error' => $this->error,
             'progress' => $this->progress,
@@ -109,10 +113,12 @@ class ImportJob
         $job = new self();
 
         $job->id = (int)($data['id'] ?? 0);
-        $job->companyId = (int)($data['company_id'] ?? 0);
-        $job->userId = (int)($data['user_id'] ?? 0);
+        $job->lockToken = $data['lock_token'] ?? null;
+        $job->companyId = (int)($data['idempresa'] ?? 0);
+        $job->userNick = (string)($data['nick'] ?? '');
         $job->status = $data['status'] ?? self::STATUS_PENDING;
         $job->filePath = $data['file_path'] ?? '';
+        $job->config = $data['config'] ?? null;
         $job->result = $data['result'] ?? null;
         $job->error = $data['error'] ?? null;
         $job->progress = (int)($data['progress'] ?? 0);

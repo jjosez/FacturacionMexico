@@ -1,46 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<cfdi_import_jobs>
-    <name>cfdi_import_jobs</name>
-    <version>1.0</version>
-    <description>Cola de importación asíncrona de CFDIs</description>
-
-    <columns>
-        <column name="id" type="integer" null="NO">
-            <constraint>PRIMARY KEY</constraint>
-            <constraint>AUTOINCREMENT</constraint>
-        </column>
-        <column name="company_id" type="integer" null="NO"/>
-        <column name="user_id" type="integer" null="NO"/>
-        <column name="status" type="varchar" length="20" null="NO" default="pending"/>
-        <column name="file_path" type="varchar" length="255" null="NO"/>
-        <column name="result" type="text" null="YES"/>
-        <column name="error" type="text" null="YES"/>
-        <column name="progress" type="integer" null="NO" default="0"/>
-        <column name="total_items" type="integer" null="NO" default="0"/>
-        <column name="processed_items" type="integer" null="NO" default="0"/>
-        <column name="created_at" type="datetime" null="NO"/>
-        <column name="processed_at" type="datetime" null="YES"/>
-
-        <column name="id_company" type="reference">
-            <references table="empresas" column="idempresa"/>
-        </column>
-        <column name="id_user" type="reference">
-            <references table="users" column="nick"/>
-        </column>
-    </columns>
-
-    <indexes>
-        <index name="idx_import_job_status">
-            <columns>status</columns>
-        </index>
-        <index name="idx_import_job_company">
-            <columns>company_id</columns>
-        </index>
-        <index name="idx_import_job_user">
-            <columns>user_id</columns>
-        </index>
-        <index name="idx_import_job_created">
-            <columns>created_at</columns>
-        </index>
-    </indexes>
-</cfdi_import_jobs>
+<table>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>idempresa</name>
+        <type>integer</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>nick</name>
+        <type>character varying(50)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>lock_token</name>
+        <type>character varying(40)</type>
+    </column>
+    <column>
+        <name>status</name>
+        <type>character varying(20)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>file_path</name>
+        <type>character varying(255)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>config</name>
+        <type>text</type>
+    </column>
+    <column>
+        <name>result</name>
+        <type>text</type>
+    </column>
+    <column>
+        <name>error</name>
+        <type>text</type>
+    </column>
+    <column>
+        <name>progress</name>
+        <type>integer</type>
+        <null>NO</null>
+        <default>0</default>
+    </column>
+    <column>
+        <name>total_items</name>
+        <type>integer</type>
+        <null>NO</null>
+        <default>0</default>
+    </column>
+    <column>
+        <name>processed_items</name>
+        <type>integer</type>
+        <null>NO</null>
+        <default>0</default>
+    </column>
+    <column>
+        <name>created_at</name>
+        <type>timestamp</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>processed_at</name>
+        <type>timestamp</type>
+    </column>
+    <constraint>
+        <name>cfdi_import_jobs_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>cfdi_import_jobs_company</name>
+        <type>FOREIGN KEY (idempresa) REFERENCES empresas (idempresa) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>cfdi_import_jobs_user</name>
+        <type>FOREIGN KEY (nick) REFERENCES users (nick) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+</table>

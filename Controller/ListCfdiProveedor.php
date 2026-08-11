@@ -23,13 +23,7 @@ use Exception;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Lib\ExtendedController;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Core\Where;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Register\CfdiImporter;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\InvoiceImportService;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ImportOptions;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result\BatchResult;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue\AsyncImportProcessor;
-use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue\ImportQueue;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 
@@ -62,27 +56,7 @@ class ListCfdiProveedor extends ExtendedController\ListController
         }
 
         if ($action === 'batch-import-cfdi-file') {
-            $this->batchImportCfdiAction();
-            return true;
-        }
-
-        if ($action === 'batch-import-process') {
-            $this->batchImportProcessAction();
-            return true;
-        }
-
-        if ($action === 'async-import') {
-            $this->asyncImportAction();
-            return true;
-        }
-
-        if ($action === 'import-status') {
-            $this->importStatusAction();
-            return true;
-        }
-
-        if ($action === 'process-import-queue') {
-            $this->processImportQueueAction();
+            $this->redirect('CfdiSupplierImport');
             return true;
         }
 
@@ -128,182 +102,23 @@ class ListCfdiProveedor extends ExtendedController\ListController
         }
     }
 
-    private function batchImportCfdiAction()
-    {
-        $this->setTemplate('BatchImportModal');
-    }
-
-    protected function batchImportProcessAction(): void
-    {
-        $this->setTemplate(false);
-
-        $files = $this->request->files->get('xmlfiles');
-        if (empty($files)) {
-            $this->response->setContent(json_encode([
-                'success' => false,
-                'error' => 'No se recibieron archivos'
-            ]));
-            return;
-        }
-
-        $files = is_array($files) ? $files : [$files];
-
-        $importer = new CfdiImporter();
-        $service = new InvoiceImportService();
-
-        $options = ImportOptions::fromArray([
-            'product_action' => $this->request->get('product_action', 'auto'),
-            'tax_mode' => $this->request->get('tax_mode', 'preserve'),
-            'update_supplier_prices' => $this->requestBoolean('update_supplier_prices'),
-            'auto_match_products' => $this->requestBoolean('auto_match_products'),
-            'price_multiplier' => (float)$this->request->input('price_multiplier', 1.0),
-        ]);
-
-        $result = new BatchResult();
-        $result->setTotal(count($files));
-
-        $importedCfdis = [];
-        $uploadErrors = [];
-
-        foreach ($files as $file) {
-            try {
-                $cfdi = $importer->processUpload($file, $this->empresa);
-                $importedCfdis[] = $cfdi;
-            } catch (Exception $e) {
-                $uploadErrors[] = $e->getMessage();
-            }
-        }
-
-        $createInvoices = $this->requestBoolean('create_invoices');
-
-        if ($createInvoices && !empty($importedCfdis)) {
-            $invoiceResult = $service->importBatch($importedCfdis, $options);
-            $result = $invoiceResult;
-        } else {
-            foreach ($importedCfdis as $cfdi) {
-                $result->addSuccess($cfdi->uuid, $cfdi->id);
-            }
-        }
-
-        foreach ($uploadErrors as $error) {
-            $result->addFailure('', $error);
-        }
-
-        $result->setTotal(count($files));
-
-        $result->setElapsedTime(0);
-
-        $this->response->setContent(json_encode([
-            'success' => $result->success > 0,
-            'results' => $result->toArray()
-        ]));
-    }
-
     protected function loadData($viewName, $view): void
     {
         if ($viewName === 'ListCfdiProveedor') {
-            $where = [new DataBaseWhere('tipo', 'P', '!=')];
+            $where = [
+                new DataBaseWhere('tipo', 'P', '!='),
+                new DataBaseWhere('idempresa', $this->empresa->idempresa),
+            ];
+
+            if ($this->permissions->onlyOwnerData) {
+                array_push($where, ...$this->getOwnerFilter($view->model));
+            }
 
             $view->loadData('', $where);
+            return;
         }
 
         parent::loadData($viewName, $view);
     }
 
-    protected function asyncImportAction(): void
-    {
-        $this->setTemplate(false);
-
-        $files = $this->request->files->get('xmlfiles');
-
-        if (empty($files)) {
-            $this->response->setContent(json_encode([
-                'success' => false,
-                'error' => 'No se recibieron archivos'
-            ]));
-            return;
-        }
-
-        $files = is_array($files) ? $files : [$files];
-
-        $user = $this->user;
-
-        try {
-            $queue = new ImportQueue();
-            $options = ImportOptions::fromArray([
-                'product_action' => $this->request->get('product_action', 'auto'),
-                'tax_mode' => $this->request->get('tax_mode', 'preserve'),
-                'update_supplier_prices' => $this->requestBoolean('update_supplier_prices'),
-                'auto_match_products' => $this->requestBoolean('auto_match_products', true),
-                'price_multiplier' => (float)$this->request->input('price_multiplier', 1.0),
-            ]);
-            $jobId = $queue->enqueue($files, $this->empresa->idempresa, (int)($user->id ?? 0), $options->toArray());
-
-            $this->response->setContent(json_encode([
-                'success' => true,
-                'job_id' => $jobId,
-                'message' => 'Trabajo agregado a la cola de procesamiento'
-            ]));
-        } catch (Exception $e) {
-            $this->response->setContent(json_encode([
-                'success' => false,
-                'error' => $e->getMessage()
-            ]));
-        }
-    }
-
-    protected function importStatusAction(): void
-    {
-        $this->setTemplate(false);
-
-        $jobId = $this->request->get('job_id');
-
-        if (empty($jobId)) {
-            $this->response->setContent(json_encode([
-                'success' => false,
-                'error' => 'Job ID requerido'
-            ]));
-            return;
-        }
-
-        $queue = new ImportQueue();
-        $status = $queue->getStatus($jobId);
-
-        if ($status === null) {
-            $this->response->setContent(json_encode([
-                'success' => false,
-                'error' => 'Job no encontrado'
-            ]));
-            return;
-        }
-
-        $this->response->setContent(json_encode([
-            'success' => true,
-            'status' => $status
-        ]));
-    }
-
-    protected function processImportQueueAction(): void
-    {
-        $this->setTemplate(false);
-
-        $processor = new AsyncImportProcessor();
-        $processed = $processor->processAll(10);
-
-        $this->response->setContent(json_encode([
-            'success' => true,
-            'processed' => $processed
-        ]));
-    }
-
-    protected function requestBoolean(string $field, bool $default = false): bool
-    {
-        $value = $this->request->input($field);
-
-        if ($value === null || $value === '') {
-            return $default;
-        }
-
-        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
-    }
 }

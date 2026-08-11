@@ -1,0 +1,235 @@
+{% extends 'Master/MenuBgTemplate.html.twig' %}
+
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-3">
+        <div class="row align-items-center">
+            <div class="col">
+                <a class="btn btn-sm btn-dark" href="{{ asset('ListCfdiProveedor') }}">
+                    <i class="fas fa-arrow-left me-1"></i>CFDI proveedores
+                </a>
+            </div>
+            <div class="col text-end">
+                <h1 class="h5 mb-0">Importación masiva de CFDI <i class="fas fa-file-import ms-1"></i></h1>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid pb-4">
+        <div class="row g-4">
+            <div class="col-12 col-xl-8">
+                <form id="supplierCfdiImportForm" class="card border-0 shadow-sm" enctype="multipart/form-data">
+                    {{ formToken() }}
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start justify-content-between mb-4">
+                            <div>
+                                <h2 class="h4 mb-1">Seleccionar comprobantes</h2>
+                                <p class="text-muted mb-0">Hasta 10 CFDI en modo inmediato o 50 mediante ZIP en la cola ampliada.</p>
+                            </div>
+                            <span class="badge text-bg-light border">XML / ZIP · 10 MB</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="supplierCfdiFiles" class="form-label fw-semibold">Archivos CFDI</label>
+                            <input type="file" name="xmlfiles[]" id="supplierCfdiFiles" class="form-control"
+                                   accept=".xml,.zip" multiple required
+                                   data-max-direct-files="{{ fsc.maxDirectUploadFiles() }}">
+                            <div class="form-text">
+                                Este servidor acepta hasta {{ fsc.maxDirectUploadFiles() }} archivos directos por petición.
+                                Para importar más, agrupe los XML en un ZIP.
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="supplierCfdiMode" class="form-label fw-semibold">Resultado esperado</label>
+                                <select name="mode" id="supplierCfdiMode" class="form-select">
+                                    <option value="register" selected>Solo registrar CFDI</option>
+                                    <option value="register_and_invoice">Registrar y generar facturas</option>
+                                </select>
+                                <div class="form-text">Si una factura falla, su CFDI permanecerá registrado.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="supplierCfdiProcessing" class="form-label fw-semibold">Procesamiento</label>
+                                <select id="supplierCfdiProcessing" class="form-select">
+                                    <option value="sync" selected>Inmediato, máximo 10 CFDI</option>
+                                    <option value="async">Cola ampliada, máximo 50 CFDI</option>
+                                </select>
+                                <div class="form-text">En la cola ampliada debe mantener esta página abierta hasta ver el resultado.</div>
+                            </div>
+                        </div>
+
+                        <div id="invoiceOptions" class="border rounded-3 p-3 bg-light d-none">
+                            <h3 class="h6 mb-3">Opciones para las facturas proveedor</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Productos</label>
+                                    <select name="product_action" class="form-select">
+                                        <option value="skip">Solo productos existentes</option>
+                                        <option value="auto" selected>Vincular automáticamente</option>
+                                        <option value="create">Crear productos no encontrados</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Impuestos</label>
+                                    <select name="tax_mode" class="form-select">
+                                        <option value="preserve" selected>Conservar los del CFDI</option>
+                                        <option value="company">Usar configuración de empresa</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="auto_match_products" value="1" checked
+                                               class="form-check-input" id="supplierAutoMatch">
+                                        <label class="form-check-label" for="supplierAutoMatch">Vincular productos automáticamente</label>
+                                    </div>
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" name="update_supplier_prices" value="1"
+                                               class="form-check-input" id="supplierUpdatePrices">
+                                        <label class="form-check-label" for="supplierUpdatePrices">Actualizar precios del proveedor</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Multiplicador de precio</label>
+                                    <input type="number" name="price_multiplier" value="1.00" min="0.01" step="0.01"
+                                           class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-0 px-4 pb-4">
+                        <button type="submit" id="supplierCfdiSubmit" class="btn btn-primary">
+                            <i class="fas fa-play me-1"></i>Iniciar importación
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-12 col-xl-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <h2 class="h5">Resultado</h2>
+                        <div id="supplierCfdiIdle" class="text-muted py-5 text-center">
+                            <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+                            <p>Los resultados de cada XML aparecerán aquí.</p>
+                        </div>
+                        <div id="supplierCfdiProgress" class="d-none py-4">
+                            <div class="progress" role="progressbar">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                            </div>
+                            <p class="small text-muted mt-2 mb-0">Procesando comprobantes...</p>
+                        </div>
+                        <div id="supplierCfdiSummary" class="d-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('supplierCfdiImportForm');
+        const mode = document.getElementById('supplierCfdiMode');
+        const processing = document.getElementById('supplierCfdiProcessing');
+        const filesInput = document.getElementById('supplierCfdiFiles');
+        const invoiceOptions = document.getElementById('invoiceOptions');
+        const submit = document.getElementById('supplierCfdiSubmit');
+        const idle = document.getElementById('supplierCfdiIdle');
+        const progress = document.getElementById('supplierCfdiProgress');
+        const summary = document.getElementById('supplierCfdiSummary');
+
+        mode.addEventListener('change', () => {
+            invoiceOptions.classList.toggle('d-none', mode.value !== 'register_and_invoice');
+        });
+
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+
+            const maxDirectFiles = Number(filesInput.dataset.maxDirectFiles || 1);
+            if (filesInput.files.length > maxDirectFiles) {
+                idle.classList.add('d-none');
+                summary.innerHTML = `<div class="alert alert-warning mb-0">
+                    Este servidor admite ${maxDirectFiles} archivos directos por petición.
+                    Agrupe los ${filesInput.files.length} XML seleccionados en un archivo ZIP.
+                </div>`;
+                summary.classList.remove('d-none');
+                return;
+            }
+
+            submit.disabled = true;
+            idle.classList.add('d-none');
+            summary.classList.add('d-none');
+            progress.classList.remove('d-none');
+
+            try {
+                const data = new FormData(form);
+                data.set('multireqtoken', nextToken());
+                const action = processing.value === 'sync' ? 'process' : 'enqueue';
+                data.append('action', action);
+                let response = await fetch(window.location.href, {method: 'POST', body: data});
+                let payload = await response.json();
+
+                if (!payload.success) throw new Error(payload.error || 'No se pudo iniciar la importación.');
+
+                if (action === 'enqueue') {
+                    const jobData = new FormData();
+                    jobData.append('action', 'process-job');
+                    jobData.append('job_id', payload.job_id);
+                    jobData.append('multireqtoken', nextToken());
+                    response = await fetch(window.location.href, {method: 'POST', body: jobData});
+                    payload = await response.json();
+                    if (!payload.success) throw new Error(payload.error || 'No se pudo procesar el trabajo.');
+                }
+
+                renderResults(payload.results);
+            } catch (error) {
+                summary.innerHTML = `<div class="alert alert-danger mb-0">${escapeHtml(error.message)}</div>`;
+                summary.classList.remove('d-none');
+            } finally {
+                progress.classList.add('d-none');
+                submit.disabled = false;
+            }
+        });
+
+        function renderResults(results) {
+            const labels = {
+                registered: ['Registrado', 'success'],
+                invoice_created: ['Factura creada', 'primary'],
+                invoice_failed: ['Factura pendiente', 'warning'],
+                duplicate: ['Duplicado', 'secondary'],
+                registration_failed: ['Error', 'danger']
+            };
+            const items = (results.items || []).map(item => {
+                const label = labels[item.status] || [item.status, 'secondary'];
+                return `<div class="border rounded-3 p-3 mb-2">
+                    <div class="d-flex justify-content-between gap-2">
+                        <strong class="text-truncate">${escapeHtml(item.file || item.uuid || 'CFDI')}</strong>
+                        <span class="badge text-bg-${label[1]}">${label[0]}</span>
+                    </div>
+                    <div class="small text-muted mt-2">${escapeHtml(item.message || '')}</div>
+                    ${item.uuid ? `<code class="small">${escapeHtml(item.uuid)}</code>` : ''}
+                </div>`;
+            }).join('');
+
+            summary.innerHTML = `<div class="row g-2 text-center mb-3">
+                <div class="col"><div class="border rounded p-2"><strong>${results.registered || 0}</strong><br><small>Registrados</small></div></div>
+                <div class="col"><div class="border rounded p-2"><strong>${results.invoices_created || 0}</strong><br><small>Facturas</small></div></div>
+                <div class="col"><div class="border rounded p-2"><strong>${results.failed || 0}</strong><br><small>Fallidos</small></div></div>
+            </div>${items}`;
+            summary.classList.remove('d-none');
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value || '';
+            return div.innerHTML;
+        }
+
+        function nextToken() {
+            const current = form.querySelector('[name="multireqtoken"]').value.split('|');
+            return `${current[0]}|${Date.now()}${Math.random()}`;
+        }
+    });
+    </script>
+{% endblock %}

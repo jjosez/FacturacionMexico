@@ -9,12 +9,20 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\UploadedFile;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
+use FacturaScripts\Dinamic\Model\User;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Register\CfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\SupplierCfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\InvoiceImportService;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ImportOptions;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Result\InvoiceImportResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue\ImportQueue;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue\AsyncImportProcessor;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\CfdiScope;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorage;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Shared\Storage\CfdiStorageInterface;
 use FacturaScripts\Test\Traits\LogErrorsTrait;
 use PHPUnit\Framework\TestCase;
+use ZipArchive;
 
 final class CfdiImporterIntegrationTest extends TestCase
 {
@@ -108,6 +116,143 @@ final class CfdiImporterIntegrationTest extends TestCase
         }
     }
 
+    public function testBatchReportsDuplicateSeparately(): void
+    {
+        $this->uuid = $this->uuid();
+        $this->supplierRfc = 'X' . str_pad((string) random_int(0, 999999999999), 12, '0', STR_PAD_LEFT);
+        $company = Empresas::default();
+        $importer = new SupplierCfdiImporter();
+
+        $first = $importer->import([$this->upload($this->uuid)], $company);
+        $second = $importer->import([$this->upload($this->uuid)], $company);
+
+        $this->assertSame('registered', $first->items[0]['status']);
+        $this->assertSame('duplicate', $second->items[0]['status']);
+        $this->assertSame(1, $second->failed);
+
+        $this->cfdi = new CfdiProveedor();
+        $this->assertTrue($this->cfdi->loadFromUuid(strtoupper($this->uuid)));
+        $this->supplier = $this->cfdi->getSupplier();
+    }
+
+    public function testBatchKeepsRegisteredCfdiWhenInvoiceCreationFails(): void
+    {
+        $this->uuid = $this->uuid();
+        $this->supplierRfc = 'X' . str_pad((string) random_int(0, 999999999999), 12, '0', STR_PAD_LEFT);
+        $company = Empresas::default();
+        $invoiceImporter = new class extends InvoiceImportService {
+            public function __construct()
+            {
+            }
+
+            public function importSingle(
+                CfdiProveedor $cfdi,
+                Proveedor $supplier,
+                ?ImportOptions $options = null,
+                ?array $submittedConceptos = null
+            ): InvoiceImportResult {
+                return InvoiceImportResult::failure('Fallo controlado al crear factura.');
+            }
+        };
+        $importer = new SupplierCfdiImporter(null, $invoiceImporter);
+
+        $result = $importer->import(
+            [$this->upload($this->uuid)],
+            $company,
+            SupplierCfdiImporter::MODE_REGISTER_AND_INVOICE
+        );
+
+        $this->assertSame(1, $result->registered);
+        $this->assertSame(1, $result->partial);
+        $this->assertSame(0, $result->failed);
+        $this->assertSame('invoice_failed', $result->items[0]['status']);
+
+        $this->cfdi = new CfdiProveedor();
+        $this->assertTrue($this->cfdi->loadFromUuid(strtoupper($this->uuid)));
+        $this->assertEmpty($this->cfdi->idfactura);
+        $this->supplier = $this->cfdi->getSupplier();
+    }
+
+    public function testQueuePersistsOwnerModeAndOptions(): void
+    {
+        $this->uuid = $this->uuid();
+        $this->supplierRfc = 'X' . str_pad((string) random_int(0, 999999999999), 12, '0', STR_PAD_LEFT);
+        $company = Empresas::default();
+        $queue = new ImportQueue();
+        $users = User::all([], [], 0, 1);
+        $this->assertNotEmpty($users);
+        $nick = (string)$users[0]->nick;
+        $config = [
+            'mode' => SupplierCfdiImporter::MODE_REGISTER_AND_INVOICE,
+            'options' => ['product' => ['product_action' => 'auto']],
+        ];
+
+        $jobId = $queue->enqueue(
+            [$this->upload($this->uuid)],
+            (int)$company->idempresa,
+            $nick,
+            $config
+        );
+
+        try {
+            $job = $queue->get($jobId);
+            $this->assertNotNull($job);
+            $this->assertSame($nick, $job->userNick);
+            $this->assertSame((int)$company->idempresa, $job->companyId);
+            $this->assertSame($config, json_decode($job->config, true));
+        } finally {
+            $queue->delete((int)$jobId);
+        }
+    }
+
+    public function testBatchImportsXmlFromZip(): void
+    {
+        $this->uuid = $this->uuid();
+        $this->supplierRfc = 'X' . str_pad((string) random_int(0, 999999999999), 12, '0', STR_PAD_LEFT);
+        $upload = $this->zipUpload($this->uuid);
+
+        try {
+            $result = (new SupplierCfdiImporter())->import([$upload], Empresas::default());
+            $this->assertSame(1, $result->registered);
+            $this->assertSame('registered', $result->items[0]['status']);
+        } finally {
+            if (is_file($upload->getPathname())) {
+                unlink($upload->getPathname());
+            }
+        }
+
+        $this->cfdi = new CfdiProveedor();
+        $this->assertTrue($this->cfdi->loadFromUuid(strtoupper($this->uuid)));
+        $this->supplier = $this->cfdi->getSupplier();
+    }
+
+    public function testQueuedBatchUsesTheSameRegistrationFlow(): void
+    {
+        $this->uuid = $this->uuid();
+        $this->supplierRfc = 'X' . str_pad((string) random_int(0, 999999999999), 12, '0', STR_PAD_LEFT);
+        $company = Empresas::default();
+        $users = User::all([], [], 0, 1);
+        $queue = new ImportQueue();
+        $jobId = $queue->enqueue(
+            [$this->upload($this->uuid)],
+            (int)$company->idempresa,
+            (string)$users[0]->nick,
+            ['mode' => SupplierCfdiImporter::MODE_REGISTER, 'options' => []]
+        );
+
+        try {
+            $result = (new AsyncImportProcessor(null, $queue))->process($jobId);
+            $this->assertSame(1, $result->registered);
+            $this->assertTrue($queue->get($jobId)->isCompleted());
+        } finally {
+            $queue->delete((int)$jobId);
+        }
+
+        $this->cfdi = new CfdiProveedor();
+        $this->assertTrue($this->cfdi->loadFromUuid(strtoupper($this->uuid)));
+        $this->supplier = $this->cfdi->getSupplier();
+    }
+
     protected function tearDown(): void
     {
         if ($this->cfdi !== null) {
@@ -137,6 +282,25 @@ final class CfdiImporterIntegrationTest extends TestCase
         ]);
         $upload->test = true;
 
+        return $upload;
+    }
+
+    private function zipUpload(string $uuid): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'cfdi-zip-');
+        $zip = new ZipArchive();
+        $zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $zip->addFromString('supplier-' . $uuid . '.xml', $this->xml($uuid));
+        $zip->close();
+
+        $upload = new UploadedFile([
+            'error' => UPLOAD_ERR_OK,
+            'name' => 'supplier-cfdi.zip',
+            'size' => filesize($path),
+            'tmp_name' => $path,
+            'type' => 'application/zip',
+        ]);
+        $upload->test = true;
         return $upload;
     }
 

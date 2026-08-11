@@ -3,6 +3,8 @@
 namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Queue;
 
 use FacturaScripts\Core\Base\DataBase;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\SupplierCfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Model\CfdiImportJob;
 use ZipArchive;
 
 class ImportQueue
@@ -15,9 +17,10 @@ class ImportQueue
     public function __construct()
     {
         $this->db = new DataBase();
+        new CfdiImportJob();
     }
 
-    public function enqueue(array $files, int $companyId, int $userId, array $options = []): string
+    public function enqueue(array $files, int $companyId, string $userNick, array $options = []): string
     {
         $zipPath = $this->createZipFromFiles($files);
 
@@ -27,13 +30,18 @@ class ImportQueue
 
         $job = new ImportJob();
         $job->companyId = $companyId;
-        $job->userId = $userId;
+        $job->userNick = $userNick;
         $job->filePath = $zipPath;
         $job->status = ImportJob::STATUS_PENDING;
-        $job->result = json_encode(['options' => $options]);
+        $job->config = json_encode($options);
         $job->createdAt = new \DateTime();
 
-        $this->save($job);
+        if (!$this->save($job)) {
+            if (is_file($zipPath)) {
+                unlink($zipPath);
+            }
+            throw new \Exception('No se pudo guardar el trabajo de importación.');
+        }
 
         return (string)$job->id;
     }
@@ -41,9 +49,10 @@ class ImportQueue
     public function dequeue(): ?ImportJob
     {
         $sql = "SELECT * FROM " . self::TABLE
-            . " WHERE status = ? ORDER BY created_at ASC LIMIT 1";
+            . " WHERE status = " . $this->quote(ImportJob::STATUS_PENDING)
+            . " ORDER BY created_at ASC LIMIT 1";
 
-        $result = $this->db->select($sql, [ImportJob::STATUS_PENDING]);
+        $result = $this->db->select($sql);
 
         if (empty($result)) {
             return null;
@@ -54,9 +63,9 @@ class ImportQueue
 
     public function get(string $jobId): ?ImportJob
     {
-        $sql = "SELECT * FROM " . self::TABLE . " WHERE id = ?";
+        $sql = "SELECT * FROM " . self::TABLE . " WHERE id = " . (int)$jobId;
 
-        $result = $this->db->select($sql, [(int)$jobId]);
+        $result = $this->db->select($sql);
 
         if (empty($result)) {
             return null;
@@ -65,12 +74,13 @@ class ImportQueue
         return ImportJob::fromArray($result[0]);
     }
 
-    public function getByUser(int $userId, int $limit = 10): array
+    public function getByUser(string $userNick, int $limit = 10): array
     {
         $sql = "SELECT * FROM " . self::TABLE
-            . " WHERE user_id = ? ORDER BY created_at DESC LIMIT ?";
+            . " WHERE nick = " . $this->quote($userNick)
+            . " ORDER BY created_at DESC LIMIT " . max(1, $limit);
 
-        $result = $this->db->select($sql, [$userId, $limit]);
+        $result = $this->db->select($sql);
 
         return array_map(fn($row) => ImportJob::fromArray($row), $result);
     }
@@ -110,40 +120,50 @@ class ImportQueue
         $progress = $total > 0 ? (int)(($processed / $total) * 100) : 0;
 
         $sql = "UPDATE " . self::TABLE
-            . " SET progress = ?, processed_items = ?, total_items = ?"
-            . " WHERE id = ?";
+            . " SET progress = " . $progress
+            . ", processed_items = " . $processed
+            . ", total_items = " . $total
+            . " WHERE id = " . (int)$jobId;
 
-        $this->db->exec($sql, [$progress, $processed, $total, (int)$jobId]);
+        $this->db->exec($sql);
     }
 
-    public function markAsProcessing(string $jobId): void
+    public function markAsProcessing(string $jobId): bool
     {
+        $lockToken = bin2hex(random_bytes(20));
         $sql = "UPDATE " . self::TABLE
-            . " SET status = ? WHERE id = ? AND status = ?";
+            . " SET status = " . $this->quote(ImportJob::STATUS_PROCESSING)
+            . ", lock_token = " . $this->quote($lockToken)
+            . " WHERE id = " . (int)$jobId
+            . " AND status = " . $this->quote(ImportJob::STATUS_PENDING);
 
-        $this->db->exec($sql, [ImportJob::STATUS_PROCESSING, (int)$jobId, ImportJob::STATUS_PENDING]);
+        if (!$this->db->exec($sql)) {
+            return false;
+        }
+
+        return $this->get($jobId)?->lockToken === $lockToken;
     }
 
     public function complete(string $jobId, array $result): void
     {
         $sql = "UPDATE " . self::TABLE
-            . " SET status = ?, result = ?, progress = 100, processed_at = NOW()"
-            . " WHERE id = ?";
+            . " SET status = " . $this->quote(ImportJob::STATUS_COMPLETED)
+            . ", result = " . $this->quote(json_encode($result))
+            . ", lock_token = NULL, progress = 100, processed_at = NOW()"
+            . " WHERE id = " . (int)$jobId;
 
-        $this->db->exec($sql, [
-            ImportJob::STATUS_COMPLETED,
-            json_encode($result),
-            (int)$jobId
-        ]);
+        $this->db->exec($sql);
     }
 
     public function fail(string $jobId, string $error): void
     {
         $sql = "UPDATE " . self::TABLE
-            . " SET status = ?, error = ?, processed_at = NOW()"
-            . " WHERE id = ?";
+            . " SET status = " . $this->quote(ImportJob::STATUS_FAILED)
+            . ", error = " . $this->quote($error)
+            . ", lock_token = NULL, processed_at = NOW()"
+            . " WHERE id = " . (int)$jobId;
 
-        $this->db->exec($sql, [ImportJob::STATUS_FAILED, $error, (int)$jobId]);
+        $this->db->exec($sql);
     }
 
     public function delete(int $jobId): bool
@@ -154,24 +174,21 @@ class ImportQueue
             unlink($job->filePath);
         }
 
-        $sql = "DELETE FROM " . self::TABLE . " WHERE id = ?";
+        $sql = "DELETE FROM " . self::TABLE . " WHERE id = " . $jobId;
 
-        return $this->db->exec($sql, [(int)$jobId]);
+        return $this->db->exec($sql);
     }
 
     public function cleanupOld(int $days = 7): int
     {
-        $sql = "DELETE FROM " . self::TABLE
-            . " WHERE status IN (?, ?)"
-            . " AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
+        $where = " WHERE status IN (" . $this->quote(ImportJob::STATUS_COMPLETED)
+            . ", " . $this->quote(ImportJob::STATUS_FAILED) . ")"
+            . " AND created_at < DATE_SUB(NOW(), INTERVAL " . max(1, $days) . " DAY)";
+        $count = $this->db->select("SELECT COUNT(*) AS total FROM " . self::TABLE . $where);
 
-        $this->db->exec($sql, [
-            ImportJob::STATUS_COMPLETED,
-            ImportJob::STATUS_FAILED,
-            $days
-        ]);
+        $this->db->exec("DELETE FROM " . self::TABLE . $where);
 
-        return $this->db->getAffectedRows();
+        return (int)($count[0]['total'] ?? 0);
     }
 
     public function getStats(): array
@@ -198,19 +215,19 @@ class ImportQueue
     private function insert(ImportJob $job): bool
     {
         $sql = "INSERT INTO " . self::TABLE
-            . " (company_id, user_id, status, file_path, progress, created_at)"
-            . " VALUES (?, ?, ?, ?, ?, NOW())";
+            . " (idempresa, nick, status, file_path, config, progress, created_at)"
+            . " VALUES (" . $job->companyId
+            . ", " . $this->quote($job->userNick)
+            . ", " . $this->quote($job->status)
+            . ", " . $this->quote($job->filePath)
+            . ", " . $this->quote($job->config)
+            . ", " . $job->progress
+            . ", NOW())";
 
-        $result = $this->db->exec($sql, [
-            $job->companyId,
-            $job->userId,
-            $job->status,
-            $job->filePath,
-            $job->progress,
-        ]);
+        $result = $this->db->exec($sql);
 
         if ($result) {
-            $job->id = $this->db->getLastIdentity();
+            $job->id = (int)$this->db->lastval();
         }
 
         return $result;
@@ -219,20 +236,18 @@ class ImportQueue
     private function update(ImportJob $job): bool
     {
         $sql = "UPDATE " . self::TABLE
-            . " SET status = ?, result = ?, error = ?, progress = ?,"
-            . " total_items = ?, processed_items = ?, processed_at = ?"
-            . " WHERE id = ?";
+            . " SET status = " . $this->quote($job->status)
+            . ", config = " . $this->quote($job->config)
+            . ", result = " . $this->quote($job->result)
+            . ", error = " . $this->quote($job->error)
+            . ", lock_token = " . $this->quote($job->lockToken)
+            . ", progress = " . $job->progress
+            . ", total_items = " . $job->totalItems
+            . ", processed_items = " . $job->processedItems
+            . ", processed_at = " . $this->quote($job->processedAt?->format('Y-m-d H:i:s'))
+            . " WHERE id = " . $job->id;
 
-        return $this->db->exec($sql, [
-            $job->status,
-            $job->result,
-            $job->error,
-            $job->progress,
-            $job->totalItems,
-            $job->processedItems,
-            $job->processedAt?->format('Y-m-d H:i:s'),
-            $job->id,
-        ]);
+        return $this->db->exec($sql);
     }
 
     private function createZipFromFiles(array $files): ?string
@@ -254,21 +269,40 @@ class ImportQueue
             return null;
         }
 
-        foreach ($files as $file) {
-            if ($file instanceof \FacturaScripts\Core\UploadedFile) {
-                if ($file->isValid()) {
-                    $zip->addFile($file->getPathname(), $file->getClientOriginalName());
-                }
-            } elseif (is_array($file)) {
-                foreach ($file as $f) {
-                    if ($f instanceof \FacturaScripts\Core\UploadedFile && $f->isValid()) {
-                        $zip->addFile($f->getPathname(), $f->getClientOriginalName());
+        $count = 0;
+        $totalBytes = 0;
+        try {
+            foreach ($files as $file) {
+                $uploads = is_array($file) ? $file : [$file];
+                foreach ($uploads as $upload) {
+                    if (!$upload instanceof \FacturaScripts\Core\UploadedFile) {
+                        continue;
                     }
+
+                    [$added, $bytes] = $this->addUploadToZip(
+                        $zip,
+                        $upload,
+                        SupplierCfdiImporter::MAX_FILES - $count,
+                        SupplierCfdiImporter::MAX_BYTES - $totalBytes
+                    );
+                    $count += $added;
+                    $totalBytes += $bytes;
                 }
             }
+        } catch (\Throwable $e) {
+            $zip->close();
+            if (is_file($zipPath)) {
+                unlink($zipPath);
+            }
+            throw $e;
         }
 
         $zip->close();
+
+        if ($count === 0) {
+            unlink($zipPath);
+            return null;
+        }
 
         return $zipPath;
     }
@@ -286,14 +320,83 @@ class ImportQueue
         $xmlFiles = [];
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $filename = $zip->getNameIndex($i);
-            if (pathinfo($filename, PATHINFO_EXTENSION) === 'xml') {
-                $zip->extractTo($extractDir, $filename);
-                $xmlFiles[] = $extractDir . '/' . $filename;
+            if (strtolower(pathinfo($filename, PATHINFO_EXTENSION)) === 'xml') {
+                $content = $zip->getFromIndex($i);
+                if ($content === false) {
+                    continue;
+                }
+
+                $path = $extractDir . '/' . uniqid() . '_' . basename($filename);
+                if (file_put_contents($path, $content) !== false) {
+                    $xmlFiles[] = $path;
+                }
             }
         }
 
         $zip->close();
 
         return $xmlFiles;
+    }
+
+    private function addUploadToZip(
+        ZipArchive $target,
+        \FacturaScripts\Core\UploadedFile $file,
+        int $maxFiles,
+        int $maxBytes
+    ): array
+    {
+        if (!$file->isValid()) {
+            throw new \Exception('Uno de los archivos recibidos no es válido.');
+        }
+
+        if (strtolower($file->extension()) === 'xml') {
+            if ($maxFiles < 1 || (int)$file->size > $maxBytes) {
+                throw new \Exception('El lote excede los límites permitidos.');
+            }
+            $target->addFile($file->getPathname(), uniqid() . '_' . $file->getClientOriginalName());
+            return [1, (int)$file->size];
+        }
+
+        if (strtolower($file->extension()) !== 'zip') {
+            throw new \Exception('Solo se permiten archivos XML o ZIP.');
+        }
+
+        $source = new ZipArchive();
+        if ($source->open($file->getPathname()) !== true) {
+            throw new \Exception('No se pudo abrir uno de los archivos ZIP.');
+        }
+
+        $count = 0;
+        $totalBytes = 0;
+        try {
+            for ($index = 0; $index < $source->numFiles; $index++) {
+                $name = $source->getNameIndex($index);
+                if (strtolower(pathinfo($name, PATHINFO_EXTENSION)) !== 'xml') {
+                    continue;
+                }
+
+                $stat = $source->statIndex($index);
+                $size = (int)($stat['size'] ?? 0);
+                if ($count >= $maxFiles || $totalBytes + $size > $maxBytes) {
+                    throw new \Exception('El contenido del ZIP excede los límites permitidos.');
+                }
+
+                $content = $source->getFromIndex($index);
+                if ($content !== false) {
+                    $target->addFromString(uniqid() . '_' . basename($name), $content);
+                    $count++;
+                    $totalBytes += strlen($content);
+                }
+            }
+        } finally {
+            $source->close();
+        }
+
+        return [$count, $totalBytes];
+    }
+
+    private function quote(?string $value): string
+    {
+        return $value === null ? 'NULL' : "'" . $this->db->escapeString($value) . "'";
     }
 }
