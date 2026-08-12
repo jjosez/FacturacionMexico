@@ -8,9 +8,12 @@ use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\UploadedFile;
 use FacturaScripts\Dinamic\Model\CfdiProveedor;
+use FacturaScripts\Dinamic\Model\EstadoDocumento;
+use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Dinamic\Model\User;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Register\CfdiImporter;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Supplier\Status\StatusService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierCfdi\SupplierCfdiImporter;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\InvoiceImportService;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Application\SupplierInvoice\Import\Options\ImportOptions;
@@ -29,6 +32,7 @@ final class CfdiImporterIntegrationTest extends TestCase
     use LogErrorsTrait;
 
     private ?CfdiProveedor $cfdi = null;
+    private ?FacturaProveedor $invoice = null;
     private ?Proveedor $supplier = null;
     private string $supplierRfc;
     private string $uuid;
@@ -253,8 +257,47 @@ final class CfdiImporterIntegrationTest extends TestCase
         $this->supplier = $this->cfdi->getSupplier();
     }
 
+    public function testInvoiceStatusChangesSynchronizeTheSupplierCfdiBothWays(): void
+    {
+        $this->uuid = $this->uuid();
+        $this->supplierRfc = 'X' . str_pad((string)random_int(0, 999999999999), 12, '0', STR_PAD_LEFT);
+        $this->cfdi = (new CfdiImporter())->processUpload($this->upload($this->uuid), Empresas::default());
+        $this->supplier = $this->cfdi->getSupplier();
+
+        $draftStatus = $this->nonReceivedInvoiceStatus();
+        $receivedStatus = $this->invoiceStatus('Recibida');
+
+        $this->invoice = new FacturaProveedor();
+        $this->invoice->setSubject($this->supplier);
+        $this->invoice->idestado = $draftStatus->idestado;
+        $this->invoice->numproveedor = 'CFDI-' . substr($this->uuid, 0, 8);
+        $this->assertTrue($this->invoice->save());
+
+        $this->cfdi->idfactura = $this->invoice->idfactura;
+        $this->cfdi->estado = StatusService::STATUS_DRAFT;
+        $this->assertTrue($this->cfdi->save());
+
+        $this->invoice->idestado = $receivedStatus->idestado;
+        $this->assertTrue($this->invoice->save());
+        $this->assertTrue($this->cfdi->load($this->cfdi->id));
+        $this->assertSame(StatusService::STATUS_RECEIVED, $this->cfdi->estado);
+
+        $this->invoice->idestado = $draftStatus->idestado;
+        $this->assertTrue($this->invoice->save());
+        $this->assertTrue($this->cfdi->load($this->cfdi->id));
+        $this->assertSame(StatusService::STATUS_DRAFT, $this->cfdi->estado);
+
+        $this->assertTrue((new StatusService())->markCancelled($this->cfdi));
+        $this->invoice->idestado = $receivedStatus->idestado;
+        $this->assertTrue($this->invoice->save());
+        $this->assertTrue($this->cfdi->load($this->cfdi->id));
+        $this->assertSame(StatusService::STATUS_CANCELLED, $this->cfdi->estado);
+    }
+
     protected function tearDown(): void
     {
+        $this->invoice?->delete();
+
         if ($this->cfdi !== null) {
             CfdiStorage::get()->delete(CfdiScope::SUPPLIER, $this->cfdi->uuid);
             $this->cfdi->delete();
@@ -283,6 +326,26 @@ final class CfdiImporterIntegrationTest extends TestCase
         $upload->test = true;
 
         return $upload;
+    }
+
+    private function invoiceStatus(string $name): EstadoDocumento
+    {
+        $status = new EstadoDocumento();
+        $this->assertTrue($status->loadWhere([
+            new DataBaseWhere('tipodoc', 'FacturaProveedor'),
+            new DataBaseWhere('nombre', $name),
+        ]), 'No se encontró el estado de FacturaProveedor: ' . $name);
+        return $status;
+    }
+
+    private function nonReceivedInvoiceStatus(): EstadoDocumento
+    {
+        $status = new EstadoDocumento();
+        $this->assertTrue($status->loadWhere([
+            new DataBaseWhere('tipodoc', 'FacturaProveedor'),
+            new DataBaseWhere('nombre', 'Recibida', '!='),
+        ]), 'No se encontró un estado de FacturaProveedor distinto de Recibida');
+        return $status;
     }
 
     private function zipUpload(string $uuid): UploadedFile

@@ -13,13 +13,13 @@ class FacturaProveedor
     {
         return function () {
             /** @var FacturaProveedorModel $this */
-            if (empty($this->idfactura) || $this->getStatus()->nombre !== 'Recibida') {
+            if (empty($this->idfactura)) {
                 return true;
             }
 
             $cfdi = new CfdiProveedor();
             if ($cfdi->loadWhereEq('idfactura', $this->idfactura)) {
-                (new StatusService())->markReceived($cfdi, $this);
+                (new StatusService())->syncInvoiceStatus($cfdi, $this);
             }
 
             return true;

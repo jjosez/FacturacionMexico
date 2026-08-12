@@ -52,7 +52,8 @@ class SupplierProductLinkService
         float $dtopor = 0.0,
         float $dtopor2 = 0.0,
         bool $updatePrice = true,
-        ?string $coddivisa = null
+        ?string $coddivisa = null,
+        ?string $documentDate = null
     ): array {
         // Verificar que el producto existe
         $variante = new Variante();
@@ -78,9 +79,9 @@ class SupplierProductLinkService
 
         if ($productoProveedor) {
             // Actualizar vinculación existente
-            $result = $this->actualizarVinculacion($productoProveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $variante->idproducto, $updatePrice, $coddivisa);
+            $result = $this->actualizarVinculacion($productoProveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $variante->idproducto, $updatePrice, $coddivisa, $documentDate);
         } else {
-            $result = $this->crearVinculacion($referencia, $codproveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $variante->idproducto, $updatePrice, $coddivisa);
+            $result = $this->crearVinculacion($referencia, $codproveedor, $refproveedor, $precio, $stock, $dtopor, $dtopor2, $variante->idproducto, $updatePrice, $coddivisa, $documentDate);
         }
 
         return $result;
@@ -128,16 +129,23 @@ class SupplierProductLinkService
         float $dtopor2,
         int $idproducto,
         bool $updatePrice,
-        ?string $coddivisa
+        ?string $coddivisa,
+        ?string $documentDate
     ): array {
         $productoProveedor->refproveedor = $refproveedor;
-        if ($updatePrice) {
+        $canUpdatePrice = $updatePrice && (
+            $documentDate === null
+            || $documentDate === ''
+            || empty($productoProveedor->actualizado)
+            || strtotime($productoProveedor->actualizado) <= strtotime($documentDate)
+        );
+        if ($canUpdatePrice) {
             $productoProveedor->precio = $precio;
+            $productoProveedor->dtopor = $dtopor;
+            $productoProveedor->dtopor2 = $dtopor2;
+            $productoProveedor->actualizado = empty($documentDate) ? Tools::dateTime() : $documentDate;
         }
         $productoProveedor->stock = $stock;
-        $productoProveedor->dtopor = $dtopor;
-        $productoProveedor->dtopor2 = $dtopor2;
-        $productoProveedor->actualizado = Tools::dateTime();
         $productoProveedor->idproducto = $idproducto;
         if ($coddivisa !== null && $coddivisa !== '') {
             $productoProveedor->coddivisa = $coddivisa;
@@ -182,7 +190,8 @@ class SupplierProductLinkService
         float $dtopor2,
         int $idproducto,
         bool $updatePrice,
-        ?string $coddivisa
+        ?string $coddivisa,
+        ?string $documentDate
     ): array {
         $productoProveedor = new ProductoProveedor();
         $productoProveedor->referencia = $referencia;
@@ -193,6 +202,9 @@ class SupplierProductLinkService
         $productoProveedor->dtopor = $dtopor;
         $productoProveedor->dtopor2 = $dtopor2;
         $productoProveedor->idproducto = $idproducto;
+        if ($documentDate !== null && $documentDate !== '') {
+            $productoProveedor->actualizado = $documentDate;
+        }
         if ($coddivisa !== null && $coddivisa !== '') {
             $productoProveedor->coddivisa = $coddivisa;
         }

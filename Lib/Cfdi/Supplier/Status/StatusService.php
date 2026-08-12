@@ -41,18 +41,23 @@ class StatusService
 
     public function markInvoiceCreated(CfdiProveedor $cfdi, FacturaProveedor $invoice): bool
     {
-        $cfdi->idfactura = $invoice->idfactura;
-        $status = $this->isReceivedInvoice($invoice)
-            ? self::STATUS_RECEIVED
-            : self::STATUS_DRAFT;
-
-        return $this->setStatus($cfdi, $status);
+        return $this->syncInvoiceStatus($cfdi, $invoice);
     }
 
     public function markReceived(CfdiProveedor $cfdi, FacturaProveedor $invoice): bool
     {
         $cfdi->idfactura = $invoice->idfactura;
         return $this->setStatus($cfdi, self::STATUS_RECEIVED);
+    }
+
+    public function syncInvoiceStatus(CfdiProveedor $cfdi, FacturaProveedor $invoice): bool
+    {
+        $cfdi->idfactura = $invoice->idfactura;
+        $status = $this->isReceivedInvoice($invoice)
+            ? self::STATUS_RECEIVED
+            : self::STATUS_DRAFT;
+
+        return $this->setStatus($cfdi, $status, true);
     }
 
     public function markCancelled(CfdiProveedor $cfdi): bool
@@ -65,19 +70,23 @@ class StatusService
         return mb_strtolower(trim($invoice->getStatus()->nombre)) === 'recibida';
     }
 
-    private function setStatus(CfdiProveedor $cfdi, string $status): bool
+    private function setStatus(CfdiProveedor $cfdi, string $status, bool $syncingInvoice = false): bool
     {
         if ($cfdi->estado === self::STATUS_CANCELLED && $status !== self::STATUS_CANCELLED) {
             return false;
         }
 
-        if ($cfdi->estado === self::STATUS_RECEIVED && $status !== self::STATUS_RECEIVED) {
+        if (
+            $cfdi->estado === self::STATUS_RECEIVED
+            && !in_array($status, [self::STATUS_RECEIVED, self::STATUS_CANCELLED], true)
+            && !($syncingInvoice && $status === self::STATUS_DRAFT)
+        ) {
             return false;
         }
 
         if (
             $cfdi->estado === self::STATUS_DRAFT
-            && !in_array($status, [self::STATUS_DRAFT, self::STATUS_RECEIVED], true)
+            && !in_array($status, [self::STATUS_DRAFT, self::STATUS_RECEIVED, self::STATUS_CANCELLED], true)
         ) {
             return false;
         }

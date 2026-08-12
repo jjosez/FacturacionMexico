@@ -249,7 +249,8 @@ class InvoiceImportService
                 0.0,
                 0.0,
                 $options->product->shouldUpdatePrices(),
-                $invoice->coddivisa ?? ''
+                $invoice->coddivisa ?? '',
+                $invoice->fecha . ' ' . $invoice->hora
             );
             if (!$linkResult['ok']) {
                 throw new Exception($linkResult['message']);
