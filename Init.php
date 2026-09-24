@@ -35,6 +35,7 @@ class Init extends InitClass
         $this->loadExtension(new Extension\Model\Empresa());
         $this->loadExtension(new Extension\Model\Familia());
         $this->loadExtension(new Extension\Model\FormaPago());
+        $this->loadExtension(new Extension\Model\Producto());
     }
 
     /**
