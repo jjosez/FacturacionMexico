@@ -4,11 +4,9 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Build;
 
 use CfdiUtils\Certificado\Certificado;
 use CfdiUtils\CfdiCreator40;
-use CfdiUtils\Elements\Cfdi40\Comprobante;
 use CfdiUtils\Nodes\Node;
 use CfdiUtils\XmlResolver\XmlResolver;
 use Exception;
-use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 
@@ -37,9 +35,11 @@ abstract class CfdiBuilder
 
     abstract protected function getAtributosComprobante();
 
-    protected function getFechaFactura($f, $h): string
+    protected function getFechaFactura(): string
     {
-        return date("Y-m-d", strtotime($f)) . 'T' . date("H:i:s", strtotime($h));
+        return date("Y-m-d", strtotime($this->factura->fecha)
+            . 'T'
+            . date("H:i:s", strtotime($this->factura->hora)));
     }
 
     protected function getIvaFromValue($base, $iva, $round = 2): float
@@ -85,8 +85,10 @@ abstract class CfdiBuilder
         $customer = $this->cliente;
 
         if ($customer->cifnif !== $fiscalID) {
-            throw new Exception('El ID Fiscal del cliente ' . $fiscalID
-                . ' no coincide con el de la Factura ' . $this->factura->cifnif);
+            throw new Exception(
+                'El ID Fiscal del cliente ' . $fiscalID
+                . ' no coincide con el de la Factura ' . $this->factura->cifnif
+            );
         }
 
         if ($customer->tipoidfiscal === 'RFC') {

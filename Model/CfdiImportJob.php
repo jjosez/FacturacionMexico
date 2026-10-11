@@ -5,7 +5,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Model;
 use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
 
-final class CfdiImportJob extends ModelClass
+class CfdiImportJob extends ModelClass
 {
     use ModelTrait;
 

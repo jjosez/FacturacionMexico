@@ -5,6 +5,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation;
 use DateTime;
 use FacturaScripts\Dinamic\Model\Cliente;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\PaymentMethodResolver;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CfdiCatalogo;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\CfdiSettings;
 
@@ -23,10 +24,9 @@ class Validator
     public static function validateFormaPago(FacturaCliente $invoice): bool
     {
         $catalog = CfdiCatalogo::formaPago();
+        $payment = PaymentMethodResolver::resolve($invoice);
 
-        return array_any(array: $catalog->all(), callback: function ($item) use ($invoice) {
-            return $invoice->codpago === $item->id;
-        });
+        return false !== $catalog->get($payment['FormaPago']);
     }
 
     public static function validateGlobalInvoice(FacturaCliente $invoice): bool

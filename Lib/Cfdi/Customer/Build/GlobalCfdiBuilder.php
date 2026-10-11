@@ -4,6 +4,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Build;
 
 use CfdiUtils\Nodes\Node;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\PaymentMethodResolver;
 
 class GlobalCfdiBuilder extends CfdiBuilder
 {
@@ -14,16 +15,18 @@ class GlobalCfdiBuilder extends CfdiBuilder
 
     protected function getAtributosComprobante(): array
     {
+        $payment = PaymentMethodResolver::resolve($this->factura);
+
         return [
             "Serie" => $this->factura->codserie,
             'Folio' => $this->factura->codigo,
-            'Fecha' => $this->getFechaFactura($this->factura->fecha, $this->factura->hora),
-            'FormaPago' => $this->factura->codpago,
+            'Fecha' => $this->getFechaFactura(),
+            'FormaPago' => $payment['FormaPago'],
             'Moneda' => $this->factura->coddivisa,
             'TipoCambio' => '1',
             'TipoDeComprobante' => $this->tipoComprobante,
             'Exportacion' => '01',
-            'MetodoPago' => 'PUE',
+            'MetodoPago' => $payment['MetodoPago'],
             'LugarExpedicion' => $this->empresa->codpostal,
             'Descuento' => 0.00,
         ];

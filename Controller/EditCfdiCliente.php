@@ -94,7 +94,7 @@ class EditCfdiCliente extends Controller
             return parent::setTemplate('CfdiClienteWizard');
         }
 
-        return parent::setTemplate('CfdiCustomerFail');
+        return parent::setTemplate('CfdiCustomerWizardError');
     }
 
     /**
@@ -215,7 +215,7 @@ class EditCfdiCliente extends Controller
             $this->attachXmlReader();
             Tools::log()->notice('CFDI timbrado correctamente');
         } else {
-            Tools::log('CFDI')->error($result->getMessage());
+            Tools::log()->error($result->getMessage());
         }
     }
 

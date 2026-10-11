@@ -18,7 +18,9 @@ class GlobalValidator implements InvoiceValidator
         }
 
         if (false === Validator::validateGlobalInvoice($document)) {
-            $result->addMessage("El RFC XAXX010101000 o la Razón social PUBLICO EN GENERAL no coinciden para la factura global.");
+            $result->addMessage(
+                "El RFC XAXX010101000 o la Razón social PUBLICO EN GENERAL no coinciden para la factura global."
+            );
         }
 
         if (false === Validator::validateFormaPago($document)) {

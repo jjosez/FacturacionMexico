@@ -13,6 +13,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\Template\InitClass;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\EstadoDocumento;
 
 class Init extends InitClass
@@ -65,8 +66,8 @@ class Init extends InitClass
     protected function setEstadosDocumento(): void
     {
         $where = [
-            new DataBaseWhere('nombre', 'Cancelada'),
-            new DataBaseWhere('tipodoc', 'FacturaCliente')
+            Where::eq('nombre', 'Cancelada'),
+            Where::eq('tipodoc', 'FacturaCliente')
         ];
 
         $canceledStatus = new EstadoDocumento();

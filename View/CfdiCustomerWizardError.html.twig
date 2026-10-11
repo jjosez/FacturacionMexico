@@ -1,0 +1,188 @@
+{#
+/**
+ * This file is part of FacturacionMexico plugin for FacturaScripts
+ * Copyright (C) 2020-2026 Juan José Prieto Dzul <juanjoseprieto88@gmail.com>
+ */
+#}
+{% extends 'Master/MenuBgTemplate.html.twig' %}
+
+{% set customer = fsc.factura.getSubject() %}
+{% set invalidRfc = not customer.cifnif or not fsc.isValidRfc(customer.cifnif) %}
+{% set fiscalAddress = customer.domicilioFiscal() %}
+{% set fiscalRegime = customer.regimenFiscal() %}
+{% set cfdiUse = customer.usoCfdi() %}
+
+{% block bodyHeaderOptions %}
+    <div class="container-fluid mb-2">
+        <div class="row align-items-center">
+            <div class="col">
+                <a class="btn btn-sm btn-outline-secondary" href="{{ fsc.factura.url() }}"
+                   title="Volver a {{ fsc.factura.codigo }}">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    <span class="ms-1">{{ fsc.factura.codigo }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid pb-3">
+        <div class="card border shadow-sm rounded-3 text-dark">
+            <div class="card-header bg-white px-3 px-md-4 py-4">
+                <div class="d-flex align-items-center">
+                    <span class="fa-stack fa-2x flex-shrink-0 me-3" aria-hidden="true">
+                        <i class="fas fa-circle fa-stack-2x text-danger"></i>
+                        <i class="fas fa-exclamation fa-stack-1x text-white"></i>
+                    </span>
+                    <div>
+                        <h1 class="h3 fw-bold mb-1">No se puede generar el CFDI</h1>
+                        <p class="text-muted mb-0">
+                            Los datos fiscales del cliente <strong>{{ customer.nombre }}</strong> requieren corrección antes de timbrar esta factura.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body px-3 px-md-4 py-4">
+                <div class="row g-4">
+                    <div class="col-12 col-xl-9">
+                        <h2 class="h5 fw-bold mb-1">Datos del cliente que requieren atención</h2>
+                        <p class="text-muted mb-4">Revisa los siguientes campos y corrige la información en la ficha del cliente.</p>
+
+                        <div class="d-grid gap-3">
+                            {% if invalidRfc %}
+                                <div class="border rounded-3 p-3">
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-auto">
+                                            <span class="fa-stack flex-shrink-0" aria-hidden="true">
+                                                <i class="fas fa-circle fa-stack-2x text-danger"></i>
+                                                <i class="fas fa-exclamation fa-stack-1x text-white"></i>
+                                            </span>
+                                        </div>
+                                        <div class="col-12 col-md">
+                                            <h3 class="h6 fw-bold mb-1">RFC</h3>
+                                            <p class="small text-muted mb-0">
+                                                {% if customer.cifnif %}El RFC del cliente tiene un formato inválido.{% else %}El cliente no tiene RFC registrado.{% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="col-12 col-md-6 col-lg-5">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="flex-grow-1 bg-light border rounded py-2 px-3">{{ customer.cifnif ?: 'No registrado' }}</div>
+                                                <span class="badge rounded-pill bg-danger text-white py-2 px-3">{{ customer.cifnif ? 'Formato inválido' : 'Requerido' }}</span>
+                                            </div>
+                                            <p class="small text-muted mt-2 mb-0">Debe tener un formato válido (12 o 13 caracteres).</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if not fiscalAddress %}
+                                <div class="border rounded-3 p-3">
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-auto">
+                                            <span class="fa-stack flex-shrink-0" aria-hidden="true"><i class="fas fa-circle fa-stack-2x text-danger"></i><i class="fas fa-exclamation fa-stack-1x text-white"></i></span>
+                                        </div>
+                                        <div class="col-12 col-md">
+                                            <h3 class="h6 fw-bold mb-1">Código Postal</h3>
+                                            <p class="small text-muted mb-0">El cliente no tiene código postal del domicilio fiscal.</p>
+                                        </div>
+                                        <div class="col-12 col-md-6 col-lg-5">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="flex-grow-1 bg-light border rounded py-2 px-3">No registrado</div>
+                                                <span class="badge rounded-pill bg-danger text-white py-2 px-3">Requerido</span>
+                                            </div>
+                                            <p class="small text-muted mt-2 mb-0">Ingresa el código postal del domicilio fiscal.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if not fiscalRegime %}
+                                <div class="border rounded-3 p-3">
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-auto">
+                                            <span class="fa-stack flex-shrink-0" aria-hidden="true"><i class="fas fa-circle fa-stack-2x text-danger"></i><i class="fas fa-exclamation fa-stack-1x text-white"></i></span>
+                                        </div>
+                                        <div class="col-12 col-md">
+                                            <h3 class="h6 fw-bold mb-1">Régimen Fiscal</h3>
+                                            <p class="small text-muted mb-0">El cliente no tiene régimen fiscal asignado.</p>
+                                        </div>
+                                        <div class="col-12 col-md-6 col-lg-5">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="flex-grow-1 bg-light border rounded py-2 px-3">No registrado</div>
+                                                <span class="badge rounded-pill bg-danger text-white py-2 px-3">Requerido</span>
+                                            </div>
+                                            <p class="small text-muted mt-2 mb-0">Selecciona el régimen fiscal del SAT.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if not cfdiUse %}
+                                <div class="border rounded-3 p-3">
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-auto">
+                                            <span class="fa-stack flex-shrink-0" aria-hidden="true"><i class="fas fa-circle fa-stack-2x text-danger"></i><i class="fas fa-exclamation fa-stack-1x text-white"></i></span>
+                                        </div>
+                                        <div class="col-12 col-md">
+                                            <h3 class="h6 fw-bold mb-1">Uso de CFDI</h3>
+                                            <p class="small text-muted mb-0">El cliente no tiene uso de CFDI asignado.</p>
+                                        </div>
+                                        <div class="col-12 col-md-6 col-lg-5">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="flex-grow-1 bg-light border rounded py-2 px-3">No registrado</div>
+                                                <span class="badge rounded-pill bg-danger text-white py-2 px-3">Requerido</span>
+                                            </div>
+                                            <p class="small text-muted mt-2 mb-0">Selecciona el uso de CFDI que se le dará al comprobante.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-3">
+                        <aside class="bg-light border rounded-3 h-100 p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="fa-stack flex-shrink-0 me-2" aria-hidden="true"><i class="fas fa-circle fa-stack-2x text-primary"></i><i class="fas fa-info fa-stack-1x text-white"></i></span>
+                                <h2 class="h5 fw-bold mb-0">Para generar el CFDI</h2>
+                            </div>
+                            <p class="text-muted">El cliente debe tener su información fiscal completa y válida. Los datos deben coincidir con su Constancia de Situación Fiscal.</p>
+                            <hr class="my-4">
+                            <h3 class="h6 fw-bold mb-3">Datos requeridos:</h3>
+
+                            <div class="d-flex">
+                                <span class="fa-stack flex-shrink-0 me-3" aria-hidden="true"><i class="fas fa-circle fa-stack-2x text-secondary"></i><i class="far fa-file-alt fa-stack-1x text-white"></i></span>
+                                <div><strong>RFC</strong><div class="small text-muted">Formato correcto según el SAT (12 o 13 caracteres).</div></div>
+                            </div>
+                            <div class="d-flex mt-3">
+                                <span class="fa-stack flex-shrink-0 me-3" aria-hidden="true"><i class="fas fa-circle fa-stack-2x text-secondary"></i><i class="fas fa-home fa-stack-1x text-white"></i></span>
+                                <div><strong>Código Postal</strong><div class="small text-muted">Del domicilio fiscal del cliente.</div></div>
+                            </div>
+                            <div class="d-flex mt-3">
+                                <span class="fa-stack flex-shrink-0 me-3" aria-hidden="true"><i class="fas fa-circle fa-stack-2x text-secondary"></i><i class="fas fa-list fa-stack-1x text-white"></i></span>
+                                <div><strong>Régimen Fiscal</strong><div class="small text-muted">Clave del régimen fiscal del SAT.</div></div>
+                            </div>
+                            <div class="d-flex mt-3">
+                                <span class="fa-stack flex-shrink-0 me-3" aria-hidden="true"><i class="fas fa-circle fa-stack-2x text-secondary"></i><i class="fas fa-tag fa-stack-1x text-white"></i></span>
+                                <div><strong>Uso de CFDI</strong><div class="small text-muted">Uso que se le dará al comprobante.</div></div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer bg-white px-3 px-md-4 py-3">
+                <div class="d-flex flex-column flex-sm-row justify-content-between gap-2">
+                    <a href="{{ customer.url() }}" class="btn btn-primary px-4">
+                        <i class="fas fa-user-edit me-2" aria-hidden="true"></i>Editar datos del cliente
+                    </a>
+                    <a href="{{ fsc.factura.url() }}" class="btn btn-outline-secondary px-4">
+                        <i class="fas fa-arrow-left me-2" aria-hidden="true"></i>Volver a la factura
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

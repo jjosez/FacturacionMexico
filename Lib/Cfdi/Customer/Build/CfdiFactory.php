@@ -5,6 +5,7 @@ namespace FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Build;
 use Exception;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\DTO\CfdiBuildResult;
+use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\EgresoValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\GlobalValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\Cfdi\Customer\Validation\IngresoValidator;
 use FacturaScripts\Plugins\FacturacionMexico\Lib\SAT\CertificateService;
@@ -13,6 +14,12 @@ class CfdiFactory
 {
     public static function buildCfdiEgreso(FacturaCliente $invoice, array $relations = []): CfdiBuildResult
     {
+        $validator = EgresoValidator::validate($invoice);
+
+        if (!$validator->isValid()) {
+            return new CfdiBuildResult('', $validator->getMessagesAsString(), true);
+        }
+
         return self::buildCfdiDocument(new EgresoCfdiBuilder($invoice), $relations);
     }
 
